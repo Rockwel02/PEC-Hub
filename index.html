@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LMS Hub — Avanti Residential</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
+    button,input{font-family:'DM Sans',sans-serif}
+    .hub{max-width:780px;margin:0 auto;min-height:100vh;border:1px solid #e2e8f0;box-shadow:0 8px 40px rgba(0,0,0,.12)}
+    nav{background:#0f1e3d;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+    .nav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}
+    .nav-logo span{color:#fff;font-weight:800;font-size:15px}
+    .nav-badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+    .nav-links{display:flex;gap:2px}
+    .nav-btn{background:transparent;color:rgba(255,255,255,.6);border:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+    .nav-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+    .nav-btn.active{color:#fff;background:rgba(255,255,255,.15)}
+    .page{min-height:500px}
+    .hero{background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 60%,#1e3a7a 100%);padding:32px;color:#fff}
+    .hero-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px}
+    .hero h1{font-size:26px;font-weight:800;margin-bottom:6px;letter-spacing:-.02em}
+    .hero p{font-size:14px;color:rgba(255,255,255,.65);margin-bottom:24px;max-width:480px}
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .stat-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 16px}
+    .stat-num{font-size:24px;font-weight:800;color:#fff}
+    .stat-label{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+    .content{padding:24px 32px;background:#f8fafc}
+    .section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin-bottom:14px}
+    .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:28px}
+    .quick-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:12px;transition:all .15s;width:100%}
+    .quick-card:hover{box-shadow:0 0 0 3px rgba(59,130,246,.15);border-color:#3b82f6}
+    .quick-card .icon{font-size:20px;line-height:1}
+    .quick-card h3{font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px}
+    .quick-card p{font-size:11px;color:#64748b}
+    .tagline{background:linear-gradient(135deg,#0f1e3dee,#1a2f55ee);border-radius:14px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between}
+    .tagline-text{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+    .tagline-sub{font-size:11px;color:rgba(255,255,255,.5)}
+
+    /* Team cards */
+    .manager-section{margin-bottom:32px;max-width:260px}
+    .team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px}
+    .flip-card{height:220px;perspective:900px;cursor:pointer}
+    .flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,.2,.2,1)}
+    .flip-card:hover .flip-inner, .flip-card.flipped .flip-inner{transform:rotateY(180deg)}
+    .flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .flip-back{transform:rotateY(180deg);background:#fff;align-items:flex-start;justify-content:center}
+    .flip-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px}
+    .flip-name{font-size:14px;font-weight:800;color:#fff;text-align:center;margin-bottom:4px}
+    .flip-role{font-size:11px;color:rgba(255,255,255,.8);font-weight:600;margin-bottom:14px}
+    .flip-hint{font-size:10px;color:rgba(255,255,255,.6)}
+    .flip-bar{width:28px;height:3px;border-radius:4px;margin-bottom:12px}
+    .flip-back-name{font-size:13px;font-weight:800;color:#0f1e3d;margin-bottom:2px}
+    .flip-back-role{font-size:11px;font-weight:700;margin-bottom:12px}
+    .flip-fact-label{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+    .flip-fact{font-size:12px;color:#334155;line-height:1.6;margin-bottom:12px}
+    .flip-quote{font-size:11px;font-style:italic;line-height:1.6;padding-left:10px}
+
+    /* Page header */
+    .page-header{background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%);padding:28px 32px 24px;color:#fff}
+    .page-header-inner{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+    .page-header h1{font-size:22px;font-weight:700;color:#fff}
+    .page-header p{font-size:14px;color:rgba(255,255,255,.65);padding-left:36px}
+
+    /* KB */
+    .search-wrap{position:relative;margin-bottom:20px}
+    .search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none}
+    .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4;font-size:16px;pointer-events:none}
+    .card{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;cursor:pointer;margin-bottom:8px;transition:all .15s}
+    .card.open{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .card-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+    .card-left{display:flex;align-items:center;gap:10px}
+    .card-title{font-size:14px;font-weight:600;color:#0f172a}
+    .card-body{padding:0 16px 16px;border-top:1px solid #f1f5f9}
+    .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+    .chevron{font-size:14px;color:#64748b;transition:transform .2s;display:inline-block}
+    .chevron.open{transform:rotate(180deg)}
+    .meta{font-size:11px;color:#64748b}
+    .btn{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none}
+    .btn-primary{background:#3b82f6;color:#fff}
+    .btn-outline{background:#fff;border:1.5px solid currentColor}
+
+    /* Filters */
+    .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+    .filter-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;transition:all .15s}
+    .filter-btn.active{background:#0f1e3d;color:#fff;border-color:#0f1e3d}
+
+    /* Videos */
+    .video-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .video-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .15s}
+    .video-card:hover{border-color:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.1)}
+    .video-thumb{background:linear-gradient(135deg,#0f1e3d,#1a2f55);height:90px;display:flex;align-items:center;justify-content:center;position:relative}
+    .play-btn{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.5);color:#fff;font-size:12px;padding-left:2px}
+    .duration{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
+    .video-info{padding:12px 14px}
+    .video-title{font-size:13px;font-weight:700;color:#0f172a;margin-top:6px;line-height:1.4}
+
+    /* Scorecard */
+    .sc-header{background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%);padding:28px 32px 0;color:#fff}
+    .sc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+    .sc-tabs{display:flex;gap:2px}
+    .sc-tab{padding:10px 18px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:transparent;color:rgba(255,255,255,.55);border-radius:10px 10px 0 0;display:flex;align-items:center;gap:5px;transition:all .15s}
+    .sc-tab.active{background:#fff;color:#0f1e3d}
+    .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
+    .kpi-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:all .15s}
+    .kpi-card.on-goal{border-color:#bbf7d0}
+    .kpi-card.below{border-color:#fecaca}
+    .kpi-inner{padding:14px 16px}
+    .kpi-label{font-size:12px;font-weight:700;color:#64748b;margin-bottom:4px}
+    .kpi-score{font-size:22px;font-weight:800}
+    .kpi-score.on-goal{color:#15803d}
+    .kpi-score.below{color:#dc2626}
+    .kpi-score.no-data{color:#94a3b8}
+    .kpi-goal{font-size:12px;color:#64748b;margin-left:6px}
+    .kpi-status{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+    .kpi-status.on-goal{color:#15803d;background:#dcfce7}
+    .kpi-status.below{color:#dc2626;background:#fee2e2}
+    .kpi-status.no-data{color:#64748b;background:#f1f5f9}
+    .progress-bar{height:6px;background:#f1f5f9;border-radius:6px;overflow:hidden;margin-top:10px}
+    .progress-fill{height:100%;border-radius:6px;transition:width .4s ease}
+    .agent-toggle{font-size:11px;font-weight:600;border:1px solid;border-radius:8px;padding:3px 8px;cursor:pointer;background:none;margin-top:6px}
+    .agent-table{margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+    .agent-table-header{display:grid;grid-template-columns:1fr 80px 80px;background:#f8fafc;padding:8px 14px;border-bottom:1px solid #e2e8f0;font-size:11px;font-weight:700;color:#64748b}
+    .agent-row{display:grid;grid-template-columns:1fr 80px 80px;padding:9px 14px;align-items:center;border-bottom:1px solid #f1f5f9;font-size:13px}
+    .agent-row:last-child{border-bottom:none}
+    .agent-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-right:8px}
+    .agent-name-wrap{display:flex;align-items:center}
+    .on-goal-txt{color:#15803d;font-weight:700}
+    .below-txt{color:#dc2626;font-weight:700}
+    .sync-panel{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px 18px;margin-bottom:16px}
+    .sync-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .sync-input{flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none}
+    .sync-btn{padding:8px 18px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+    .sync-btn:disabled{background:#94a3b8;cursor:not-allowed}
+    .sync-hint{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.7;margin-bottom:10px}
+    .manual-hint{border-radius:12px;padding:10px 16px;margin-bottom:20px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+    .manual-input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .manual-input-row input{padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;width:100%}
+    .add-metric-btn{width:100%;padding:12px;background:#fff;border:1.5px dashed;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+    .sources{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px}
+    .source-row{display:flex;gap:8px;font-size:11px;margin-bottom:4px}
+    .source-kpi{color:#0f172a;font-weight:600;min-width:160px}
+    .source-val{color:#64748b}
+
+    /* Login */
+    .login-wrap{padding:40px 32px;display:flex;justify-content:center}
+    .login-box{background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:32px;width:100%;max-width:380px}
+    .login-icon{font-size:40px;text-align:center;margin-bottom:12px}
+    .login-title{font-size:18px;font-weight:800;text-align:center;margin-bottom:6px}
+    .login-sub{font-size:13px;color:#64748b;text-align:center;line-height:1.6;margin-bottom:24px}
+    .login-label{font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px}
+    .login-input{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;margin-bottom:12px}
+    .login-btn{width:100%;padding:11px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px}
+    .login-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12px;color:#dc2626;margin-bottom:12px}
+    .google-btn{width:100%;padding:10px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:#374151;display:flex;align-items:center;justify-content:center;gap:8px}
+    .login-footer{margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9;font-size:11px;color:#64748b;text-align:center}
+
+    /* Coaching */
+    .coaching-header{background:linear-gradient(135deg,#0f1e3d 0%,#1e1a4e 100%);padding:28px 32px 24px;color:#fff}
+    .coaching-top{display:flex;align-items:flex-start;justify-content:space-between}
+    .signout-btn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);border-radius:8px;font-size:11px;padding:4px 10px;cursor:pointer}
+
+    /* Footer */
+    footer{background:#0f1e3d;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+    footer span{font-size:11px;color:rgba(255,255,255,.4)}
+
+    /* Status chips */
+    .chips{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+    .chip{display:flex;align-items:center;gap:6px;border-radius:20px;padding:5px 12px}
+    .chip-dot{width:8px;height:8px;border-radius:50%}
+    .chip span{font-size:12px;font-weight:700}
+
+    /* Edit form */
+    .edit-form{padding:16px}
+    .edit-grid{display:grid;grid-template-columns:2fr 1fr 1fr 72px;gap:8px;margin-bottom:10px}
+    .edit-grid input{padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;width:100%}
+    .edit-label{font-size:11px;color:#64748b;margin-bottom:4px}
+    .edit-actions{display:flex;gap:8px;margin-top:4px}
+    .btn-save{padding:7px 18px;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+    .btn-cancel{padding:7px 14px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer}
+    .btn-remove{padding:7px 14px;background:#fff;color:#dc2626;border:1px solid #fecaca;border-radius:8px;font-size:13px;cursor:pointer;margin-left:auto}
+
+    /* Metric display */
+    .metric-display{padding:14px 16px}
+    .metric-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .metric-name{font-size:14px;font-weight:700;color:#0f172a}
+    .metric-vals{display:flex;gap:0;margin-top:12px}
+    .metric-val-block{flex:1;padding-right:16px;border-right:1px solid #e2e8f0;margin-right:16px}
+    .metric-val-block:last-child{border-right:none;margin-right:0;padding-right:0}
+    .metric-val-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#64748b;margin-bottom:3px}
+    .metric-val-num{font-size:20px;font-weight:800}
+    .edit-btn{font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:600}
+
+    @media(max-width:600px){
+      .nav-links{display:none}
+      .team-grid{grid-template-columns:repeat(2,1fr)}
+      .quick-grid{grid-template-columns:1fr}
+      .kpi-grid{grid-template-columns:1fr}
+      .video-grid{grid-template-columns:1fr}
+      .edit-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="hub">
+  <nav id="nav">
+    <a class="nav-logo" onclick="showPage('home')">
+      <span>🏢</span>
+      <span>LMS Hub</span>
+      <span class="nav-badge">Avanti</span>
+    </a>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+  <div class="page" id="pageContent"></div>
+  <footer>
+    <span>LMS Hub · Internal Use Only</span>
+    <span>Progress, not Perfection.</span>
+  </footer>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+const COLORS_MAP = {
+  navy:'#1a2f55', teal:'#0d9488', amber:'#d97706',
+  coral:'#e05c45', purple:'#7c3aed', accent:'#3b82f6',
+  green:'#16a34a'
+};
+
+const TEAM = [
+  {id:1, name:'Rowel De La Trinidad', role:'Lead Management Manager', emoji:'👑', color:'#1a2f55', funFact:'Over a decade in customer service and still loves a good call.', quote:'Progress, not Perfection.', isSolo:true},
+  {id:2, name:'Agent 1', role:'LMS Specialist', emoji:'🌟', color:'#0d9488', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:3, name:'Agent 2', role:'LMS Specialist', emoji:'🎯', color:'#7c3aed', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:4, name:'Agent 3', role:'LMS Specialist', emoji:'🔥', color:'#d97706', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:5, name:'Agent 4', role:'LMS Specialist', emoji:'⚡', color:'#3b82f6', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:6, name:'Agent 5', role:'LMS Specialist', emoji:'🌈', color:'#e05c45', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:7, name:'Agent 6', role:'LMS Specialist', emoji:'🎵', color:'#0d9488', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:8, name:'Agent 7', role:'LMS Specialist', emoji:'🏆', color:'#7c3aed', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:9, name:'Agent 8', role:'LMS Specialist', emoji:'💡', color:'#d97706', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:10,name:'Agent 9', role:'LMS Specialist', emoji:'🎨', color:'#3b82f6', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:11,name:'Agent 10',role:'LMS Specialist', emoji:'🌙', color:'#e05c45', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:12,name:'Agent 11',role:'LMS Specialist', emoji:'🦋', color:'#0d9488', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:13,name:'Agent 12',role:'LMS Specialist', emoji:'🌺', color:'#7c3aed', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:14,name:'Agent 13',role:'LMS Specialist', emoji:'⭐', color:'#d97706', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:15,name:'Agent 14',role:'LMS Specialist', emoji:'🚀', color:'#3b82f6', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+  {id:16,name:'Agent 15',role:'LMS Specialist', emoji:'💎', color:'#e05c45', funFact:'Fun fact coming soon!', quote:'Quote coming soon!'},
+];
+
+const KB = [
+  {id:1, title:'Tour Scheduling SOP', cat:'SOP', updated:'Jun 1, 2026'},
+  {id:2, title:'Prospect Follow-Up Framework', cat:'Process', updated:'May 28, 2026'},
+  {id:3, title:'Handling No-Shows', cat:'FAQ', updated:'May 20, 2026'},
+  {id:4, title:'Funnel Leasing Navigation Guide', cat:'System', updated:'May 15, 2026'},
+  {id:5, title:'Community-Specific Notes: Overview', cat:'Reference', updated:'May 10, 2026'},
+  {id:6, title:'Escalation Protocol', cat:'SOP', updated:'May 5, 2026'},
+];
+
+const SPIELS = [
+  {id:1, title:'Warm Greeting — Inbound Call', cat:'Inbound', preview:'"Thank you for calling Avanti Residential, this is [Name], how can I help you today?"'},
+  {id:2, title:'Tour Confirmation Text', cat:'Outbound', preview:'"Hi [Prospect Name]! Just confirming your tour at [Community] on [Date] at [Time]..."'},
+  {id:3, title:'Prospect Gone Cold — Re-engagement', cat:'Outbound', preview:'"Hi [Name], I wanted to reach out and see if you\'re still exploring your options..."'},
+  {id:4, title:'Voicemail Script — First Attempt', cat:'Voicemail', preview:'"Hi [Name], this is [Your Name] from Avanti Residential following up on your inquiry..."'},
+  {id:5, title:'Objection: I need to think about it', cat:'Objection Handling', preview:'"Absolutely! Can I ask — is there anything specific you\'re weighing?"'},
+  {id:6, title:'Closing — Tour Booking Confirmation', cat:'Inbound', preview:'"Perfect! I have you scheduled for [Date/Time]. You\'ll receive a confirmation shortly..."'},
+];
+
+const VIDEOS = [
+  {id:1, title:'New Specialist Onboarding Walkthrough', dur:'18 min', cat:'Onboarding'},
+  {id:2, title:'Funnel Leasing: Creating and Managing Leads', dur:'12 min', cat:'Systems'},
+  {id:3, title:'Live Call Review: Best Practices', dur:'22 min', cat:'Coaching'},
+  {id:4, title:'Tour Scheduling Deep Dive', dur:'15 min', cat:'Process'},
+  {id:5, title:'Handling Difficult Conversations', dur:'20 min', cat:'Skills'},
+  {id:6, title:'Q&A: Common Prospect Objections', dur:'25 min', cat:'Skills'},
+];
+
+const KPI_CONFIG = [
+  {id:'call_completion',    label:'Call Completion Rate',   goal:90, unit:'%', agentTable:false},
+  {id:'lead_engagement',    label:'Lead Engagement Score',  goal:9,  unit:'',  agentTable:true},
+  {id:'task_management',    label:'Task Management Score',  goal:9,  unit:'',  agentTable:true},
+  {id:'lead_to_scheduled',  label:'Lead to Scheduled Tour', goal:30, unit:'%', agentTable:false},
+  {id:'lead_to_tour',       label:'Lead to Tour',           goal:20, unit:'%', agentTable:false},
+  {id:'fenix_scored_calls', label:'Fenix Scored Calls',     goal:90, unit:'%', agentTable:true},
+];
+
+const CAT_COLORS = {
+  SOP:{bg:'#dbeafe',c:'#1e40af'}, Process:{bg:'#d1fae5',c:'#065f46'},
+  FAQ:{bg:'#fef3c7',c:'#92400e'}, System:{bg:'#ede9fe',c:'#5b21b6'},
+  Reference:{bg:'#fce7f3',c:'#9d174d'}, Inbound:{bg:'#dbeafe',c:'#1e40af'},
+  Outbound:{bg:'#d1fae5',c:'#065f46'}, Voicemail:{bg:'#fef3c7',c:'#92400e'},
+  'Objection Handling':{bg:'#fce7f3',c:'#9d174d'},
+  Onboarding:{bg:'#d1fae5',c:'#065f46'}, Systems:{bg:'#ede9fe',c:'#5b21b6'},
+  Coaching:{bg:'#fef3c7',c:'#92400e'}, Process:{bg:'#d1fae5',c:'#065f46'},
+  Skills:{bg:'#dbeafe',c:'#1e40af'}, '1:1':{bg:'#dbeafe',c:'#1e40af'},
+  Performance:{bg:'#fce7f3',c:'#9d174d'},
+};
+
+// ── STATE ─────────────────────────────────────────────────────────
+let state = {
+  page: 'home',
+  manager: null,
+  expandedKb: null,
+  expandedSpiel: null,
+  spielFilter: 'All',
+  videoFilter: 'All',
+  expandedCoaching: null,
+  kbSearch: '',
+  spielSearch: '',
+  scTab: 'mtd',
+  expandedKpi: null,
+  sheetUrl: '',
+  syncStatus: 'idle',
+  syncMsg: '',
+  lastSynced: null,
+  fenixMsg: '',
+  period: 'June 2026',
+  teamScores: {call_completion:0, lead_engagement:0, task_management:0, lead_to_scheduled:0, lead_to_tour:0, fenix_scored_calls:0},
+  agents: [
+    {name:'Maria S.',    lead_engagement:9.2, task_management:9.5, fenix_scored_calls:92},
+    {name:'James T.',    lead_engagement:8.7, task_management:9.1, fenix_scored_calls:88},
+    {name:'Ana R.',      lead_engagement:9.4, task_management:8.8, fenix_scored_calls:95},
+    {name:'Kevin L.',    lead_engagement:7.9, task_management:9.3, fenix_scored_calls:85},
+    {name:'Agent 5',     lead_engagement:9.1, task_management:9.0, fenix_scored_calls:91},
+    {name:'Agent 6',     lead_engagement:8.5, task_management:8.6, fenix_scored_calls:87},
+  ],
+  monthend: KPI_CONFIG.map((k,i)=>({id:i+1, label:k.label, actual:0, goal:k.goal, unit:k.unit})),
+  quarterly: KPI_CONFIG.map((k,i)=>({id:i+1, label:k.label, actual:0, goal:k.goal, unit:k.unit})),
+  editingMetric: null,
+  editVals: {},
+  showAddMetric: false,
+  newMetric: {label:'',actual:'',goal:'',unit:''},
+  loginEmail: '',
+  loginLoading: false,
+  loginError: '',
+};
+
+// ── NAV ───────────────────────────────────────────────────────────
+const NAV = [
+  {id:'kb',       label:'Knowledge Base', icon:'📚'},
+  {id:'spiels',   label:'Spiels',         icon:'💬'},
+  {id:'videos',   label:'Videos',         icon:'▶️'},
+  {id:'scorecard',label:'Scorecard',      icon:'📊'},
+  {id:'coaching', label:'Coaching Logs',  icon:'🔒'},
+];
+
+function renderNav() {
+  document.getElementById('navLinks').innerHTML = NAV.map(n=>`
+    <button class="nav-btn${state.page===n.id?' active':''}" onclick="showPage('${n.id}')">
+      ${n.icon} ${n.label}
+    </button>
+  `).join('');
+}
+
+function showPage(p) {
+  state.page = p;
+  state.expandedKb = null;
+  state.expandedSpiel = null;
+  state.expandedKpi = null;
+  render();
+  window.scrollTo(0,0);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function badge(cat){
+  const c = CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
+  return `<span class="badge" style="background:${c.bg};color:${c.c}">${cat}</span>`;
+}
+
+function pct(actual, goal, lowerIsBetter=false) {
+  if (!goal) return 0;
+  if (lowerIsBetter) return actual<=goal ? 100 : Math.max(0,Math.round(100-((actual-goal)/goal)*100));
+  return Math.min(Math.round((actual/goal)*100),100);
+}
+
+function onGoal(actual, goal) { return actual > 0 && actual >= goal; }
+
+function statusChip(actual, goal, unit='') {
+  if (!actual) return `<span class="kpi-status no-data">No data</span>`;
+  const og = onGoal(actual, goal);
+  return `<span class="kpi-status ${og?'on-goal':'below'}">${og?'✓ On Goal':'✗ Below'}</span>`;
+}
+
+// ── HOME PAGE ─────────────────────────────────────────────────────
+function renderHome() {
+  const manager = TEAM.find(t=>t.isSolo);
+  const agents  = TEAM.filter(t=>!t.isSolo);
+  return `
+    <div class="hero">
+      <div class="hero-eyebrow">Lead Management Specialist Team · Avanti Residential</div>
+      <h1>Welcome to LMS Hub 👋</h1>
+      <p>Your team's central resource for knowledge, scripts, training, and more.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">15</div><div class="stat-label">Active specialists</div></div>
+        <div class="stat-card"><div class="stat-num">${KB.length}</div><div class="stat-label">KB articles</div></div>
+        <div class="stat-card"><div class="stat-num">${SPIELS.length}</div><div class="stat-label">Spiels & scripts</div></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="section-label">Your Manager</div>
+      <div style="max-width:260px;margin-bottom:32px">${flipCard(manager)}</div>
+      <div class="section-label">The Team <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">— hover a card to flip it!</span></div>
+      <div class="team-grid">${agents.map(flipCard).join('')}</div>
+      <div class="section-label">Quick Access</div>
+      <div class="quick-grid">
+        ${[
+          {id:'kb',icon:'📚',label:'Knowledge Base',desc:'SOPs, FAQs, and process guides',color:'#3b82f6'},
+          {id:'spiels',icon:'💬',label:'Spiels Library',desc:'Approved scripts and talking points',color:'#0d9488'},
+          {id:'videos',icon:'▶️',label:'Training Videos',desc:'Walkthroughs and skill-builders',color:'#d97706'},
+          {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, and quarterly scores',color:'#16a34a'},
+          {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
+        ].map(c=>`
+          <button class="quick-card" onclick="showPage('${c.id}')" 
+            onmouseover="this.style.borderColor='${c.color}';this.style.boxShadow='0 0 0 3px ${c.color}22'"
+            onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
+            <span class="icon">${c.icon}</span>
+            <div><h3>${c.label}</h3><p>${c.desc}</p></div>
+          </button>
+        `).join('')}
+      </div>
+      <div class="tagline">
+        <div><div class="tagline-text">Progress, not Perfection.</div><div class="tagline-sub">LMS Team · Avanti Residential</div></div>
+        <div style="font-size:26px">🌟</div>
+      </div>
+    </div>`;
+}
+
+function flipCard(m) {
+  return `
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front" style="background:linear-gradient(160deg,${m.color}ee,${m.color}99);border:1.5px solid rgba(255,255,255,.15);box-shadow:0 4px 20px rgba(0,0,0,.15)">
+          <div class="flip-avatar">${m.emoji}</div>
+          <div class="flip-name">${m.name}</div>
+          <div class="flip-role">${m.role}</div>
+          <div class="flip-hint">Tap to flip ↻</div>
+        </div>
+        <div class="flip-back" style="border:2px solid ${m.color}44;box-shadow:0 4px 20px ${m.color}22">
+          <div class="flip-bar" style="background:${m.color}"></div>
+          <div class="flip-back-name">${m.name}</div>
+          <div class="flip-back-role" style="color:${m.color}">${m.role}</div>
+          <div class="flip-fact-label">Fun Fact</div>
+          <div class="flip-fact">${m.funFact}</div>
+          <div class="flip-quote" style="color:${m.color};border-left:3px solid ${m.color}">"${m.quote}"</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── KB PAGE ───────────────────────────────────────────────────────
+function renderKB() {
+  const filtered = KB.filter(a=>
+    a.title.toLowerCase().includes(state.kbSearch.toLowerCase()) ||
+    a.cat.toLowerCase().includes(state.kbSearch.toLowerCase())
+  );
+  return `
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:24px">📚</span><h1>Knowledge Base</h1></div>
+      <p>SOPs, process guides, FAQs, and reference materials</p>
+    </div>
+    <div class="content">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input value="${state.kbSearch}" oninput="state.kbSearch=this.value;renderPage()" placeholder="Search articles..."/>
+      </div>
+      ${filtered.map(a=>`
+        <div class="card${state.expandedKb===a.id?' open':''}" onclick="state.expandedKb=state.expandedKb===a.id?null:${a.id};renderPage()">
+          <div class="card-header">
+            <div class="card-left">${badge(a.cat)}<span class="card-title">${a.title}</span></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="meta">${a.updated}</span>
+              <span class="chevron${state.expandedKb===a.id?' open':''}">▾</span>
+            </div>
+          </div>
+          ${state.expandedKb===a.id?`
+            <div class="card-body">
+              <p style="font-size:13px;color:#64748b;margin-top:12px;line-height:1.7;margin-bottom:12px">Full content for <strong>${a.title}</strong> goes here. Document step-by-step instructions, screenshots, tips, and related links.</p>
+              <button class="btn btn-primary">Open Full Article →</button>
+            </div>`:''
+          }
+        </div>
+      `).join('')}
+      ${filtered.length===0?'<div style="text-align:center;padding:40px 0;color:#64748b;font-size:14px">No articles match your search.</div>':''}
+    </div>`;
+}
+
+// ── SPIELS PAGE ───────────────────────────────────────────────────
+function renderSpiels() {
+  const cats = ['All',...new Set(SPIELS.map(s=>s.cat))];
+  const filtered = SPIELS.filter(s=>
+    (state.spielFilter==='All'||s.cat===state.spielFilter) &&
+    (s.title.toLowerCase().includes(state.spielSearch.toLowerCase()))
+  );
+  return `
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:24px">💬</span><h1>Spiels Library</h1></div>
+      <p>Approved scripts, greetings, and talking points for prospect interactions</p>
+    </div>
+    <div class="content">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input value="${state.spielSearch}" oninput="state.spielSearch=this.value;renderPage()" placeholder="Search spiels..."/>
+      </div>
+      <div class="filters">
+        ${cats.map(c=>`<button class="filter-btn${state.spielFilter===c?' active':''}" onclick="state.spielFilter='${c}';renderPage()">${c}</button>`).join('')}
+      </div>
+      ${filtered.map(s=>`
+        <div class="card${state.expandedSpiel===s.id?' open':''}" style="${state.expandedSpiel===s.id?'border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.1)':''}">
+          <div class="card-header" onclick="state.expandedSpiel=state.expandedSpiel===s.id?null:${s.id};renderPage()">
+            <div class="card-left">${badge(s.cat)}<span class="card-title">${s.title}</span></div>
+            <span class="chevron${state.expandedSpiel===s.id?' open':''}">▾</span>
+          </div>
+          ${state.expandedSpiel===s.id?`
+            <div class="card-body">
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;font-size:13px;color:#334155;line-height:1.75;font-style:italic;margin:12px 0">
+                ${s.preview}<br><br><span style="font-style:normal;color:#64748b">[Full spiel content goes here.]</span>
+              </div>
+              <button class="btn" style="background:#fff;color:#0d9488;border:1.5px solid #0d9488" onclick="navigator.clipboard.writeText('${s.preview.replace(/'/g,"\\'")}').then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Script',2000)})">Copy Script</button>
+            </div>`:''
+          }
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+// ── VIDEOS PAGE ───────────────────────────────────────────────────
+function renderVideos() {
+  const cats = ['All',...new Set(VIDEOS.map(v=>v.cat))];
+  const filtered = VIDEOS.filter(v=>state.videoFilter==='All'||v.cat===state.videoFilter);
+  return `
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:24px">▶️</span><h1>Training Videos</h1></div>
+      <p>Walkthroughs, skill-builders, and coaching recordings</p>
+    </div>
+    <div class="content">
+      <div class="filters">
+        ${cats.map(c=>`<button class="filter-btn${state.videoFilter===c?' active':''}" onclick="state.videoFilter='${c}';renderPage()">${c}</button>`).join('')}
+      </div>
+      <div class="video-grid">
+        ${filtered.map(v=>`
+          <div class="video-card">
+            <div class="video-thumb">
+              <div class="play-btn">▶</div>
+              <div class="duration">${v.dur}</div>
+            </div>
+            <div class="video-info">${badge(v.cat)}<div class="video-title">${v.title}</div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+// ── SCORECARD PAGE ────────────────────────────────────────────────
+function toCsvUrl(url) {
+  try {
+    const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (!match) return null;
+    const id = match[1];
+    const gidMatch = url.match(/[#&]gid=(\d+)/);
+    const gid = gidMatch ? gidMatch[1] : '0';
+    return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  } catch(e) { return null; }
+}
+
+async function syncSheet() {
+  if (!state.sheetUrl) { state.syncMsg='Paste your Google Sheet link first.'; state.syncStatus='error'; render(); return; }
+  const csvUrl = toCsvUrl(state.sheetUrl);
+  if (!csvUrl) { state.syncMsg='Invalid Google Sheets URL.'; state.syncStatus='error'; render(); return; }
+  state.syncStatus='loading'; state.syncMsg=''; render();
+  try {
+    const res = await fetch(csvUrl);
+    if (!res.ok) throw new Error(`Could not access sheet (${res.status}).`);
+    const text = await res.text();
+    const lines = text.split('\n').filter(l=>l.trim());
+    if (lines.length < 2) throw new Error('Sheet appears empty.');
+    const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+    const kpiIdx   = headers.findIndex(h=>h.includes('kpi')||h.includes('metric')||h.includes('name'));
+    const scoreIdx = headers.findIndex(h=>h.includes('score')||h.includes('actual')||h.includes('value'));
+    if (kpiIdx===-1||scoreIdx===-1) throw new Error('Sheet needs columns: KPI and Score.');
+    const updated = {...state.teamScores};
+    lines.slice(1).forEach(line=>{
+      const cols  = line.split(',').map(c=>c.trim().replace(/"/g,''));
+      const name  = (cols[kpiIdx]||'').toLowerCase();
+      const score = parseFloat((cols[scoreIdx]||'').replace('%',''))||0;
+      if (name.includes('call')||name.includes('completion'))         updated.call_completion   = score;
+      if (name.includes('lead eng')||name.includes('engagement'))     updated.lead_engagement   = score;
+      if (name.includes('task'))                                       updated.task_management   = score;
+      if (name.includes('scheduled')||name.includes('lead to sch'))   updated.lead_to_scheduled = score;
+      if (name.includes('lead to tour')&&!name.includes('sched'))     updated.lead_to_tour      = score;
+    });
+    state.teamScores = updated;
+    state.syncStatus = 'success';
+    state.syncMsg = 'Scores synced!';
+    state.lastSynced = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    setTimeout(()=>{state.syncStatus='idle';state.syncMsg='';render();},5000);
+  } catch(err) {
+    state.syncStatus='error';
+    state.syncMsg=err.message||'Sync failed.';
+  }
+  render();
+}
+
+function handleFenixUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const lines = ev.target.result.split('\n').filter(l=>l.trim());
+      if (lines.length < 2) { state.fenixMsg='File appears empty.'; render(); return; }
+      const headers  = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+      const nameIdx  = headers.findIndex(h=>h.includes('agent')||h.includes('name'));
+      const scoreIdx = headers.findIndex(h=>h.includes('score')||h.includes('percent')||h.includes('%'));
+      if (nameIdx===-1||scoreIdx===-1) { state.fenixMsg='CSV needs columns: Agent Name, Score.'; render(); return; }
+      const parsed = lines.slice(1).map(line=>{
+        const cols = line.split(',').map(c=>c.trim().replace(/"/g,''));
+        return {name:cols[nameIdx]||'', fenix:parseFloat(cols[scoreIdx])||0};
+      }).filter(a=>a.name);
+      state.agents = state.agents.map(a=>{
+        const match = parsed.find(p=>p.name.toLowerCase()===a.name.toLowerCase());
+        return match ? {...a, fenix_scored_calls:match.fenix} : a;
+      });
+      const avg = Math.round(parsed.reduce((s,a)=>s+a.fenix,0)/parsed.length*10)/10;
+      state.teamScores.fenix_scored_calls = avg;
+      state.fenixMsg = `✓ ${parsed.length} agents loaded`;
+      setTimeout(()=>{state.fenixMsg='';render();},5000);
+    } catch(e) { state.fenixMsg='Could not read file.'; }
+    render();
+  };
+  reader.readAsText(file);
+}
+
+function renderScorecard() {
+  const tabColor = state.scTab==='mtd'?'#3b82f6':state.scTab==='monthend'?'#0d9488':'#7c3aed';
+  const manualData = state.scTab==='monthend' ? state.monthend : state.quarterly;
+
+  return `
+    <div class="sc-header">
+      <div class="sc-top">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+            <span style="font-size:24px">📊</span>
+            <h1 style="font-size:22px;font-weight:700;color:#fff">Scorecard</h1>
+          </div>
+          <p style="font-size:14px;color:rgba(255,255,255,.65);padding-left:36px">Running MTD · Month-End · Quarterly</p>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;color:#fff;font-weight:700">${state.period}</div>
+          <button style="font-size:11px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;padding:0;margin-top:3px" 
+            onclick="let p=prompt('Edit period:',state.period);if(p){state.period=p;render()}">✏ Edit period</button>
+        </div>
+      </div>
+      <div class="sc-tabs">
+        ${[{id:'mtd',label:'Running (MTD)',icon:'🔄'},{id:'monthend',label:'Month-End',icon:'📅'},{id:'quarterly',label:'Quarterly',icon:'📆'}].map(t=>`
+          <button class="sc-tab${state.scTab===t.id?' active':''}" 
+            style="${state.scTab===t.id?`border-bottom:3px solid ${t.id==='mtd'?'#3b82f6':t.id==='monthend'?'#0d9488':'#7c3aed'}`:'border-bottom:3px solid transparent'}"
+            onclick="state.scTab='${t.id}';state.expandedKpi=null;render()">
+            ${t.icon} ${t.label}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="content">
+      ${state.scTab==='mtd' ? renderMTD(tabColor) : renderManualTab(manualData, tabColor)}
+    </div>`;
+}
+
+function renderMTD(tabColor) {
+  return `
+    <!-- Google Sheet Sync -->
+    <div class="sync-panel">
+      <div class="sync-row">
+        <span style="font-size:20px">🔗</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Auto Sync</div>
+          <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`Connected · Last synced ${state.lastSynced}`:'Connected · Not yet synced'):'Connect your master Google Sheet to pull scores automatically'}</div>
+        </div>
+        ${state.sheetUrl?`<button class="edit-btn" onclick="state.sheetUrl='';render()">Change</button>`:''}
+      </div>
+      ${!state.sheetUrl?`
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." />
+          <button class="sync-btn" onclick="state.sheetUrl=document.getElementById('sheetInput').value.trim();render()">Save Link</button>
+        </div>`:''
+      }
+      <div class="sync-hint"><strong style="color:#0f172a">Sheet format:</strong> Columns — <strong>KPI</strong> and <strong>Score</strong>. The Google Apps Script writes to this sheet automatically every morning at 8am EST.</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="sync-btn${state.syncStatus==='loading'?' disabled':''}" onclick="syncSheet()" ${state.syncStatus==='loading'?'disabled':''}>
+          ${state.syncStatus==='loading'?'⏳ Syncing...':'↻ Sync Now'}
+        </button>
+        ${state.syncMsg?`<span style="font-size:12px;font-weight:600;color:${state.syncStatus==='success'?'#15803d':'#dc2626'}">${state.syncStatus==='success'?'✓ ':'⚠ '}${state.syncMsg}</span>`:''}
+      </div>
+    </div>
+
+    <!-- Fenix Upload -->
+    <div class="sync-panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">📤</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">Fenix Scored Calls — CSV Upload</div>
+          <div style="font-size:11px;color:#64748b">Export from Fenix and upload here. Columns: Agent Name, Score</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${state.fenixMsg?`<span style="font-size:11px;font-weight:600;color:#15803d">${state.fenixMsg}</span>`:''}
+        <label style="padding:8px 16px;background:#7c3aed;color:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+          Upload Fenix CSV
+          <input type="file" accept=".csv" style="display:none" onchange="handleFenixUpload(this)"/>
+        </label>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px">Team Averages</div>
+    <div class="kpi-grid">
+      ${KPI_CONFIG.map(kpi=>{
+        const actual = state.teamScores[kpi.id]||0;
+        const og = onGoal(actual, kpi.goal);
+        const p  = pct(actual, kpi.goal);
+        const isOpen = state.expandedKpi===kpi.id;
+        return `
+          <div class="kpi-card${actual>0?(og?' on-goal':' below'):''}">
+            <div class="kpi-inner">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+                <div>
+                  <div class="kpi-label">${kpi.label}</div>
+                  <div style="display:flex;align-items:baseline;gap:0">
+                    <span class="kpi-score ${actual>0?(og?'on-goal':'below'):'no-data'}">${actual}${kpi.unit}</span>
+                    <span class="kpi-goal">/ ${kpi.goal}${kpi.unit} goal</span>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                  ${statusChip(actual, kpi.goal, kpi.unit)}
+                  ${kpi.agentTable?`<button class="agent-toggle" style="color:#3b82f6;border-color:#3b82f644" onclick="state.expandedKpi=state.expandedKpi==='${kpi.id}'?null:'${kpi.id}';render()">${isOpen?'Hide ▲':'Per agent ▼'}</button>`:''}
+                </div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width:${p}%;background:${actual>0?(og?'#16a34a':'#e05c45'):'#e2e8f0'}"></div>
+              </div>
+            </div>
+            ${isOpen&&kpi.agentTable?`
+              <div style="padding:0 16px 16px;border-top:1px solid #f1f5f9">
+                ${renderAgentTable(kpi.id, kpi.goal, kpi.unit)}
+              </div>`:''
+            }
+          </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Data Sources -->
+    <div class="sources">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Data Sources</div>
+      ${[
+        {k:'Call Completion Rate',   v:'Phone Reports - Daily MTD → Phone_Report.csv → Col M (last row)'},
+        {k:'Lead Engagement',        v:'LMS Scores → agent_score.csv → Col L (last row)'},
+        {k:'Task Management',        v:'LMS Scores → agent_score.csv → Col M (last row)'},
+        {k:'Lead to Scheduled Tour', v:'Tours Col C ÷ Lead Count Col E × 100'},
+        {k:'Lead to Tour',           v:'(Tours Col D + Col E) ÷ Lead Count Col E × 100'},
+        {k:'Fenix Scored Calls',     v:'Manual CSV upload from Fenix platform'},
+      ].map(s=>`<div class="source-row"><span class="source-kpi">${s.k}</span><span class="source-val">${s.v}</span></div>`).join('')}
+    </div>`;
+}
+
+function renderAgentTable(kpiId, goal, unit) {
+  const sorted = [...state.agents].sort((a,b)=>(b[kpiId]||0)-(a[kpiId]||0));
+  return `
+    <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#64748b;margin:14px 0 8px">Per Agent</div>
+    <div class="agent-table">
+      <div class="agent-table-header">
+        <span>Agent</span><span style="text-align:right">Score</span><span style="text-align:right">Status</span>
+      </div>
+      ${sorted.map((a,i)=>{
+        const score = a[kpiId]||0;
+        const og    = score >= goal && score > 0;
+        const initials = a.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+        return `
+          <div class="agent-row" style="background:${i%2===0?'#fff':'#fafafa'}">
+            <div class="agent-name-wrap">
+              <div class="agent-avatar" style="background:${og?'#dcfce7':'#fee2e2'};color:${og?'#15803d':'#dc2626'}">${initials}</div>
+              <span style="font-size:13px;color:#0f172a;font-weight:500">${a.name}</span>
+            </div>
+            <span style="text-align:right;font-weight:700;color:${og?'#15803d':'#dc2626'}">${score}${unit}</span>
+            <span style="text-align:right;font-size:11px;font-weight:700;color:${og?'#15803d':'#dc2626'}">${og?'✓ On Goal':'✗ Below'}</span>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderManualTab(data, tabColor) {
+  return `
+    <div class="manual-hint" style="background:${tabColor}11;border:1px solid ${tabColor}22;color:${tabColor}">
+      📋 Manual entry — fill in once the period closes.
+    </div>
+    ${data.map(m=>{
+      const og = m.actual > 0 && m.actual >= m.goal;
+      const isEditing = state.editingMetric===m.id;
+      return `
+        <div class="kpi-card${m.actual>0?(og?' on-goal':' below'):''}" style="margin-bottom:10px">
+          ${isEditing?`
+            <div class="edit-form">
+              <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:12px">Editing: ${m.label}</div>
+              <div class="manual-input-row">
+                <div>
+                  <div class="edit-label">Actual</div>
+                  <input type="number" id="editActual_${m.id}" value="${m.actual}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;width:100%"/>
+                </div>
+                <div>
+                  <div class="edit-label">Goal</div>
+                  <input type="number" id="editGoal_${m.id}" value="${m.goal}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;width:100%"/>
+                </div>
+              </div>
+              <div class="edit-actions">
+                <button class="btn-save" style="background:${tabColor}" onclick="saveMetric(${m.id})">Save</button>
+                <button class="btn-cancel" onclick="state.editingMetric=null;render()">Cancel</button>
+              </div>
+            </div>`:
+            `<div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div class="kpi-label">${m.label}</div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <span class="kpi-score ${m.actual>0?(og?'on-goal':'below'):'no-data'}">${m.actual}${m.unit}</span>
+                  <span class="kpi-goal">/ ${m.goal}${m.unit} goal</span>
+                  ${m.actual>0?statusChip(m.actual,m.goal,m.unit):''}
+                </div>
+              </div>
+              <button class="edit-btn" onclick="state.editingMetric=${m.id};render()">Edit</button>
+            </div>`
+          }
+        </div>`;
+    }).join('')}`;
+}
+
+function saveMetric(id) {
+  const data   = state.scTab==='monthend' ? state.monthend : state.quarterly;
+  const actual = parseFloat(document.getElementById('editActual_'+id).value)||0;
+  const goal   = parseFloat(document.getElementById('editGoal_'+id).value)||0;
+  const idx    = data.findIndex(m=>m.id===id);
+  if (idx!==-1) data[idx] = {...data[idx], actual, goal};
+  state.editingMetric = null;
+  render();
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────
+function renderLogin() {
+  return `
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:24px">🔒</span><h1>Coaching Logs</h1></div>
+      <p>Manager access only — authentication required</p>
+    </div>
+    <div class="login-wrap">
+      <div class="login-box">
+        <div class="login-icon">🔐</div>
+        <div class="login-title">Manager Sign In</div>
+        <div class="login-sub">Coaching logs are restricted to authorized LMS managers. Sign in with your Avanti email to continue.</div>
+        <label class="login-label">Email address</label>
+        <input class="login-input" type="email" id="loginEmail" placeholder="you@avantiresidential.com"
+          value="${state.loginEmail}"
+          oninput="state.loginEmail=this.value"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+        ${state.loginError?`<div class="login-err">${state.loginError}</div>`:''}
+        <button class="login-btn" onclick="doLogin()" ${state.loginLoading?'disabled':''}>
+          ${state.loginLoading?'Signing in...':'Sign In →'}
+        </button>
+        <div style="text-align:center">
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px">or continue with</div>
+          <button class="google-btn"><strong>G</strong> Sign in with Google</button>
+        </div>
+        <div class="login-footer">Access issues? Contact Rowel · LMS Hub v1.0</div>
+      </div>
+    </div>`;
+}
+
+function doLogin() {
+  const email = state.loginEmail;
+  if (!email.includes('@')) { state.loginError='Please enter a valid email address.'; render(); return; }
+  state.loginError=''; state.loginLoading=true; render();
+  setTimeout(()=>{
+    if (email.toLowerCase().includes('avanti')||email.toLowerCase().includes('rowel')) {
+      state.manager = {name:'Rowel De La Trinidad', email, role:'Lead Management Manager'};
+      state.loginLoading=false;
+    } else {
+      state.loginError='Access restricted to authorized managers. Please use your Avanti email.';
+      state.loginLoading=false;
+    }
+    render();
+  },1200);
+}
+
+// ── COACHING ──────────────────────────────────────────────────────
+const COACHING = [
+  {id:1, name:'Maria S.',  date:'Jun 2, 2026',  type:'1:1',         notes:'Strong improvement on follow-up cadence. Discussed tone calibration on re-engagement calls. Action: practice objection scripts this week.'},
+  {id:2, name:'James T.',  date:'May 30, 2026', type:'Performance', notes:'Tour conversion trending up. Reviewed Funnel Leasing logging accuracy. Action: audit last 10 lead entries for completeness.'},
+  {id:3, name:'Ana R.',    date:'May 27, 2026', type:'1:1',         notes:'Confidence building on cold re-engagements. Reviewed voicemail script delivery. Action: listen to 3 own call recordings before next session.'},
+  {id:4, name:'Kevin L.',  date:'May 22, 2026', type:'Coaching',    notes:'Addressed scheduling errors. SOPs reviewed together. Action: double-check confirmation texts against template before sending.'},
+];
+
+function renderCoaching() {
+  return `
+    <div class="coaching-header">
+      <div class="coaching-top">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:22px">📋</span>
+            <h1 style="font-size:22px;font-weight:700;color:#fff">Coaching Logs</h1>
+          </div>
+          <p style="font-size:13px;color:rgba(255,255,255,.55);padding-left:32px">1:1 notes, performance records, and coaching history</p>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9)">${state.manager.name}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px">${state.manager.role}</div>
+          <button class="signout-btn" onclick="state.manager=null;showPage('home')">Sign out</button>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      ${COACHING.map(l=>`
+        <div class="card${state.expandedCoaching===l.id?' open':''}" style="${state.expandedCoaching===l.id?'border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)':''}">
+          <div class="card-header" onclick="state.expandedCoaching=state.expandedCoaching===l.id?null:${l.id};render()">
+            <div class="card-left">
+              <div style="width:34px;height:34px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">
+                ${l.name.split(' ').map(n=>n[0]).join('')}
+              </div>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#0f172a">${l.name}</div>
+                <div style="font-size:11px;color:#64748b">${l.date}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${badge(l.type)}
+              <span class="chevron${state.expandedCoaching===l.id?' open':''}">▾</span>
+            </div>
+          </div>
+          ${state.expandedCoaching===l.id?`
+            <div class="card-body">
+              <p style="font-size:13px;color:#334155;line-height:1.75;margin:12px 0">${l.notes}</p>
+              <div style="display:flex;gap:8px">
+                <button class="btn" style="background:#7c3aed;color:#fff">Edit Log</button>
+                <button class="btn btn-outline" style="color:#64748b;border-color:#e2e8f0">Add Follow-up</button>
+              </div>
+            </div>`:''
+          }
+        </div>
+      `).join('')}
+      <button style="margin-top:20px;width:100%;padding:12px;background:#0f1e3d;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">
+        + New Coaching Log
+      </button>
+    </div>`;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function renderPage() {
+  let html = '';
+  switch(state.page) {
+    case 'home':      html = renderHome(); break;
+    case 'kb':        html = renderKB(); break;
+    case 'spiels':    html = renderSpiels(); break;
+    case 'videos':    html = renderVideos(); break;
+    case 'scorecard': html = renderScorecard(); break;
+    case 'coaching':  html = state.manager ? renderCoaching() : renderLogin(); break;
+    default:          html = renderHome();
+  }
+  document.getElementById('pageContent').innerHTML = html;
+}
+
+function render() {
+  renderNav();
+  renderPage();
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
