@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PEC Hub — Avanti Residential</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
+    button,input,textarea,select{font-family:'DM Sans',sans-serif}
+    .hub{max-width:820px;margin:0 auto;min-height:100vh;border:1px solid #e2e8f0;box-shadow:0 8px 40px rgba(0,0,0,.12)}
+    nav{background:#0f1e3d;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+    .nav-logo{display:flex;align-items:center;gap:8px;cursor:pointer}
+    .nav-logo span{color:#fff;font-weight:800;font-size:15px}
+    .nav-badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+    .nav-links{display:flex;gap:2px;flex-wrap:wrap}
+    .nav-btn{background:transparent;color:rgba(255,255,255,.6);border:none;padding:5px 8px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+    .nav-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+    .nav-btn.active{color:#fff;background:rgba(255,255,255,.15)}
+    .page{min-height:500px}
+    .hero{background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 60%,#1e3a7a 100%);padding:32px;color:#fff}
+    .hero-eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px}
+    .hero h1{font-size:24px;font-weight:800;margin-bottom:6px}
+    .hero p{font-size:14px;color:rgba(255,255,255,.65);margin-bottom:24px;max-width:480px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .stat-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px}
+    .stat-num{font-size:22px;font-weight:800;color:#fff}
+    .stat-label{font-size:10px;color:rgba(255,255,255,.6);margin-top:2px}
+    .content{padding:24px 28px;background:#f8fafc}
+    .section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin-bottom:12px;margin-top:4px}
+    .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+    .quick-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:10px;transition:all .15s;width:100%}
+    .quick-card h3{font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px}
+    .quick-card p{font-size:11px;color:#64748b}
+    .tagline{background:linear-gradient(135deg,#0f1e3dee,#1a2f55ee);border-radius:14px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .tagline-text{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+    .tagline-sub{font-size:11px;color:rgba(255,255,255,.5)}
+    .manager-section{margin-bottom:28px;max-width:240px}
+    .team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+    .flip-card{height:240px;perspective:900px;cursor:pointer}
+    .flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,.2,.2,1)}
+    .flip-card:hover .flip-inner,.flip-card.flipped .flip-inner{transform:rotateY(180deg)}
+    .flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .flip-back{transform:rotateY(180deg);background:#fff;align-items:flex-start;justify-content:center}
+    .flip-avatar{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:10px}
+    .flip-name{font-size:13px;font-weight:800;color:#fff;text-align:center;margin-bottom:3px}
+    .flip-role{font-size:10px;color:rgba(255,255,255,.8);font-weight:600;margin-bottom:12px}
+    .flip-hint{font-size:10px;color:rgba(255,255,255,.6)}
+    .flip-bar{width:24px;height:3px;border-radius:4px;margin-bottom:10px}
+    .flip-back-name{font-size:13px;font-weight:800;color:#0f1e3d;margin-bottom:2px}
+    .flip-back-role{font-size:11px;font-weight:700;margin-bottom:12px}
+    .page-header{background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%);padding:24px 28px 20px;color:#fff}
+    .page-header-inner{display:flex;align-items:center;gap:12px;margin-bottom:5px}
+    .page-header h1{font-size:20px;font-weight:700;color:#fff}
+    .page-header p{font-size:13px;color:rgba(255,255,255,.65);padding-left:34px}
+    .search-wrap{position:relative;margin-bottom:16px}
+    .search-wrap input{width:100%;padding:10px 14px 10px 36px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;background:#fff}
+    .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.4;font-size:15px;pointer-events:none}
+    .card{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;cursor:pointer;margin-bottom:8px;transition:border-color .15s}
+    .card.open{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .card-header{padding:13px 15px;display:flex;align-items:center;justify-content:space-between}
+    .card-left{display:flex;align-items:center;gap:8px}
+    .card-title{font-size:13px;font-weight:600;color:#0f172a}
+    .card-body{padding:0 15px 14px;border-top:1px solid #f1f5f9}
+    .card-body p{font-size:13px;color:#475569;margin-top:12px;line-height:1.7}
+    .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
+    .chevron{font-size:13px;color:#64748b;transition:transform .2s;display:inline-block}
+    .chevron.open{transform:rotate(180deg)}
+    .meta{font-size:11px;color:#64748b;white-space:nowrap}
+    .btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:inline-block}
+    .btn-primary{background:#3b82f6;color:#fff}
+    .btn-purple{background:#7c3aed;color:#fff}
+    .btn-teal{background:#0d9488;color:#fff}
+    .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .filter-btn{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;transition:all .15s}
+    .filter-btn.active{background:#0f1e3d;color:#fff;border-color:#0f1e3d}
+    .video-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .video-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .15s}
+    .video-card:hover{border-color:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.1)}
+    .video-thumb{background:linear-gradient(135deg,#0f1e3d,#1a2f55);height:80px;display:flex;align-items:center;justify-content:center;position:relative}
+    .play-btn{width:32px;height:32px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.5);color:#fff;font-size:11px;padding-left:2px}
+    .duration{position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 5px;border-radius:4px}
+    .video-info{padding:10px 12px}
+    .video-title{font-size:12px;font-weight:700;color:#0f172a;margin-top:5px;line-height:1.4}
+    .sc-header{background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%);padding:24px 28px 0;color:#fff}
+    .sc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+    .sc-tabs{display:flex;gap:2px}
+    .sc-tab{padding:9px 16px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:transparent;color:rgba(255,255,255,.55);border-radius:10px 10px 0 0;display:flex;align-items:center;gap:4px;transition:all .15s;border-bottom:3px solid transparent}
+    .sc-tab.active{background:#fff;color:#0f1e3d}
+    .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+    .kpi-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden}
+    .kpi-card.on-goal{border-color:#bbf7d0}
+    .kpi-card.below{border-color:#fecaca}
+    .kpi-inner{padding:13px 15px}
+    .kpi-label{font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px}
+    .kpi-score{font-size:20px;font-weight:800}
+    .kpi-score.on-goal{color:#15803d}
+    .kpi-score.below{color:#dc2626}
+    .kpi-score.no-data{color:#94a3b8}
+    .kpi-goal{font-size:11px;color:#64748b;margin-left:5px}
+    .kpi-status{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+    .kpi-status.on-goal{color:#15803d;background:#dcfce7}
+    .kpi-status.below{color:#dc2626;background:#fee2e2}
+    .kpi-status.no-data{color:#64748b;background:#f1f5f9}
+    .progress-bar{height:5px;background:#f1f5f9;border-radius:6px;overflow:hidden;margin-top:8px}
+    .progress-fill{height:100%;border-radius:6px;transition:width .4s ease}
+    .agent-toggle{font-size:10px;font-weight:600;border:1px solid;border-radius:8px;padding:2px 7px;cursor:pointer;background:none;margin-top:5px}
+    .agent-table{margin-top:12px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+    .agent-table-header{display:grid;grid-template-columns:1fr 70px 70px;background:#f8fafc;padding:7px 12px;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:700;color:#64748b}
+    .agent-row{display:grid;grid-template-columns:1fr 70px 70px;padding:8px 12px;align-items:center;border-bottom:1px solid #f1f5f9;font-size:12px}
+    .agent-row:last-child{border-bottom:none}
+    .agent-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-right:7px}
+    .agent-name-wrap{display:flex;align-items:center}
+    .sync-panel{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:14px}
+    .sync-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .sync-input{flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none}
+    .sync-btn{padding:7px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .sync-btn:disabled{background:#94a3b8;cursor:not-allowed}
+    .sync-hint{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-size:11px;color:#64748b;line-height:1.7;margin-bottom:10px}
+    .manual-hint{border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+    .edit-btn{font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:4px 9px;cursor:pointer;font-weight:600}
+    .login-wrap{padding:36px 28px;display:flex;justify-content:center;background:#f8fafc}
+    .login-box{background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:28px;width:100%;max-width:360px}
+    .login-input{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;margin-bottom:10px}
+    .login-btn{width:100%;padding:10px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px}
+    .login-err{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:7px 11px;font-size:11px;color:#dc2626;margin-bottom:10px}
+    .coaching-header{background:linear-gradient(135deg,#0f1e3d 0%,#1e1a4e 100%);padding:24px 28px 20px;color:#fff}
+    .signout-btn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);border-radius:8px;font-size:11px;padding:4px 9px;cursor:pointer}
+    footer{background:#0f1e3d;padding:10px 24px;display:flex;align-items:center;justify-content:space-between}
+    footer span{font-size:10px;color:rgba(255,255,255,.4)}
+    /* EOD */
+    .eod-form{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:16px}
+    .eod-label{font-size:12px;font-weight:700;color:#0f172a;display:block;margin-bottom:6px}
+    .eod-input{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;margin-bottom:14px;background:#fff}
+    .eod-textarea{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;margin-bottom:14px;resize:vertical;min-height:80px;background:#fff}
+    .eod-select{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;margin-bottom:14px;background:#fff;appearance:none}
+    .eod-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .eod-submit{width:100%;padding:12px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+    .eod-success{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px}
+    .eod-log-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:8px}
+    .eod-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .eod-log-name{font-size:14px;font-weight:700;color:#0f172a}
+    .eod-log-time{font-size:11px;color:#64748b}
+    .eod-log-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .eod-log-stat{background:#f8fafc;border-radius:8px;padding:8px 10px}
+    .eod-log-stat-num{font-size:16px;font-weight:800;color:#0f172a}
+    .eod-log-stat-label{font-size:10px;color:#64748b;margin-top:1px}
+    .eod-logout-banner{background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-top:20px}
+    .upload-area{border:2px dashed #cbd5e1;border-radius:10px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer;transition:border-color .15s}
+    .upload-area:hover{border-color:#3b82f6}
+    .upload-area input{display:none}
+    .upload-preview{display:flex;align-items:center;gap:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;color:#0369a1;font-weight:600}
+    @media(max-width:600px){
+      .team-grid{grid-template-columns:repeat(2,1fr)}
+      .quick-grid{grid-template-columns:repeat(2,1fr)}
+      .kpi-grid{grid-template-columns:1fr}
+      .video-grid{grid-template-columns:1fr}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .eod-grid{grid-template-columns:1fr}
+      .nav-links{display:none}
+    }
+  </style>
+</head>
+<body>
+<div class="hub">
+  <nav id="nav">
+    <div class="nav-logo" onclick="showPage('home')">
+      <span>🏢</span>
+      <span>PEC Hub</span>
+      <span class="nav-badge">Avanti</span>
+    </div>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+  <div class="page" id="pageContent"></div>
+  <footer>
+    <span>PEC Hub · Prospect Experience Coordinators · Avanti Residential</span>
+    <span>Progress, not Perfection.</span>
+  </footer>
+</div>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+const TEAM = [
+  {id:1,name:'Rowel De La Trinidad',role:'Lead Management Manager',emoji:'👑',color:'#1a2f55',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Rowel.jpg',funFact:'Over a decade in customer service and still loves a good call.',quote:'Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go. — Joshua 1:9',isSolo:true},
+  {id:2,name:'Beverlyn Domingo',role:'Prospect Experience Coordinator',emoji:'🌟',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Beverlyn.png',funFact:'Fun fact coming soon!',quote:'Have more than you show, speak less than you know. — William Shakespeare'},
+  {id:3,name:'Dianne Mercado',role:'Prospect Experience Coordinator',emoji:'🎯',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Dianne%20Mercado.jpeg',funFact:'Fun fact coming soon!',quote:'Grow through what you go through.'},
+  {id:4,name:'Quigly Arias',role:'Prospect Experience Coordinator',emoji:'🔥',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Quigly%20Arias.jpeg',funFact:'Fun fact coming soon!',quote:'Be kind, for everyone you meet is fighting a hard battle.'},
+  {id:5,name:'Russel Espaldon',role:'Prospect Experience Coordinator',emoji:'⚡',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Russel%20Espaldon.jpeg',funFact:'',quote:'Progress, not perfection.'},
+  {id:6,name:'Mary Panimbagon',role:'Prospect Experience Coordinator',emoji:'🌸',color:'#be185d',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Mary%20Panimbagon.jpeg',funFact:'',quote:'A beautiful life is built, not found.'},
+  {id:7,name:'Jeffrey Bolo',role:'Prospect Experience Coordinator',emoji:'🎵',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jeffrey%20Bolo.jpg',funFact:'',quote:'Good things happen when people help each other.'},
+  {id:8,name:'Juliet Elaco',role:'Prospect Experience Coordinator',emoji:'🌈',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Juliet%20Elaco.jpg',funFact:'',quote:'For we live by faith, not by sight.'},
+  {id:9,name:'Elhora Paule',role:'Prospect Experience Coordinator',emoji:'🏆',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/elhora%20Paule.jpg',funFact:'',quote:'You don\'t have to have it all figured out to move forward.'},
+  {id:10,name:'Charles Calidguid',role:'Prospect Experience Coordinator',emoji:'💡',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Charles%20Calidguid.jpg',funFact:'',quote:'Sapagkat gusto ko po sanang ireklamo si Sen. Pangilinan sa pagsigaw. Meron po ba sa rules natin na sinasabing pwede mong sigawan ang kapwa mo senador?'},
+  {id:11,name:'Carizza Estanislao',role:'Prospect Experience Coordinator',emoji:'🎨',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Carizza%20Estanislao.jpeg',funFact:'',quote:'With God, all things are possible. I work hard, trust deeply, and leave the results in His hands.'},
+  {id:12,name:'Jo-Ann Atadero',role:'Prospect Experience Coordinator',emoji:'🌙',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jo-ann%20Atadero.png',funFact:'',quote:'I can be changed by what happens to me. But I refuse to be reduced by it. — Maya Angelou'},
+  {id:13,name:'Kenneth Geronimo',role:'Prospect Experience Coordinator',emoji:'🦋',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Kenneth%20Geronimo.png',funFact:'',quote:'The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. — Brian Herbert'},
+];
+
+const KB = [
+  // Tour & Scheduling
+  {id:1,title:'Proper Tour Scheduling Process',cat:'Tour & Scheduling',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQDpAWMdAsqtRr0xqWqYaGYPAS94FuMdMdFR7s9raNxkWQA?e=jubN4s',summary:'Always use the ADD TOUR feature on the prospect\'s guest card. The Community Calendar is only a fallback when the LC or CM calendar has issues and no availability shows after using ADD TOUR. Any Community Calendar override requires LC confirmation first.'},
+  {id:2,title:'Missed Tour Follow-Up',cat:'Tour & Scheduling',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQDXvacMO10FQ6qy-1euxjKvAUnbo7fLIA9KMjke-vn-u8Y?e=TcMtPT',summary:'Follow up within 2 hours of a missed tour. Complete 3 attempts: call, voicemail, then email. Focus on rescheduling. Only mark Lost - No Response after 3 unanswered attempts.'},
+  {id:3,title:'Test Guest Card Process',cat:'Tour & Scheduling',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQBB7qG3SoO1QIAWV5j_IucQAawEu0MU7Fx2MXzOZ9SrMX8?e=erXyHW',summary:'Guidelines for creating and handling test guest cards. Follow this process to ensure test entries are properly tagged and do not affect live reporting or lead data.'},
+  // Lead Management
+  {id:4,title:'Outreach Expectations',cat:'Lead Management',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQDjmLVOVnGoQoFLluQ6iZ7fAY4bYZzA2S7esXsSEURQy08?e=o2ccGC',summary:'Every outbound/returned call must have a voicemail plus follow-up email. Non-negotiable. Voicemail only waived if mailbox is full or system issue prevents it — email still required in all cases.'},
+  {id:5,title:'Handling Realtor-Initiated Inquiries',cat:'Lead Management',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQDvBoR05lh0RJmFMFJuUR0OAafAACTJI2WA3HsIMIeLUgE?e=KDnF7f',summary:'Keep lead Active — do not change to Vendor status; use DNR if needed. Collect client name whenever possible. Without client info, all follow-ups go through the realtor. Tours can still be booked using the realtor\'s name. Document realtor representation clearly in notes.'},
+  // Resident & Application Handling
+  {id:6,title:'Handling Calls Related to Resident Billing',cat:'Resident & Application',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQDUsPc0i20VSbprUrc6RBfjAX81Rq4sP-cphMBkZxJLHRg?e=dyblgC',summary:'Billing, charges, notices, payments → route to BM Team. One transfer attempt only. If BM doesn\'t answer → Experience Chat + create BM task. Former resident billing → Antonette (Shannon backup). BM task deadlines: 24hrs urgent, 48hrs standard. Escalate to Shannon if delayed.'},
+  {id:7,title:'Handling Resident Calls from a Different Phone Number',cat:'Resident & Application',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQAIErePYb8VQq3wr3KqGz86AZ47zcBfuM2BuQ7ixZZ1Hio?e=SPNy3Y',summary:'Verify residency in Yardi including roommate section. If resident\'s own new/alternate number → update in Yardi and Funnel, then merge guest cards. If using someone else\'s phone → do not merge. When uncertain → loop in RES team before acting.'},
+  {id:8,title:'Proper Next Steps for Denied Applications',cat:'Resident & Application',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQAuwt4bce6aTpFFRfzgoTX_AVMjCzToudo8ZwUx1G1hSZE?e=cPpREq',summary:'Denied due to credit/criminal/eviction → advise dispute with TransUnion directly. No guarantors or internal re-evaluations for these denials. Within 30 days → request AA team to reactivate original application, not a new one. When unsure → ask AA team first before communicating anything.'},
+  {id:9,title:'Applicant Deposit Refund Inquiry',cat:'Resident & Application',tag:'SOP',link:'https://capitalrealestateco-my.sharepoint.com/:w:/g/personal/rdltrinidad_avantiresidential_com/IQBaZdrAuMJXT5CPnQpVgmT4AWo_K-ocEXHR4PwttCKNKH4?e=QL5C62',summary:'Guidelines for handling applicant inquiries about deposit refunds. Covers proper routing, timelines, and communication steps to ensure accurate and timely resolution.'},
+  {id:11,title:'Accepted Income Documents',cat:'Resident & Application',tag:'SOP',link:'https://docs.google.com/document/d/1ibMGW29aNG4Zz_CYC-ePBM924Va29FxV/edit?usp=sharing',summary:'Reference guide for accepted income documentation during the application process. Covers all valid income document types agents can direct applicants to submit.'},
+  // Team & Compliance
+  {id:10,title:'Attendance Guidelines for Contractors',cat:'Team & Compliance',tag:'Policy',link:'https://docs.google.com/document/d/1pRCtkm5lDqaWp0vYEoEQjxWL1mIU69R4tg38uzQ-Jis/edit?usp=sharing',summary:'90-min break per shift. Grace: 15 min late login, 5 min overbreak. Point system: NCNS=2pts, Unexcused=1pt, Excused=0.5pt, Late/Early Logout=0.5pt, Overbreak=0.25pt. Corrective flow: 1-2pts verbal → 2.25-3pts written → 3.25-4pts coaching → 4.25+ NTE → 5+ escalate to Olga. PTO: 2 weeks notice minimum, resets Jan 1. Points reset end of year.'},
+];
+
+const SPIELS = [
+  // Qualification & Applications
+  {id:1, title:'Rental Qualifications',cat:'Qualification & Applications',preview:'Our rental qualifications include meeting the income requirement of xx times the rent, along with credit, rental, and background screening conducted through TransUnion. I can share our full rental criteria with you if you\'d like 😊'},
+  {id:2, title:'Will I Get Approved?',cat:'Qualification & Applications',preview:'We welcome all individuals who apply and meet the qualifying requirements. We encourage you to review our rental criteria — approval is not guaranteed and is based on several factors. I can walk you to it now and email it to you so you have it handy.'},
+  {id:3, title:'Credit is Low — Should I Still Apply?',cat:'Qualification & Applications',preview:'"Credit is one part of the screening, and outcomes can range from approval to a higher deposit or denial. I recommend reviewing our rental criteria to help you decide, and I can send that over to you."'},
+  {id:4, title:'Can I Add a Cosigner?',cat:'Qualification & Applications',preview:'"We don\'t offer co-signers, but you can add a guarantor for income purposes. The guarantor would need to qualify at 4 times the rent, and their income would be used instead."'},
+  {id:5, title:'Eviction History',cat:'Qualification & Applications',preview:'We welcome anyone who applies and meets our qualifications. Rental history, including evictions, is part of the screening process. I can share our rental criteria with you or go over it verbatim so you have the exact details.'},
+  {id:6, title:'Section 8 / Housing Voucher',cat:'Qualification & Applications',preview:'"We consider all sources of income. The applicant will still be screened and must qualify under the same criteria and screening standards as all other applicants."'},
+  {id:7, title:'Screening Report Error',cat:'Qualification & Applications',preview:'"Once your screening is complete, you\'ll receive a report along with TransUnion\'s contact details so you can dispute any inaccuracies directly with them."'},
+  {id:8, title:'Application Denial — Dispute Guidance',cat:'Qualification & Applications',preview:'"Hi [Name], thank you for reaching out. I checked your application and I can see the decision was based on your [credit / criminal screening / eviction history]. I want to be honest with you — this is something that our team is not able to review or override on our end. For disputes or additional information, you would need to contact TransUnion directly. Their contact details are in the screening results email you received. I\'m sorry I couldn\'t bring you better news today, but I want to make sure you have the right contact so you can get the answers you need. Is there anything else I can help you with?"'},
+  // Pricing & Budget
+  {id:9, title:'That\'s Too Expensive',cat:'Pricing & Budget',preview:'I hear you. Just so I understand, when you say expensive, compared to what you\'ve seen so far?'},
+  {id:10,title:'I Found Something Cheaper',cat:'Pricing & Budget',preview:'That makes sense, there are definitely lower-priced options out there. Out of curiosity, what stood out to you about that one?'},
+  {id:11,title:'It\'s Out of My Budget',cat:'Pricing & Budget',preview:'Thanks for sharing that. If you found a place that actually solved [their need: location, safety, amenities, convenience], would you be open to exploring options that make it work?'},
+  {id:12,title:'Can I Pay Upfront for My Lease?',cat:'Pricing & Budget',preview:'Our communities make it easy to stay on track with rent payments. While we don\'t accept the full rent upfront, you can take advantage of our convenient auto-debit feature through the payment portal.'},
+  // Community & Policy Questions
+  {id:13,title:'Are You a Senior Community?',cat:'Community & Policy',preview:'"Thank you for checking us out! At this time, Avanti does not have 55+ designated communities, but anyone who meets our rental qualifications is welcome to apply."'},
+  {id:14,title:'Do You Do Virtual Tours?',cat:'Community & Policy',preview:'"At the moment, none of our Avanti communities offer virtual tours. All tours are conducted in person. However, we\'d be happy to walk you through the community details over the phone or guide you through the website."'},
+  {id:15,title:'How Long Is the Application Wait?',cat:'Community & Policy',preview:'Great question! Once you apply, the approval process can take up to 5 business days. If documents come in quickly and results are accepted, we can often approve much sooner — sometimes the same day. Most of the time we try to give an answer within 24 hours.'},
+  // Empathy & Special Situations
+  {id:16,title:'Prospect Had a Recent Divorce',cat:'Empathy & Special Situations',preview:'"I\'m not sure if this is a fresh start or a tough transition, but either way, I\'m here to help make this next step easier for you." / "Whatever this transition looks like for you, I\'m here to support you and help you find the right place."'},
+];
+
+const CALL_NOTES = {
+  'Prospect Related': [
+    'Tour & Leasing Intent','Prospect - New Inquiry','Prospect - Follow Up','Canceled Tour',
+    'Prospect - Needs Qualification','Prospect - Rental Criteria Questions','Prospect - Outside Budget',
+    'Prospect - No Availability Match','Prospect - Shopping Around','Prospect - Not Moving Yet',
+    'Prospect - Already Leased Elsewhere','Prospect - Duplicate Inquiry','Scheduled Tour',
+    'Rescheduled Tour','Canceled Tour','Prospect already at the leasing office','No Show - Prospect',
+    'Same Day Tour Request','Virtual Tour Request','Application Stage but Not Submitted',
+    'Prospect - Application Questions','Prospect - Qualification Requirements',
+    'Prospect - Fee and Deposit Inquiry','Prospect - Guarantor Questions',
+    'Prospect - Section 8 / Voucher Inquiry','Prospect - out of state and will not tour',
+    'Prospect - Income Based Community','Prospect - Confirmed tour',
+    'Prospect - Looking for short-term lease','Prospect - Lack of amenities',
+    'Prospect - wish to speak to someone in CT','Prospect - Pet Policy',
+    'Prospect - Need Spanish agent','Prospect - Toured',
+  ],
+  'Applicant Related': [
+    'Applicant - Application Submitted','Applicant - Application In Progress',
+    'Applicant - New Inquiry','Applicant - Screening in Review','Applicant - Approved',
+    'Applicant - Conditionally Approved','Applicant - Denied Inquiry','Applicant - Refund Inquiry',
+    'Applicant - Move In Date Change','Applicant - Application Withdrawal','Applicant - Cancelled',
+    'Applicant - Denied Application',
+  ],
+  'Resident Related': [
+    'Resident - Maintenance Request','Resident - Work Order Follow Up',
+    'Resident - Rent Payment Question','Resident - Late Fee Question',
+    'Resident - Lease Clarification','Resident - Utility Billing','Resident - Parking Concern',
+    'Resident - Amenity Concern','Resident - Neighbor Complaint','Resident - Account Balance Question',
+    'Resident - General Inquiry','Resident - Maintenance','Resident - Pick Up the Key',
+    'Resident Using Different Phone Number','Resident - Renewal Inquiry',
+  ],
+  'Renewal Related': [
+    'Renewal - Rate Question','Renewal - Lease Term Options','Renewal - Notice to Vacate',
+    'Renewal - Transfer Request','Renewal - Renewal Negotiation','Renewal - Early Termination Inquiry',
+    'Renewal - General Inquiry',
+  ],
+  'Former Resident': [
+    'Former Resident - Balance Inquiry','Former Resident - Collections Question',
+    'Former Resident - Deposit Dispute','Former Resident - Rental Verification',
+    'Former Resident - General Inquiry','Former Resident - Refund',
+  ],
+  'Business / Admin / Other': [
+    'Vendor','Vendor - Maintenance Partner','Vendor - Utility Partner','Vendor - Marketing',
+    'Corporate Inquiry','Legal Inquiry','Fair Housing Concern','Media Inquiry',
+    'Ownership Inquiry','Past Due Invoice','Realtor','Parking Lot Striping Company',
+    'Kings 3 Emergency Communications','Calling on Behalf of Friend','Cleaning Services',
+    'Delivery Service (UPS/FedEx)','Rental Verification','Market Survey',
+  ],
+  'Call Outcome Only Tags': [
+    'No Answer','Left Voicemail','Caller Hung Up','Disconnected Line','Wrong Number',
+    'Spam Call','Language Barrier','Unable to leave VM - Long Hold Music',
+    'Unable to leave VM - VM is Full','Unable to leave VM - VM is Not Yet Set Up',
+    'Unable to leave VM - Hung Up','System Error - Failed to Connect',
+    'Transferred to Resident Experience','Transferred to Renewal Team',
+    'Transferred to Business Management','Not Interested','Not Looking for an Apartment',
+    'Spanish Speaking','Not Available to Talk at This Time','Email Sent',
+    'No Answer + Left Voicemail + Email Sent',
+  ],
+  'Disqualified / Non-Leasing Calls': [
+    'Not a Leasing Inquiry','Prospect - Outside Service Area','Prospect - Commercial Space Inquiry',
+    'Prospect - Employment Inquiry','Not a Prospect - Resident\'s Family','Test Call',
+    'Prospect - Looking for Different Property','Not a Prospect - Not Interested',
+    'Not a Prospect - Rental Verification','Not a Prospect - Wrong Number',
+    'Not a Prospect - No Longer Needed an Apartment',
+  ],
+  'Timeline / Attempt Notes': [
+    '1st Attempt > Call > VM > Email','2nd Attempt > Call > VM > Email',
+    '3rd Attempt > Call > VM > Email','4th Attempt > Call > VM > Email',
+    '5th Attempt > Call > VM > Email',
+  ],
+};
+
+const KPI_CONFIG = [
+  {id:'call_completion',   label:'Call Completion Rate',   goal:90,unit:'%', agentTable:false},
+  {id:'lead_engagement',   label:'Lead Engagement Score',  goal:9, unit:'',  agentTable:true},
+  {id:'task_management',   label:'Task Management Score',  goal:9, unit:'',  agentTable:true},
+  {id:'lead_to_scheduled', label:'Lead to Scheduled Tour', goal:30,unit:'%', agentTable:false},
+  {id:'lead_to_tour',      label:'Lead to Tour',           goal:20,unit:'%', agentTable:false},
+  {id:'fenix_scored_calls',label:'Fenix Scored Calls',     goal:90,unit:'%', agentTable:true},
+];
+
+const CAT_COLORS = {
+  'Tour & Scheduling':{bg:'#dbeafe',c:'#1e40af'},
+  'Lead Management':{bg:'#d1fae5',c:'#065f46'},
+  'Resident & Application':{bg:'#fef3c7',c:'#92400e'},
+  'Team & Compliance':{bg:'#ede9fe',c:'#5b21b6'},
+  'Qualification & Applications':{bg:'#dbeafe',c:'#1e40af'},
+  'Pricing & Budget':{bg:'#d1fae5',c:'#065f46'},
+  'Community & Policy':{bg:'#fef3c7',c:'#92400e'},
+  'Empathy & Special Situations':{bg:'#fce7f3',c:'#9d174d'},
+  'Onboarding':{bg:'#d1fae5',c:'#065f46'},
+  'Systems':{bg:'#ede9fe',c:'#5b21b6'},
+  'Coaching':{bg:'#fef3c7',c:'#92400e'},
+  'Process':{bg:'#dbeafe',c:'#1e40af'},
+  'Skills':{bg:'#fce7f3',c:'#9d174d'},
+  SOP:{bg:'#dbeafe',c:'#1e40af'},
+  Policy:{bg:'#ede9fe',c:'#5b21b6'},
+  'Spiel/Process':{bg:'#d1fae5',c:'#065f46'},
+  '1:1':{bg:'#dbeafe',c:'#1e40af'},
+  Performance:{bg:'#fce7f3',c:'#9d174d'},
+  Coaching:{bg:'#fef3c7',c:'#92400e'},
+};
+
+// ── STATE ─────────────────────────────────────────────────────────
+let eodSubmissions = [];
+let state = {
+  page:'home', manager:null,
+  announcements:[
+    {id:1, title:'Welcome to PEC Hub!', body:'This is your one-stop resource for everything you need. Explore the Knowledge Base, Spiels Library, Call Notes, and more.', date:'2026-06-11', pinned:true, type:'info'},
+  ],
+  showAnnouncementForm:false,
+  anTitle:'', anBody:'', anType:'info', anPinned:false,
+  trainings:[],
+  showTrainingForm:false,
+  trTitle:'', trAgent:'All', trDue:'', trCompleted:false,
+  expandedKb:null, expandedSpiel:null, expandedCoaching:null,
+  showCoachingForm:false, coachingSearch:'', coachingCatFilter:'All',
+  clCoachee:'', clDate:'', clCategory:'', clNotes:'', clFileName:'', clDriveUrl:'',
+  kbSearch:'', kbCat:'All', spielSearch:'', spielCat:'All',
+  notesSearch:'', notesCat:'All',
+  scTab:'mtd', expandedKpi:null,
+  sheetUrl:'', sheetUrlDraft:'', syncStatus:'idle', syncMsg:'', lastSynced:null,
+  fenixMsg:'', 
+  periodMTD:'June 2026',
+  periodMonthEnd:'May 2026',
+  periodQuarterly:'Q2 2026',
+  teamScores:{call_completion:0,lead_engagement:0,task_management:0,lead_to_scheduled:0,lead_to_tour:0,fenix_scored_calls:0},
+  agents:[
+    {name:'Agent 1',lead_engagement:0,task_management:0,fenix_scored_calls:0},
+    {name:'Agent 2',lead_engagement:0,task_management:0,fenix_scored_calls:0},
+    {name:'Agent 3',lead_engagement:0,task_management:0,fenix_scored_calls:0},
+  ],
+  monthend:KPI_CONFIG.map((k,i)=>({id:i+1,label:k.label,actual:0,goal:k.goal,unit:k.unit})),
+  quarterly:KPI_CONFIG.map((k,i)=>({id:i+1,label:k.label,actual:0,goal:k.goal,unit:k.unit})),
+  editingMetric:null,
+  loginEmail:'', loginLoading:false, loginError:'',
+  // EOD
+  eodName:'', eodDate:'', eodDashPhoto:null, eodDashPhotoName:'',
+  eodIsPOC:false, eodHuddleTopic:'', eodHuddleCovered:'',
+  eodCallsHandled:'', eodToursScheduled:'', eodToursCompleted:'', eodFollowUps:'',
+  eodWins:'', eodChallenges:'',
+  eodSubmitted:false,
+};
+
+const NAV = [
+  {id:'announcements', label:'Announcements', icon:'📣'},
+  {id:'kb',       label:'Knowledge Base',icon:'📚'},
+  {id:'spiels',   label:'Spiels',        icon:'💬'},
+  {id:'notes',    label:'Call Notes',     icon:'🗒️'},
+  {id:'scorecard',label:'Scorecard',     icon:'📊'},
+  {id:'eod',      label:'EOD Report',    icon:'📝'},
+  {id:'coaching', label:'Coaching Logs', icon:'🔒'},
+];
+
+function badge(cat,type='cat'){
+  const c=CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
+  return `<span class="badge" style="background:${c.bg};color:${c.c}">${cat}</span>`;
+}
+function pct(a,g){if(!g)return 0;return Math.min(Math.round((a/g)*100),100);}
+function onGoal(a,g){return a>0&&a>=g;}
+function statusChip(a,g){
+  if(!a)return`<span class="kpi-status no-data">No data</span>`;
+  const og=onGoal(a,g);
+  return`<span class="kpi-status ${og?'on-goal':'below'}">${og?'✓ On Goal':'✗ Below'}</span>`;
+}
+function renderNav(){
+  document.getElementById('navLinks').innerHTML=NAV.map(n=>
+    `<button class="nav-btn${state.page===n.id?' active':''}" onclick="showPage('${n.id}')">${n.icon} ${n.label}</button>`
+  ).join('');
+}
+function showPage(p){state.page=p;state.expandedKb=null;state.expandedSpiel=null;state.expandedKpi=null;state.eodSubmitted=false;render();window.scrollTo(0,0);}
+
+// ── HOME ──────────────────────────────────────────────────────────
+function renderHome(){
+  const mgr=TEAM.find(t=>t.isSolo);
+  const agents=TEAM.filter(t=>!t.isSolo);
+  return`
+    <div class="hero">
+      <div class="hero-eyebrow">Prospect Experience Coordinator Team · Avanti Residential</div>
+      <h1>Welcome to PEC Hub 🏠</h1>
+      <p>Your one-stop resource for knowledge, scripts, training, scores, and more.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">15</div><div class="stat-label">Active coordinators</div></div>
+        <div class="stat-card"><div class="stat-num">${KB.length}</div><div class="stat-label">KB articles</div></div>
+        <div class="stat-card"><div class="stat-num">${SPIELS.length}</div><div class="stat-label">Spiels & scripts</div></div>
+        <div class="stat-card"><div class="stat-num">${eodSubmissions.length}</div><div class="stat-label">EOD today</div></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="section-label">Your Manager</div>
+      <div class="manager-section">${flipCard(mgr)}</div>
+      <div class="section-label">The Team <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">— hover to flip!</span></div>
+      <div class="team-grid">${agents.map(flipCard).join('')}</div>
+      <div class="section-label">Quick Access</div>
+      <div class="quick-grid">
+        ${[
+          {id:'announcements',icon:'📣',label:'Announcements',desc:'Team updates and Grace Hill trainings',color:'#dc2626'},
+          {id:'kb',icon:'📚',label:'Knowledge Base',desc:'SOPs and process guides',color:'#3b82f6'},
+          {id:'spiels',icon:'💬',label:'Spiels Library',desc:'Scripts and talking points',color:'#0d9488'},
+          {id:'notes',icon:'🗒️',label:'Call Notes',desc:'Disposition tags and note library',color:'#d97706'},
+          {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, quarterly',color:'#16a34a'},
+          {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
+          {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
+        ].map(c=>`
+          <button class="quick-card" onclick="showPage('${c.id}')"
+            onmouseover="this.style.borderColor='${c.color}';this.style.boxShadow='0 0 0 3px ${c.color}22'"
+            onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
+            <span style="font-size:18px;line-height:1">${c.icon}</span>
+            <div><h3>${c.label}</h3><p>${c.desc}</p></div>
+          </button>`).join('')}
+      </div>
+      <div class="tagline">
+        <div><div class="tagline-text">Progress, not Perfection.</div><div class="tagline-sub">PEC Team · Avanti Residential</div></div>
+        <div style="font-size:24px">🌟</div>
+      </div>
+    </div>`;
+}
+function flipCard(m){
+  const frontFace = m.photo
+    ? `<img src="${m.photo}" alt="${m.name}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid rgba(255,255,255,.6);margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.25)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="flip-avatar" style="display:none">${m.emoji}</div>`
+    : `<div class="flip-avatar" style="width:90px;height:90px;font-size:40px">${m.emoji}</div>`;
+  const cardId = 'fc_' + m.id;
+  return`<div class="flip-card" id="${cardId}" onclick="document.getElementById('${cardId}').classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-front" style="background:linear-gradient(160deg,${m.color}ee,${m.color}99);border:1.5px solid rgba(255,255,255,.15)">
+        ${frontFace}
+        <div class="flip-name" style="font-size:13px;font-weight:800;color:#fff;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.3)">${m.name}</div>
+        <div class="flip-hint" style="font-size:10px;color:rgba(255,255,255,.6);margin-top:6px">Tap to flip ↻</div>
+      </div>
+      <div class="flip-back" style="border:2px solid ${m.color}44">
+        <div class="flip-bar" style="background:${m.color}"></div>
+        <div class="flip-back-name">${m.name}</div>
+        <div class="flip-quote" style="color:${m.color};border-left:3px solid ${m.color};padding-left:10px;font-size:11px;font-style:italic;line-height:1.6">"${m.quote}"</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── ANNOUNCEMENTS + GRACE HILL TRAINING ──────────────────────────
+function daysUntil(dateStr){
+  const due = new Date(dateStr+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.ceil((due - today) / (1000*60*60*24));
+}
+
+function renderAnnouncements(){
+  const today = new Date().toISOString().split('T')[0];
+  const isManager = !!state.manager;
+
+  // Sort: pinned first, then by date desc
+  const sorted = [...state.announcements].sort((a,b)=>(b.pinned-a.pinned)||(b.date.localeCompare(a.date)));
+
+  // Training urgency
+  const urgent   = state.trainings.filter(t=>!t.completed && daysUntil(t.due)<=7);
+  const upcoming = state.trainings.filter(t=>!t.completed && daysUntil(t.due)>7);
+  const done     = state.trainings.filter(t=>t.completed);
+
+  const TYPE_STYLE = {
+    info:    {bg:'#dbeafe',c:'#1e40af',icon:'ℹ️',label:'Info'},
+    urgent:  {bg:'#fee2e2',c:'#dc2626',icon:'🚨',label:'Urgent'},
+    reminder:{bg:'#fef9c3',c:'#92400e',icon:'🔔',label:'Reminder'},
+    update:  {bg:'#d1fae5',c:'#065f46',icon:'✅',label:'Update'},
+  };
+
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#991b1b 0%,#b91c1c 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">📣</span><h1>Announcements</h1></div>
+      <p>Team updates, reminders, and Grace Hill training tracker</p>
+    </div>
+
+    <div class="content">
+
+      <!-- URGENT TRAINING BANNER -->
+      ${urgent.length>0?`
+        <div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:14px;padding:16px 18px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="font-size:20px">🚨</span>
+            <div style="font-size:14px;font-weight:800;color:#dc2626">${urgent.length} Grace Hill Training${urgent.length!==1?'s':''} Due Within 7 Days!</div>
+          </div>
+          ${urgent.map(t=>{
+            const days=daysUntil(t.due);
+            const due=new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+            return`<div style="background:#fff;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#0f172a">${t.title}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px">${t.agent==='All'?'All agents':t.agent} · Due ${due}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:16px;font-weight:800;color:#dc2626">${days===0?'TODAY':days<0?'OVERDUE':`${days}d`}</div>
+                <div style="font-size:10px;color:#dc2626">left</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`:''
+      }
+
+      <!-- ANNOUNCEMENTS SECTION -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="section-label" style="margin:0">Announcements</div>
+        ${isManager?`<button onclick="state.showAnnouncementForm=!state.showAnnouncementForm;render()" style="padding:6px 14px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">
+          ${state.showAnnouncementForm?'Cancel':'+ New Announcement'}
+        </button>`:''}
+      </div>
+
+      ${state.showAnnouncementForm&&isManager?`
+        <div style="background:#fff;border:1.5px solid #dc2626;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 0 3px rgba(220,38,38,.08)">
+          <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:14px">📣 New Announcement</div>
+          <label class="eod-label">Type</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            ${Object.entries(TYPE_STYLE).map(([k,v])=>`
+              <button onclick="state.anType='${k}';render()" style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${state.anType===k?v.c:v.c+'44'};background:${state.anType===k?v.bg:'#fff'};color:${v.c}">${v.icon} ${v.label}</button>
+            `).join('')}
+          </div>
+          <label class="eod-label">Title *</label>
+          <input type="text" class="eod-input" placeholder="e.g. Mandatory Grace Hill Training" value="${state.anTitle}" oninput="state.anTitle=this.value"/>
+          <label class="eod-label">Message *</label>
+          <textarea class="eod-textarea" placeholder="Details of the announcement..." oninput="state.anBody=this.value">${state.anBody}</textarea>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px;font-size:12px;color:#64748b">
+            <input type="checkbox" ${state.anPinned?'checked':''} onchange="state.anPinned=this.checked" style="accent-color:#dc2626"/>
+            Pin this announcement to the top
+          </label>
+          <button onclick="saveAnnouncement()" style="padding:10px 20px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Post Announcement</button>
+        </div>`:''
+      }
+
+      ${sorted.length===0?`<div style="text-align:center;padding:24px;color:#64748b;font-size:13px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:20px">No announcements yet.</div>`:''}
+      ${sorted.map(a=>{
+        const ts=TYPE_STYLE[a.type]||TYPE_STYLE.info;
+        const dateStr=new Date(a.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return`
+          <div style="background:#fff;border:1.5px solid ${ts.c}33;border-left:4px solid ${ts.c};border-radius:12px;padding:14px 16px;margin-bottom:10px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                  <span>${ts.icon}</span>
+                  ${a.pinned?`<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:10px;font-weight:700">📌 Pinned</span>`:''}
+                  <span style="font-size:10px;background:${ts.bg};color:${ts.c};padding:1px 7px;border-radius:10px;font-weight:700">${ts.label}</span>
+                  <span style="font-size:11px;color:#94a3b8">${dateStr}</span>
+                </div>
+                <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px">${a.title}</div>
+                <div style="font-size:13px;color:#475569;line-height:1.6">${a.body}</div>
+              </div>
+              ${isManager?`<button onclick="deleteAnnouncement(${a.id})" style="font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;flex-shrink:0">✕</button>`:''}
+            </div>
+          </div>`;
+      }).join('')}
+
+      <!-- GRACE HILL TRAINING TRACKER -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px">
+        <div class="section-label" style="margin:0">Grace Hill Training Tracker</div>
+        <div style="display:flex;gap:8px">
+          <label style="padding:6px 12px;background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+            📊 Upload XLS Report
+            <input type="file" accept=".xls,.xlsx" style="display:none" onchange="parseGraceHillXLS(this)"/>
+          </label>
+          ${isManager?`<button onclick="state.showTrainingForm=!state.showTrainingForm;render()" style="padding:6px 12px;background:#0f1e3d;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
+            ${state.showTrainingForm?'Cancel':'+ Add Manual'}
+          </button>`:''}
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#15803d;line-height:1.6">
+        <strong>How to use:</strong> Every Monday, export your Grace Hill Training Assignment Report as XLS and upload it here. The tracker auto-populates with all assignments, agents, due dates, and urgency flags instantly.
+      </div>
+
+      ${state.showTrainingForm&&isManager?`
+        <div style="background:#fff;border:1.5px solid #0f1e3d;border-radius:14px;padding:18px;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:14px">📚 Add Grace Hill Training</div>
+          <label class="eod-label">Training Title *</label>
+          <input type="text" class="eod-input" placeholder="e.g. Fair Housing Essentials" value="${state.trTitle}" oninput="state.trTitle=this.value"/>
+          <div class="eod-grid">
+            <div>
+              <label class="eod-label">Assigned To</label>
+              <select class="eod-select" style="margin-bottom:0" onchange="state.trAgent=this.value">
+                <option value="All" ${state.trAgent==='All'?'selected':''}>All Agents</option>
+                ${TEAM.filter(t=>!t.isSolo).map(t=>`<option value="${t.name}" ${state.trAgent===t.name?'selected':''}>${t.name}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="eod-label">Due Date *</label>
+              <input type="date" class="eod-input" style="margin-bottom:0" value="${state.trDue}" onchange="state.trDue=this.value"/>
+            </div>
+          </div>
+          <button onclick="saveTraining()" style="margin-top:14px;padding:10px 20px;background:#0f1e3d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Add Training</button>
+        </div>`:''
+      }
+
+      ${state.trainings.length===0?`
+        <div style="text-align:center;padding:24px;color:#64748b;font-size:13px;background:#fff;border:1px solid #e2e8f0;border-radius:12px">
+          No trainings added yet. ${isManager?'Click "+ Add Training" to add one from the Grace Hill report.':''}
+        </div>`:''
+      }
+
+      ${[...urgent,...upcoming,...done].map(t=>{
+        const days=daysUntil(t.due);
+        const due=new Date(t.due+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        const overdue=days<0&&!t.completed;
+        const borderColor=t.completed?'#bbf7d0':overdue?'#fca5a5':days<=7?'#fca5a5':days<=14?'#fde68a':'#e2e8f0';
+        const statusColor=t.completed?'#15803d':overdue?'#dc2626':days<=7?'#dc2626':days<=14?'#d97706':'#64748b';
+        const statusText=t.completed?'✓ Completed':overdue?`${Math.abs(days)}d overdue`:days===0?'Due TODAY':`${days}d left`;
+        return`
+          <div style="background:#fff;border:1.5px solid ${borderColor};border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px;flex:1">
+              ${isManager?`<input type="checkbox" ${t.completed?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:#15803d;flex-shrink:0" onchange="toggleTraining(${t.id})"/>`:
+              `<span style="font-size:14px">${t.completed?'✅':'⏳'}</span>`}
+              <div>
+                <div style="font-size:13px;font-weight:700;color:${t.completed?'#94a3b8':'#0f172a'};text-decoration:${t.completed?'line-through':'none'}">${t.title}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px">${t.agent==='All'?'All agents':t.agent} · Due ${due}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span style="font-size:11px;font-weight:700;color:${statusColor};background:${statusColor}18;padding:3px 10px;border-radius:20px">${statusText}</span>
+              ${isManager?`<button onclick="deleteTraining(${t.id})" style="font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0">✕</button>`:''}
+            </div>
+          </div>`;
+      }).join('')}
+
+    </div>`;
+}
+
+function saveAnnouncement(){
+  if(!state.anTitle||!state.anBody){alert('Please fill in the title and message.');return;}
+  state.announcements.push({id:Date.now(),title:state.anTitle,body:state.anBody,type:state.anType||'info',pinned:state.anPinned,date:new Date().toISOString().split('T')[0]});
+  state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.showAnnouncementForm=false;
+  render();
+}
+function deleteAnnouncement(id){
+  state.announcements=state.announcements.filter(a=>a.id!==id);render();
+}
+function saveTraining(){
+  if(!state.trTitle||!state.trDue){alert('Please fill in the training title and due date.');return;}
+  state.trainings.push({id:Date.now(),title:state.trTitle,agent:state.trAgent||'All',due:state.trDue,completed:false});
+  state.trTitle='';state.trAgent='All';state.trDue='';state.showTrainingForm=false;
+  render();
+}
+function toggleTraining(id){
+  state.trainings=state.trainings.map(t=>t.id===id?{...t,completed:!t.completed}:t);render();
+}
+function deleteTraining(id){
+  state.trainings=state.trainings.filter(t=>t.id!==id);render();
+}
+
+function parseGraceHillXLS(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){alert('No data found in the file.');return;}
+
+      // Map column names flexibly
+      const first=rows[0];
+      const keys=Object.keys(first);
+      const empKey   =keys.find(k=>k.toLowerCase().includes('employee')&&!k.toLowerCase().includes('id')&&!k.toLowerCase().includes('position'));
+      const titleKey =keys.find(k=>k.toLowerCase().includes('training')&&k.toLowerCase().includes('title'));
+      const dueKey   =keys.find(k=>k.toLowerCase().includes('due')&&k.toLowerCase().includes('date'));
+      const daysKey  =keys.find(k=>k.toLowerCase().includes('days'));
+
+      if(!empKey||!titleKey||!dueKey){
+        alert('Could not find required columns. Expected: Employee, Training Title, Due Date.');
+        return;
+      }
+
+      // Clear existing non-completed trainings and reload from file
+      state.trainings=state.trainings.filter(t=>t.completed);
+
+      rows.forEach((row,i)=>{
+        const emp=String(row[empKey]||'').trim();
+        const title=String(row[titleKey]||'').trim();
+        if(!emp||!title)return;
+
+        // Parse due date
+        let dueStr='';
+        const rawDue=row[dueKey];
+        if(rawDue instanceof Date){
+          dueStr=rawDue.toISOString().split('T')[0];
+        } else if(typeof rawDue==='string'&&rawDue.includes('/')){
+          // MM/DD/YYYY → YYYY-MM-DD
+          const parts=rawDue.split('/');
+          if(parts.length===3) dueStr=`${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+        } else if(typeof rawDue==='number'){
+          // Excel serial date
+          const d=new Date(Math.round((rawDue-25569)*86400*1000));
+          dueStr=d.toISOString().split('T')[0];
+        }
+
+        if(!dueStr)return;
+
+        // Check if same training+agent already exists from a previous manual entry
+        const exists=state.trainings.find(t=>t.title===title&&t.agent===emp);
+        if(!exists){
+          state.trainings.push({id:Date.now()+i,title,agent:emp,due:dueStr,completed:false});
+        }
+      });
+
+      const count=state.trainings.filter(t=>!t.completed).length;
+      alert(`✓ Loaded ${count} training assignment${count!==1?'s':''} from Grace Hill report!`);
+      render();
+    }catch(err){
+      alert('Error reading file: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+
+function renderKB(){
+  const cats=['All',...new Set(KB.map(a=>a.cat))];
+  const filtered=KB.filter(a=>
+    (state.kbCat==='All'||a.cat===state.kbCat)&&
+    (a.title.toLowerCase().includes(state.kbSearch.toLowerCase())||a.cat.toLowerCase().includes(state.kbSearch.toLowerCase()))
+  );
+  return`
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:22px">📚</span><h1>Knowledge Base</h1></div>
+      <p>SOPs, process guides, and reference materials for the PEC team</p>
+    </div>
+    <div class="content">
+      <div class="search-wrap"><span class="search-icon">🔍</span>
+        <input value="${state.kbSearch}" oninput="state.kbSearch=this.value;renderPage()" placeholder="Search articles..."/>
+      </div>
+      <div class="filters">
+        ${cats.map(c=>`<button class="filter-btn${state.kbCat===c?' active':''}" onclick="state.kbCat='${c}';renderPage()">${c}</button>`).join('')}
+      </div>
+      ${filtered.map(a=>`
+        <div class="card${state.expandedKb===a.id?' open':''}" onclick="state.expandedKb=state.expandedKb===${a.id}?null:${a.id};renderPage()">
+          <div class="card-header">
+            <div class="card-left">${badge(a.tag,'tag')} ${badge(a.cat)}<span class="card-title">${a.title}</span></div>
+            <span class="chevron${state.expandedKb===a.id?' open':''}">▾</span>
+          </div>
+          ${state.expandedKb===a.id?`
+            <div class="card-body">
+              <p>${a.summary}</p>
+              <div style="margin-top:12px;display:flex;gap:8px" onclick="event.stopPropagation()">
+                ${a.link ? `<button class="btn btn-primary" style="font-size:11px" onclick="event.stopPropagation();window.open('${a.link}','_blank')">View Full SOP →</button>` : `<span style="font-size:11px;color:#94a3b8;font-style:italic">Link coming soon</span>`}
+              </div>
+            </div>`:''
+          }
+        </div>`).join('')}
+      ${filtered.length===0?'<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No articles match your search.</div>':''}
+    </div>`;
+}
+
+// ── SPIELS ────────────────────────────────────────────────────────
+function renderSpiels(){
+  const cats=['All',...new Set(SPIELS.map(s=>s.cat))];
+  const filtered=SPIELS.filter(s=>
+    (state.spielCat==='All'||s.cat===state.spielCat)&&
+    s.title.toLowerCase().includes(state.spielSearch.toLowerCase())
+  );
+  return`
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:22px">💬</span><h1>Spiels Library</h1></div>
+      <p>Approved scripts and talking points for prospect interactions</p>
+    </div>
+    <div class="content">
+      <div class="search-wrap"><span class="search-icon">🔍</span>
+        <input value="${state.spielSearch}" oninput="state.spielSearch=this.value;renderPage()" placeholder="Search spiels..."/>
+      </div>
+      <div class="filters">
+        ${cats.map(c=>`<button class="filter-btn${state.spielCat===c?' active':''}" onclick="state.spielCat='${c}';renderPage()">${c}</button>`).join('')}
+      </div>
+      ${filtered.map(s=>`
+        <div class="card${state.expandedSpiel===s.id?' open':''}" style="${state.expandedSpiel===s.id?'border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.1)':''}">
+          <div class="card-header" onclick="state.expandedSpiel=state.expandedSpiel===${s.id}?null:${s.id};renderPage()">
+            <div class="card-left">${badge(s.cat)}<span class="card-title">${s.title}</span></div>
+            <span class="chevron${state.expandedSpiel===s.id?' open':''}">▾</span>
+          </div>
+          ${state.expandedSpiel===s.id?`
+            <div class="card-body">
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;font-size:12px;color:#334155;line-height:1.75;font-style:italic;margin:12px 0">
+                ${s.preview}
+              </div>
+              <button class="btn btn-teal" style="font-size:11px" onclick="navigator.clipboard.writeText(\`${s.preview.replace(/`/g,'\\`')}\`).then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Script',2000)})">Copy Script</button>
+            </div>`:''
+          }
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── CALL NOTES ────────────────────────────────────────────────────
+const NOTE_CAT_COLORS = {
+  'Prospect Related':          {bg:'#dbeafe',c:'#1e40af'},
+  'Applicant Related':         {bg:'#d1fae5',c:'#065f46'},
+  'Resident Related':          {bg:'#fef3c7',c:'#92400e'},
+  'Renewal Related':           {bg:'#ede9fe',c:'#5b21b6'},
+  'Former Resident':           {bg:'#fce7f3',c:'#9d174d'},
+  'Business / Admin / Other':  {bg:'#f1f5f9',c:'#475569'},
+  'Call Outcome Only Tags':    {bg:'#ecfdf5',c:'#065f46'},
+  'Disqualified / Non-Leasing Calls':{bg:'#fff7ed',c:'#9a3412'},
+  'Timeline / Attempt Notes':  {bg:'#f0f9ff',c:'#0369a1'},
+};
+function renderCallNotes(){
+  const allCats = Object.keys(CALL_NOTES);
+  const filtered = state.notesCat === 'All'
+    ? Object.entries(CALL_NOTES)
+    : [[state.notesCat, CALL_NOTES[state.notesCat]]];
+  const search = state.notesSearch.toLowerCase();
+  return`
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Notes</h1></div>
+      <p>Disposition tags and note library — copy the right tag for every call</p>
+    </div>
+    <div class="content">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input value="${state.notesSearch}" oninput="state.notesSearch=this.value;renderPage()" placeholder="Search tags..."/>
+      </div>
+      <div class="filters" style="margin-bottom:18px">
+        <button class="filter-btn${state.notesCat==='All'?' active':''}" onclick="state.notesCat='All';renderPage()">All</button>
+        ${allCats.map(c=>`<button class="filter-btn${state.notesCat===c?' active':''}" onclick="state.notesCat='${c.replace(/'/g,"\\'")}';renderPage()">${c}</button>`).join('')}
+      </div>
+      ${filtered.map(([cat, tags])=>{
+        const matchedTags = search ? tags.filter(t=>t.toLowerCase().includes(search)) : tags;
+        if(matchedTags.length === 0) return '';
+        const cc = NOTE_CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
+        return`
+          <div style="margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c}">${cat}</span>
+              <span style="font-size:11px;color:#94a3b8">${matchedTags.length} tag${matchedTags.length!==1?'s':''}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${matchedTags.map(tag=>`
+                <button onclick="navigator.clipboard.writeText('${tag.replace(/'/g,"\\'")}').then(()=>{
+                  this.style.background='#0f1e3d';this.style.color='#fff';this.textContent='✓ Copied';
+                  setTimeout(()=>{this.style.background='${cc.bg}';this.style.color='${cc.c}';this.textContent='${tag.replace(/'/g,"\\'").replace(/"/g,'&quot;')}';},1500)
+                })" style="
+                  background:${cc.bg};color:${cc.c};
+                  border:1px solid ${cc.c}22;border-radius:20px;
+                  padding:5px 12px;font-size:12px;font-weight:600;
+                  cursor:pointer;transition:all .15s;text-align:left;
+                  font-family:'DM Sans',sans-serif;
+                ">${tag}</button>
+              `).join('')}
+            </div>
+          </div>`;
+      }).join('')}
+      ${search && filtered.every(([,tags])=>tags.filter(t=>t.toLowerCase().includes(search)).length===0)
+        ? '<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No tags match your search.</div>'
+        : ''}
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">💡</span>
+        <div style="font-size:12px;color:#64748b;line-height:1.6"><strong style="color:#0f172a">How to use:</strong> Click any tag to copy it instantly. Paste directly into Funnel Leasing as your call note or disposition tag.</div>
+      </div>
+    </div>`;
+}
+
+// ── SCORECARD ─────────────────────────────────────────────────────
+function toCsvUrl(url){
+  try{
+    const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if(!m)return null;
+    const id=m[1];
+    const gm=url.match(/[#&?]gid=(\d+)/);
+    const gid=gm?gm[1]:'0';
+    return`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  }catch(e){return null;}
+}
+async function syncSheet(){
+  if(!state.sheetUrl){state.syncMsg='Paste your Google Sheet link first.';state.syncStatus='error';render();return;}
+  const csvUrl=toCsvUrl(state.sheetUrl);
+  if(!csvUrl){state.syncMsg='Invalid Google Sheets URL.';state.syncStatus='error';render();return;}
+  state.syncStatus='loading';state.syncMsg='';render();
+  try{
+    // Use allorigins CORS proxy to bypass browser CORS restriction
+    const proxyUrl=`https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
+    const res=await fetch(proxyUrl);
+    if(!res.ok)throw new Error(`Could not fetch sheet (${res.status}). Make sure the sheet is shared as Anyone with the link can view.`);
+    const json=await res.json();
+    const text=json.contents||'';
+    if(!text.trim())throw new Error('Sheet appears empty. Make sure the Apps Script has run and the MTD Scores tab has data.');
+    const lines=text.split('\n').filter(l=>l.trim());
+    if(lines.length<2)throw new Error('Not enough rows in sheet. Check that the Apps Script wrote data to the MTD Scores tab.');
+    const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+    const ki=headers.findIndex(h=>h.includes('kpi')||h.includes('metric')||h.includes('name'));
+    const si=headers.findIndex(h=>h.includes('score')||h.includes('actual')||h.includes('value'));
+    if(ki===-1||si===-1)throw new Error('Could not find KPI and Score columns. Check your sheet headers.');
+    const u={...state.teamScores};
+    lines.slice(1).forEach(line=>{
+      const cols=line.split(',').map(c=>c.trim().replace(/"/g,''));
+      const n=(cols[ki]||'').toLowerCase();
+      const v=parseFloat((cols[si]||'').replace('%',''))||0;
+      if(n.includes('call')||n.includes('completion'))u.call_completion=v;
+      if(n.includes('lead eng')||n.includes('engagement'))u.lead_engagement=v;
+      if(n.includes('task'))u.task_management=v;
+      if(n.includes('scheduled')||n.includes('lead to sch'))u.lead_to_scheduled=v;
+      if(n.includes('lead to tour')&&!n.includes('sched'))u.lead_to_tour=v;
+    });
+    state.teamScores=u;
+    state.syncStatus='success';state.syncMsg='Scores synced!';
+    state.lastSynced=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    setTimeout(()=>{state.syncStatus='idle';state.syncMsg='';render();},5000);
+  }catch(err){
+    state.syncStatus='error';
+    state.syncMsg=err.message||'Sync failed. Check the sheet is set to Anyone with the link can view.';
+  }
+  render();
+}
+function handleFenixUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const lines=ev.target.result.split('\n').filter(l=>l.trim());
+      if(lines.length<2){state.fenixMsg='File appears empty.';render();return;}
+      const h=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+      const ni=h.findIndex(x=>x.includes('agent')||x.includes('name'));
+      const si=h.findIndex(x=>x.includes('score')||x.includes('percent')||x.includes('%'));
+      if(ni===-1||si===-1){state.fenixMsg='CSV needs: Agent Name, Score.';render();return;}
+      const parsed=lines.slice(1).map(l=>{
+        const c=l.split(',').map(x=>x.trim().replace(/"/g,''));
+        const scoreRaw = c[si]||'';
+        // Handle percentage formats like "94.62%" or "0.9462"
+        let score = parseFloat(scoreRaw.replace('%',''))||0;
+        // If score is between 0 and 1, it's a decimal percentage — convert to %
+        if(score > 0 && score <= 1) score = Math.round(score * 1000) / 10;
+        return{name:c[ni]||'',fenix:score};
+      }).filter(a=>a.name && a.fenix > 0);
+      state.agents=state.agents.map(a=>{const m=parsed.find(p=>p.name.toLowerCase()===a.name.toLowerCase());return m?{...a,fenix_scored_calls:m.fenix}:a;});
+      // Use the max value as the team average (catches summary/total rows from Fenix)
+      const teamAvg = parsed.length > 0 ? Math.round(Math.max(...parsed.map(a=>a.fenix))*10)/10 : 0;
+      state.teamScores.fenix_scored_calls = teamAvg;
+      state.fenixMsg=`✓ ${parsed.length} agents loaded`;
+      setTimeout(()=>{state.fenixMsg='';render();},5000);
+    }catch(e){state.fenixMsg='Could not read file.';}
+    render();
+  };
+  reader.readAsText(file);
+}
+function renderPeriodControl(tab){
+  const key   = tab==='mtd'?'periodMTD':tab==='monthend'?'periodMonthEnd':'periodQuarterly';
+  const type  = tab==='quarterly'?'Quarter':'Month';
+  const val   = state[key];
+  return`
+    <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">${type}</div>
+    <div style="font-size:14px;color:#fff;font-weight:700">${val}</div>
+    <button style="font-size:11px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;padding:0;margin-top:3px"
+      onclick="let p=prompt('Edit ${type.toLowerCase()}:','${val}');if(p){state['${key}']=p;render()}">✏ Edit</button>`;
+}
+function renderScorecard(){
+  const tabColor=state.scTab==='mtd'?'#3b82f6':state.scTab==='monthend'?'#0d9488':'#7c3aed';
+  const manualData=state.scTab==='monthend'?state.monthend:state.quarterly;
+  return`
+    <div class="sc-header">
+      <div class="sc-top">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+            <span style="font-size:22px">📊</span>
+            <h1 style="font-size:20px;font-weight:700;color:#fff">Scorecard</h1>
+          </div>
+          <p style="font-size:13px;color:rgba(255,255,255,.65);padding-left:32px">Running MTD · Month-End · Quarterly</p>
+        </div>
+        <div style="text-align:right" id="sc-period-display">
+          ${renderPeriodControl(state.scTab)}
+        </div>
+      </div>
+      <div class="sc-tabs">
+        ${[{id:'mtd',label:'Running (MTD)',icon:'🔄',color:'#3b82f6'},{id:'monthend',label:'Month-End',icon:'📅',color:'#0d9488'},{id:'quarterly',label:'Quarterly',icon:'📆',color:'#7c3aed'}].map(t=>`
+          <button class="sc-tab${state.scTab===t.id?' active':''}"
+            style="${state.scTab===t.id?`border-bottom-color:${t.color}`:'border-bottom-color:transparent'}"
+            onclick="state.scTab='${t.id}';state.expandedKpi=null;render()">${t.icon} ${t.label}</button>`).join('')}
+      </div>
+    </div>
+    <div class="content">
+      ${state.scTab==='mtd'?renderMTD():renderManualTab(manualData,tabColor)}
+    </div>`;
+}
+function renderMTD(){
+  return`
+    <div class="sync-panel">
+      <div class="sync-row">
+        <span style="font-size:18px">🔗</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Auto Sync</div>
+          <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`Connected · Last synced ${state.lastSynced}`:'Connected · Not yet synced'):'Connect your master Google Sheet to pull scores automatically'}</div>
+        </div>
+        ${state.sheetUrl?`<button class="edit-btn" onclick="state.sheetUrl='';render()">Change</button>`:''}
+      </div>
+      ${!state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
+        <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="state.sheetUrlDraft=this.value"/>
+        <button class="sync-btn" onclick="state.sheetUrl=(state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();render()">Save Link</button>
+      </div>`:''}
+      <div class="sync-hint"><strong style="color:#0f172a">Sheet format:</strong> Columns — KPI and Score. The Google Apps Script writes to this sheet every morning at 8am EST.</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="sync-btn${state.syncStatus==='loading'?' disabled':''}" onclick="syncSheet()" ${state.syncStatus==='loading'?'disabled':''}>
+          ${state.syncStatus==='loading'?'⏳ Syncing...':'↻ Sync Now'}
+        </button>
+        ${state.syncMsg?`<span style="font-size:12px;font-weight:600;color:${state.syncStatus==='success'?'#15803d':'#dc2626'}">${state.syncStatus==='success'?'✓ ':'⚠ '}${state.syncMsg}</span>`:''}
+      </div>
+    </div>
+    <div class="sync-panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">📤</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">Fenix Scored Calls — CSV Upload</div>
+          <div style="font-size:11px;color:#64748b">Export from Fenix. Columns needed: Agent Name, Score</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${state.fenixMsg?`<span style="font-size:11px;font-weight:600;color:#15803d">${state.fenixMsg}</span>`:''}
+        <label style="padding:7px 14px;background:#7c3aed;color:#fff;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+          Upload Fenix CSV<input type="file" accept=".csv" style="display:none" onchange="handleFenixUpload(this)"/>
+        </label>
+      </div>
+    </div>
+    <div class="section-label">Team Averages</div>
+    <div class="kpi-grid">
+      ${KPI_CONFIG.map(kpi=>{
+        const a=state.teamScores[kpi.id]||0;
+        const og=onGoal(a,kpi.goal);
+        const p=pct(a,kpi.goal);
+        const isOpen=state.expandedKpi===kpi.id;
+        return`<div class="kpi-card${a>0?(og?' on-goal':' below'):''}">
+          <div class="kpi-inner">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+              <div>
+                <div class="kpi-label">${kpi.label}</div>
+                <div><span class="kpi-score ${a>0?(og?'on-goal':'below'):'no-data'}">${a}${kpi.unit}</span><span class="kpi-goal">/ ${kpi.goal}${kpi.unit}</span></div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+                ${statusChip(a,kpi.goal)}
+                ${kpi.agentTable?`<button class="agent-toggle" style="color:#3b82f6;border-color:#3b82f644" onclick="state.expandedKpi=state.expandedKpi==='${kpi.id}'?null:'${kpi.id}';render()">${isOpen?'Hide ▲':'Per agent ▼'}</button>`:''}
+              </div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${a>0?(og?'#16a34a':'#e05c45'):'#e2e8f0'}"></div></div>
+          </div>
+          ${isOpen&&kpi.agentTable?`<div style="padding:0 14px 14px;border-top:1px solid #f1f5f9">${renderAgentTable(kpi.id,kpi.goal,kpi.unit)}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="sources" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px">
+      <div class="section-label" style="margin-bottom:8px">Data Sources</div>
+      ${[
+        {k:'Call Completion Rate',v:'Phone Reports - Daily MTD → Phone_Report.csv → Col M (last row)'},
+        {k:'Lead Engagement',v:'LMS Scores → agent_score.csv → Col L (last row)'},
+        {k:'Task Management',v:'LMS Scores → agent_score.csv → Col M (last row)'},
+        {k:'Lead to Scheduled Tour',v:'Tours Col C ÷ Lead Count Col E × 100'},
+        {k:'Lead to Tour',v:'(Tours Col D + Col E) ÷ Lead Count Col E × 100'},
+        {k:'Fenix Scored Calls',v:'Manual CSV upload from Fenix platform'},
+      ].map(s=>`<div style="display:flex;gap:8px;font-size:11px;margin-bottom:4px"><span style="color:#0f172a;font-weight:600;min-width:150px">${s.k}</span><span style="color:#64748b">${s.v}</span></div>`).join('')}
+    </div>`;
+}
+function renderAgentTable(kpiId,goal,unit){
+  const sorted=[...state.agents].sort((a,b)=>(b[kpiId]||0)-(a[kpiId]||0));
+  return`<div class="section-label" style="margin:12px 0 8px">Per Agent</div>
+    <div class="agent-table">
+      <div class="agent-table-header"><span>Agent</span><span style="text-align:right">Score</span><span style="text-align:right">Status</span></div>
+      ${sorted.map((a,i)=>{
+        const s=a[kpiId]||0;const og=s>=goal&&s>0;
+        const ini=a.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+        return`<div class="agent-row" style="background:${i%2===0?'#fff':'#fafafa'}">
+          <div class="agent-name-wrap"><div class="agent-avatar" style="background:${og?'#dcfce7':'#fee2e2'};color:${og?'#15803d':'#dc2626'}">${ini}</div><span>${a.name}</span></div>
+          <span style="text-align:right;font-weight:700;color:${og?'#15803d':'#dc2626'}">${s}${unit}</span>
+          <span style="text-align:right;font-size:10px;font-weight:700;color:${og?'#15803d':'#dc2626'}">${og?'✓ On Goal':'✗ Below'}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+function renderManualTab(data,tabColor){
+  return`
+    <div class="manual-hint" style="background:${tabColor}11;border:1px solid ${tabColor}22;color:${tabColor}">
+      📋 ${state.scTab==='monthend'?`${state.periodMonthEnd} — fill in once the month closes.`:`${state.periodQuarterly} — roll up once the quarter ends.`}
+    </div>
+    ${data.map(m=>{
+      const og=m.actual>0&&m.actual>=m.goal;
+      const isEditing=state.editingMetric===m.id;
+      return`<div class="kpi-card${m.actual>0?(og?' on-goal':' below'):''}" style="margin-bottom:8px">
+        ${isEditing?`<div style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:10px">Editing: ${m.label}</div>
+          <div class="eod-grid" style="margin-bottom:10px">
+            <div><label class="eod-label">Actual</label><input type="number" id="ea_${m.id}" value="${m.actual}" class="eod-input" style="margin-bottom:0"/></div>
+            <div><label class="eod-label">Goal</label><input type="number" id="eg_${m.id}" value="${m.goal}" class="eod-input" style="margin-bottom:0"/></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" style="font-size:12px" onclick="saveMetric(${m.id})">Save</button>
+            <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:12px" onclick="state.editingMetric=null;render()">Cancel</button>
+          </div>
+        </div>`:
+        `<div style="padding:13px 15px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="kpi-label">${m.label}</div>
+            <div style="display:flex;align-items:baseline;gap:6px">
+              <span class="kpi-score ${m.actual>0?(og?'on-goal':'below'):'no-data'}">${m.actual}${m.unit}</span>
+              <span class="kpi-goal">/ ${m.goal}${m.unit} goal</span>
+              ${m.actual>0?statusChip(m.actual,m.goal):''}
+            </div>
+          </div>
+          <button class="edit-btn" onclick="state.editingMetric=${m.id};render()">Edit</button>
+        </div>`}
+      </div>`;
+    }).join('')}`;
+}
+function saveMetric(id){
+  const data=state.scTab==='monthend'?state.monthend:state.quarterly;
+  const idx=data.findIndex(m=>m.id===id);
+  if(idx!==-1){data[idx]={...data[idx],actual:parseFloat(document.getElementById('ea_'+id).value)||0,goal:parseFloat(document.getElementById('eg_'+id).value)||0};}
+  state.editingMetric=null;render();
+}
+
+// ── EOD REPORT ────────────────────────────────────────────────────
+const EOD_FORM_URL = 'https://forms.gle/KGtWJvLCZ3P1xQpVA';
+
+function renderEOD(){
+  const isManager = !!state.manager;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  if(isManager){
+    return`
+      <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%)">
+        <div class="page-header-inner"><span style="font-size:22px">📝</span><h1>EOD Report</h1></div>
+        <p>Manager view — submitted reports and team summary</p>
+      </div>
+      <div class="content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="font-size:13px;color:#64748b">${eodSubmissions.length} submission${eodSubmissions.length!==1?'s':''} recorded this session</div>
+          <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:11px" onclick="state.manager=null;render()">Exit Manager View</button>
+        </div>
+
+        ${eodSubmissions.length===0?`
+          <div style="text-align:center;padding:40px 20px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:16px">
+            <div style="font-size:36px;margin-bottom:10px">📋</div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px">No submissions yet today</div>
+            <div style="font-size:12px;color:#64748b">Submissions from the Google Form will appear here once agents start submitting.</div>
+          </div>`:
+          eodSubmissions.map(s=>`
+            <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div>
+                  <div style="font-size:14px;font-weight:700;color:#0f172a">${s.name}</div>
+                  <div style="font-size:11px;color:#64748b">${s.date} · Submitted at ${s.submittedAt}</div>
+                </div>
+              </div>
+              ${s.huddleTopic?`<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.06em">🎙 Huddle: </span><span style="font-size:12px;color:#334155">${s.huddleTopic}</span></div>`:''}
+              ${s.wins?`<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.06em">🌟 Wins: </span><span style="font-size:12px;color:#334155">${s.wins}</span></div>`:''}
+              ${s.challenges?`<div><span style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.06em">⚠ Challenges: </span><span style="font-size:12px;color:#334155">${s.challenges}</span></div>`:''}
+            </div>`).join('')
+        }
+
+        <div style="margin-top:20px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:12px;color:#64748b">Summary email sends automatically at 11am Manila time daily</div>
+          <a href="${EOD_FORM_URL}" target="_blank" style="font-size:12px;font-weight:600;color:#3b82f6;text-decoration:none">View Form →</a>
+        </div>
+
+        <div class="eod-logout-banner" style="margin-top:16px">
+          <span style="font-size:24px">⚠️</span>
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:2px">Reminder to team: Log out of Humanity TCP!</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.8)">All coordinators must clock out before ending their shift.</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">📝</span><h1>EOD Report</h1></div>
+      <p>Submit your end-of-day report before logging off</p>
+    </div>
+    <div class="content">
+
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="font-size:13px;color:#64748b;margin-bottom:4px">${today}</div>
+      </div>
+
+      <!-- Main submit button -->
+      <a href="${EOD_FORM_URL}" target="_blank" style="display:block;text-decoration:none">
+        <div style="background:linear-gradient(135deg,#0f1e3d,#1a2f55);border-radius:16px;padding:28px 24px;text-align:center;cursor:pointer;transition:opacity .15s"
+          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+          <div style="font-size:36px;margin-bottom:12px">📋</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px">Submit EOD Report</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.65);margin-bottom:16px">Click to open the EOD form and submit your daily report</div>
+          <div style="display:inline-block;background:#fff;color:#0f1e3d;padding:10px 28px;border-radius:20px;font-size:13px;font-weight:800">
+            Open EOD Form →
+          </div>
+        </div>
+      </a>
+
+      <!-- What to include reminder -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-top:16px">
+        <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:10px">📌 What to include in your EOD report:</div>
+        ${[
+          {icon:'👤', text:'Your name and today\'s date'},
+          {icon:'🎙', text:'If you are the POC — huddle topic and what was covered'},
+          {icon:'🌟', text:'Your wins for the day — any great calls, tours, or breakthroughs'},
+          {icon:'⚠️', text:'Any challenges or blockers you need support with'},
+        ].map(i=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:16px">${i.icon}</span>
+            <span style="font-size:12px;color:#475569">${i.text}</span>
+          </div>`).join('')}
+      </div>
+
+      <!-- Manager view button -->
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="doLogin('manager')" style="font-size:11px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:6px 14px;cursor:pointer">
+          🔒 Manager View
+        </button>
+      </div>
+
+      <!-- Logout reminder -->
+      <div class="eod-logout-banner" style="margin-top:16px">
+        <span style="font-size:24px">⚠️</span>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:2px">Don't forget to log out of Humanity TCP!</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.8)">Clock out before submitting this report. Missing punches may result in pay deductions.</div>
+        </div>
+      </div>
+    </div>`;
+}
+// ── LOGIN & COACHING ──────────────────────────────────────────────
+function doLogin(type){
+  if(type==='manager'){
+    const e=prompt('Enter your Avanti email:');
+    if(e&&e.trim().toLowerCase()==='rdltrinidad@avantiresidential.com'){
+      state.manager={name:'Rowel De La Trinidad',email:e,role:'Lead Management Manager'};
+      render();
+    } else if(e){alert('Access restricted. Only authorized managers can access this view.');}
+    return;
+  }
+}
+function renderLogin(){
+  return`
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:22px">🔒</span><h1>Coaching Logs</h1></div>
+      <p>Manager access only — authentication required</p>
+    </div>
+    <div class="login-wrap">
+      <div class="login-box">
+        <div style="font-size:36px;text-align:center;margin-bottom:10px">🔐</div>
+        <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:6px">Manager Sign In</div>
+        <div style="font-size:12px;color:#64748b;text-align:center;line-height:1.6;margin-bottom:20px">Coaching logs are restricted to authorized LMS managers.</div>
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Email address</label>
+        <input class="login-input" type="email" id="loginEmail" placeholder="you@avantiresidential.com"
+          value="${state.loginEmail}" oninput="state.loginEmail=this.value"
+          onkeydown="if(event.key==='Enter')doLoginPage()"/>
+        ${state.loginError?`<div class="login-err">${state.loginError}</div>`:''}
+        <button class="login-btn" onclick="doLoginPage()" ${state.loginLoading?'disabled':''}>
+          ${state.loginLoading?'Signing in...':'Sign In →'}
+        </button>
+        <div style="text-align:center">
+          <div style="font-size:11px;color:#64748b;margin-bottom:8px">or continue with</div>
+          <button style="width:100%;padding:9px;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;color:#374151;display:flex;align-items:center;justify-content:center;gap:8px">
+            <strong>G</strong> Sign in with Google
+          </button>
+        </div>
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:11px;color:#64748b;text-align:center">Access issues? Contact Rowel · PEC Hub v1.0</div>
+      </div>
+    </div>`;
+}
+function doLoginPage(){
+  const email=state.loginEmail.trim().toLowerCase();
+  if(!email.includes('@')){state.loginError='Please enter a valid email address.';render();return;}
+  state.loginError='';state.loginLoading=true;render();
+  setTimeout(()=>{
+    if(email==='rdltrinidad@avantiresidential.com'){
+      state.manager={name:'Rowel De La Trinidad',email,role:'Lead Management Manager'};
+      state.loginLoading=false;
+    }else{state.loginError='Access restricted. Only authorized managers can access coaching logs.';state.loginLoading=false;}
+    render();
+  },1200);
+}
+
+let coachingLogs = [
+  {id:1, coachee:'Beverlyn Domingo', date:'2026-06-02', category:'Call Spiel', notes:'Strong improvement on follow-up cadence. Discussed tone calibration on re-engagement calls. Action: practice objection scripts this week.', fileName:'', driveUrl:''},
+  {id:2, coachee:'Russel Espaldon',  date:'2026-05-30', category:'KPI',        notes:'Tour conversion trending up. Reviewed Funnel Leasing logging accuracy. Action: audit last 10 lead entries for completeness.', fileName:'', driveUrl:''},
+  {id:3, coachee:'Dianne Mercado',   date:'2026-05-27', category:'Process',    notes:'Confidence building on cold re-engagements. Reviewed voicemail script delivery. Action: listen to 3 own call recordings before next session.', fileName:'', driveUrl:''},
+  {id:4, coachee:'Kenneth Geronimo', date:'2026-05-22', category:'Process',    notes:'Addressed scheduling errors. SOPs reviewed together. Action: double-check confirmation texts against template before sending.', fileName:'', driveUrl:''},
+];
+
+const DRIVE_FOLDER = 'https://drive.google.com/drive/u/0/folders/1KGXELajQfXuM5bZ-fQa1dGTBegyEOkjd';
+const COACHING_CATS = ['KPI','Process','Call Spiel','Attendance','General'];
+const CAT_BADGE = {
+  'KPI':        {bg:'#dbeafe',c:'#1e40af'},
+  'Process':    {bg:'#d1fae5',c:'#065f46'},
+  'Call Spiel': {bg:'#ede9fe',c:'#5b21b6'},
+  'Attendance': {bg:'#fef3c7',c:'#92400e'},
+  'General':    {bg:'#f1f5f9',c:'#475569'},
+};
+
+function renderCoaching(){
+  const showForm  = state.showCoachingForm;
+  const catFilter = state.coachingCatFilter || 'All';
+  const search    = (state.coachingSearch||'').toLowerCase();
+  const filtered  = coachingLogs.filter(l=>
+    (catFilter==='All'||l.category===catFilter) &&
+    (l.coachee.toLowerCase().includes(search)||l.category.toLowerCase().includes(search)||(l.notes||'').toLowerCase().includes(search))
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+
+  return`
+    <div class="coaching-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+            <span style="font-size:20px">📋</span>
+            <h1 style="font-size:20px;font-weight:700;color:#fff">Coaching Logs</h1>
+          </div>
+          <p style="font-size:12px;color:rgba(255,255,255,.55);padding-left:30px">1:1 notes, performance records, and coaching history</p>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9)">${state.manager.name}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px">${state.manager.role}</div>
+          <button class="signout-btn" onclick="state.manager=null;showPage('home')">Sign out</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      ${showForm ? `
+        <!-- NEW LOG FORM -->
+        <div style="background:#fff;border:1.5px solid #7c3aed;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 0 0 3px rgba(124,58,237,.08)">
+          <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f1f5f9">
+            ✏️ New Coaching Log
+          </div>
+
+          <div class="eod-grid" style="margin-bottom:14px">
+            <div>
+              <label class="eod-label">Coachee *</label>
+              <select class="eod-select" style="margin-bottom:0" onchange="state.clCoachee=this.value">
+                <option value="">Select agent...</option>
+                ${TEAM.filter(t=>!t.isSolo).map(t=>`<option value="${t.name}" ${(state.clCoachee||'')=== t.name?'selected':''}>${t.name}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="eod-label">Date of Coaching *</label>
+              <input type="date" class="eod-input" style="margin-bottom:0" value="${state.clDate||new Date().toISOString().split('T')[0]}" onchange="state.clDate=this.value"/>
+            </div>
+          </div>
+
+          <label class="eod-label">Category *</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            ${COACHING_CATS.map(c=>{
+              const cc=CAT_BADGE[c]||{bg:'#f1f5f9',c:'#475569'};
+              const sel=(state.clCategory||'')=== c;
+              return`<button onclick="state.clCategory='${c}';render()" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${sel?cc.c:cc.c+'44'};background:${sel?cc.bg:'#fff'};color:${cc.c};transition:all .15s">${c}</button>`;
+            }).join('')}
+          </div>
+
+          <label class="eod-label">Coaching Notes *</label>
+          <textarea class="eod-textarea" style="min-height:100px" placeholder="What was discussed? What are the action items? What improvement was noted..." oninput="state.clNotes=this.value">${state.clNotes||''}</textarea>
+
+          <label class="eod-label">Attach File (optional)</label>
+          <div class="upload-area" onclick="document.getElementById('clFileUpload').click()" style="margin-bottom:14px">
+            <input type="file" id="clFileUpload" style="display:none" onchange="state.clFileName=this.files[0]?this.files[0].name:'';render()"/>
+            <div style="font-size:20px;margin-bottom:4px">📎</div>
+            <div style="font-size:12px;font-weight:600;color:#3b82f6">Click to attach a file</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">PDF, image, or document</div>
+          </div>
+          ${state.clFileName?`<div class="upload-preview" style="margin-bottom:14px">📎 ${state.clFileName}</div>`:''}
+
+          <label class="eod-label">Google Drive Link (optional)</label>
+          <input type="url" class="eod-input" placeholder="Paste Drive link to coaching recording or document..." value="${state.clDriveUrl||''}" oninput="state.clDriveUrl=this.value"/>
+
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button onclick="saveCoachingLog()" style="flex:1;padding:11px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+              Save Coaching Log ✓
+            </button>
+            <button onclick="state.showCoachingForm=false;render()" style="padding:11px 18px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;cursor:pointer">
+              Cancel
+            </button>
+          </div>
+        </div>
+      ` : `
+        <button onclick="state.showCoachingForm=true;state.clCoachee='';state.clDate='';state.clCategory='';state.clNotes='';state.clFileName='';state.clDriveUrl='';render()"
+          style="width:100%;padding:12px;background:#7c3aed;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">
+          ✏️ + New Coaching Log
+        </button>
+      `}
+
+      <!-- SEARCH + FILTER -->
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input value="${state.coachingSearch||''}" oninput="state.coachingSearch=this.value;renderPage()" placeholder="Search by agent, category, or notes..."/>
+      </div>
+      <div class="filters" style="margin-bottom:16px">
+        ${['All',...COACHING_CATS].map(c=>`
+          <button class="filter-btn${catFilter===c?' active':''}" onclick="state.coachingCatFilter='${c}';renderPage()">${c}</button>
+        `).join('')}
+      </div>
+
+      <!-- STATS ROW -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px">
+        ${COACHING_CATS.slice(0,3).map(c=>{
+          const cc=CAT_BADGE[c];
+          const count=coachingLogs.filter(l=>l.category===c).length;
+          return`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;text-align:center">
+            <div style="font-size:18px;font-weight:800;color:${cc.c}">${count}</div>
+            <div style="font-size:10px;color:#64748b;margin-top:1px">${c}</div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- LOG LIST -->
+      ${filtered.length===0?`<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No coaching logs found.</div>`:''}
+      ${filtered.map(l=>{
+        const cc=CAT_BADGE[l.category]||{bg:'#f1f5f9',c:'#475569'};
+        const ini=l.coachee.split(' ').map(n=>n[0]).join('').slice(0,2);
+        const isOpen=state.expandedCoaching===l.id;
+        const dateFormatted=new Date(l.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return`
+          <div class="card${isOpen?' open':''}" style="${isOpen?'border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)':''}">
+            <div class="card-header" onclick="state.expandedCoaching=state.expandedCoaching===${l.id}?null:${l.id};render()">
+              <div class="card-left">
+                <div style="width:34px;height:34px;border-radius:50%;background:${cc.bg};color:${cc.c};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${ini}</div>
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:#0f172a">${l.coachee}</div>
+                  <div style="font-size:11px;color:#64748b">${dateFormatted}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${cc.bg};color:${cc.c}">${l.category}</span>
+                ${l.fileName?`<span style="font-size:10px;color:#64748b">📎</span>`:''}
+                <span class="chevron${isOpen?' open':''}">▾</span>
+              </div>
+            </div>
+            ${isOpen?`
+              <div class="card-body">
+                <p style="white-space:pre-line">${l.notes}</p>
+                <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                  ${l.fileName?`<div style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px">📎 ${l.fileName}</div>`:''}
+                  ${l.driveUrl?`<a href="${l.driveUrl}" target="_blank" style="font-size:11px;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:5px 10px;text-decoration:none">🔗 Open Drive File</a>`:''}
+                  <a href="${DRIVE_FOLDER}" target="_blank" style="font-size:11px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:5px 10px;text-decoration:none">📁 Open Drive Folder</a>
+                  <button onclick="deleteCoachingLog(${l.id})" style="font-size:11px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:8px;padding:5px 10px;cursor:pointer;margin-left:auto">Delete</button>
+                </div>
+              </div>`:''
+            }
+          </div>`;
+      }).join('')}
+
+      <div style="margin-top:20px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:#64748b">${coachingLogs.length} total log${coachingLogs.length!==1?'s':''}</div>
+        <a href="${DRIVE_FOLDER}" target="_blank" style="font-size:12px;font-weight:600;color:#7c3aed;text-decoration:none">📁 Open Drive Folder →</a>
+      </div>
+    </div>`;
+}
+
+function saveCoachingLog(){
+  if(!state.clCoachee){alert('Please select a coachee.');return;}
+  if(!state.clDate){alert('Please select a date.');return;}
+  if(!state.clCategory){alert('Please select a category.');return;}
+  if(!state.clNotes||!state.clNotes.trim()){alert('Please add coaching notes.');return;}
+  const newLog={
+    id:Date.now(),
+    coachee:state.clCoachee,
+    date:state.clDate,
+    category:state.clCategory,
+    notes:state.clNotes.trim(),
+    fileName:state.clFileName||'',
+    driveUrl:state.clDriveUrl||'',
+  };
+  coachingLogs.push(newLog);
+  state.showCoachingForm=false;
+  state.clCoachee='';state.clDate='';state.clCategory='';state.clNotes='';state.clFileName='';state.clDriveUrl='';
+  render();
+}
+
+function deleteCoachingLog(id){
+  if(!confirm('Delete this coaching log?'))return;
+  coachingLogs=coachingLogs.filter(l=>l.id!==id);
+  state.expandedCoaching=null;
+  render();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function renderPage(){
+  let html='';
+  switch(state.page){
+    case 'home':      html=renderHome();break;
+    case 'announcements': html=renderAnnouncements();break;
+    case 'spiels':    html=renderSpiels();break;
+    case 'notes':     html=renderCallNotes();break;
+    case 'scorecard': html=renderScorecard();break;
+    case 'eod':       html=renderEOD();break;
+    case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
+    default:          html=renderHome();
+  }
+  document.getElementById('pageContent').innerHTML=html;
+}
+function render(){renderNav();renderPage();}
+render();
+</script>
+</body>
+</html>
