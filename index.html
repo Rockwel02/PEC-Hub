@@ -1348,8 +1348,17 @@ async function syncSheet(silent){
       } else {
         text = raw;
       }
-      if (text && text.trim() && !text.trim().startsWith('<')) break; // got usable CSV, not an HTML error page
-      lastError = `Proxy ${i+1} returned empty or invalid content`;
+      // Validate this actually looks like real CSV data, not an HTML error page,
+      // a JS redirect snippet, a literal "null", or an empty/whitespace-only response.
+      const t = (text || '').trim();
+      const looksLikeRealCsv = t.length > 10
+        && !t.startsWith('<')
+        && t.toLowerCase() !== 'null'
+        && !t.toLowerCase().startsWith('window.location')
+        && !t.toLowerCase().includes('accounts.google.com')
+        && t.includes(',');  // a CSV with at least one comma-separated row
+      if (looksLikeRealCsv) break; // genuinely usable, stop trying more proxies
+      lastError = `Proxy ${i+1} returned invalid content (not real CSV data)`;
       text = null;
     } catch(err) {
       lastError = `Proxy ${i+1} failed: ${err.message}`;
@@ -1359,7 +1368,7 @@ async function syncSheet(silent){
   if (!text) {
     if(!silent){
       state.syncStatus='error';
-      state.syncMsg=`Failed to fetch. ${lastError||'All proxies failed.'} Make sure the sheet is shared as "Anyone with the link can view".`;
+      state.syncMsg=`Could not reach the sheet right now (${lastError||'all proxy services failed'}). This is usually a temporary outage with the free proxy service, not a problem with your sheet. Try again in a minute, or use the manual entry tabs in the meantime.`;
       render();
     } else {
       // Auto-sync failures stay quiet in the UI but we still record the attempt
