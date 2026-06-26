@@ -217,25 +217,99 @@ const KB = [
 
 const SPIELS = [
   // Qualification & Applications
-  {id:1, title:'Rental Qualifications',cat:'Qualification & Applications',preview:'Our rental qualifications include meeting the income requirement of xx times the rent, along with credit, rental, and background screening conducted through TransUnion. I can share our full rental criteria with you if you\'d like 😊'},
-  {id:2, title:'Will I Get Approved?',cat:'Qualification & Applications',preview:'We welcome all individuals who apply and meet the qualifying requirements. We encourage you to review our rental criteria — approval is not guaranteed and is based on several factors. I can walk you to it now and email it to you so you have it handy.'},
-  {id:3, title:'Credit is Low — Should I Still Apply?',cat:'Qualification & Applications',preview:'"Credit is one part of the screening, and outcomes can range from approval to a higher deposit or denial. I recommend reviewing our rental criteria to help you decide, and I can send that over to you."'},
-  {id:4, title:'Can I Add a Cosigner?',cat:'Qualification & Applications',preview:'"We don\'t offer co-signers, but you can add a guarantor for income purposes. The guarantor would need to qualify at 4 times the rent, and their income would be used instead."'},
-  {id:5, title:'Eviction History',cat:'Qualification & Applications',preview:'We welcome anyone who applies and meets our qualifications. Rental history, including evictions, is part of the screening process. I can share our rental criteria with you or go over it verbatim so you have the exact details.'},
-  {id:6, title:'Section 8 / Housing Voucher',cat:'Qualification & Applications',preview:'"We consider all sources of income. The applicant will still be screened and must qualify under the same criteria and screening standards as all other applicants."'},
-  {id:7, title:'Screening Report Error',cat:'Qualification & Applications',preview:'"Once your screening is complete, you\'ll receive a report along with TransUnion\'s contact details so you can dispute any inaccuracies directly with them."'},
-  {id:8, title:'Application Denial — Dispute Guidance',cat:'Qualification & Applications',preview:'"Hi [Name], thank you for reaching out. I checked your application and I can see the decision was based on your [credit / criminal screening / eviction history]. I want to be honest with you — this is something that our team is not able to review or override on our end. For disputes or additional information, you would need to contact TransUnion directly. Their contact details are in the screening results email you received. I\'m sorry I couldn\'t bring you better news today, but I want to make sure you have the right contact so you can get the answers you need. Is there anything else I can help you with?"'},
+  {id:1, title:'Rental Qualifications',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'Great question — it\'s smart to know what we look for before you apply.',
+    answer:'Our rental qualifications include meeting the income requirement of xx times the rent, along with credit, rental, and background screening conducted through TransUnion.',
+    ask:'Would you like me to send over our full rental criteria so you have all the details handy?'
+  }},
+  {id:2, title:'Will I Get Approved?',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'I completely understand wanting some certainty before applying.',
+    answer:'We welcome all individuals who apply and meet the qualifying requirements. Approval isn\'t guaranteed and is based on several factors in our rental criteria.',
+    ask:'Would you like me to walk you through that criteria now, or email it over so you can review it on your own time?'
+  }},
+  {id:3, title:'Credit is Low — Should I Still Apply?',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'Thanks for being upfront about that — it shows you\'re thinking this through carefully.',
+    answer:'Credit, eviction, and criminal history are all reviewed as part of TransUnion\'s screening process, and the result of that screening is what determines whether you\'ll be approved, conditionally approved, or denied.',
+    ask:'Would it help if I sent over our rental criteria so you can see exactly how that\'s weighed before deciding whether to apply?'
+  }},
+  {id:4, title:'Can I Add a Cosigner?',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'That\'s a fair thing to ask about, especially if you want extra support on the income side.',
+    answer:'We don\'t offer co-signers, but you can add a guarantor for income purposes — they\'d need to qualify at 4 times the rent for their income to qualify. They also have the option to qualify using their assets instead, calculated as Rate x Lease Term x 4 for CO communities, and either their income or asset would be used for your approval.',
+    ask:'Do you have someone in mind who might be able to qualify as a guarantor?'
+  }},
+  {id:5, title:'Eviction History',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'I appreciate you bringing that up directly — that helps me give you the clearest answer.',
+    answer:'We welcome anyone who applies and meets our qualifications. Rental history, including evictions, is part of the screening process.',
+    ask:'Would you like me to share our rental criteria so you can see exactly how that factors in before you apply?'
+  }},
+  {id:6, title:'Section 8 / Housing Voucher',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'Thanks for letting me know — that\'s good context for me to have, and I want to make sure you get connected with the right person on this too.',
+    answer:'For Section 8 and housing voucher questions, I\'ll always loop in our Onsite Team since they handle the specifics on that side. I can either schedule a tour for you so you can meet with them in person, or see if someone\'s available to connect by phone right now — and if not, they can give you a call back. Either way, we can go ahead and continue with prequalifying you on this call.',
+    ask:'Would you like me to schedule a tour, or try connecting you with Onsite by phone first?'
+  }},
+  {id:7, title:'Screening Report Error',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'I hear you, and I want to make sure that gets sorted out the right way.',
+    answer:'Since the screening was made through our screening partner, TransUnion, I\'d suggest reaching out to them through the link they sent you for a dispute, or you can call them directly using the phone number provided in that email — they\'ll be able to explain further and walk you through the steps.',
+    ask:'Once you\'ve had a chance to reach out to them, would it be okay if I followed up with you in a few days to see where things stand?'
+  }},
+  {id:8, title:'Application Denial — Dispute Guidance',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'I checked your application and I can see the decision was based on your [credit / criminal screening / eviction history] — I want to be honest with you about that.',
+    answer:'This is something our team isn\'t able to review or override on our end. For disputes or additional information, you\'d need to contact TransUnion directly — their contact details are in the screening results email you received.',
+    ask:'I\'m sorry I couldn\'t bring you better news today, but is there anything else I can help you with?'
+  }},
   // Pricing & Budget
-  {id:9, title:'That\'s Too Expensive',cat:'Pricing & Budget',preview:'I hear you. Just so I understand, when you say expensive, compared to what you\'ve seen so far?'},
-  {id:10,title:'I Found Something Cheaper',cat:'Pricing & Budget',preview:'That makes sense, there are definitely lower-priced options out there. Out of curiosity, what stood out to you about that one?'},
-  {id:11,title:'It\'s Out of My Budget',cat:'Pricing & Budget',preview:'Thanks for sharing that. If you found a place that actually solved [their need: location, safety, amenities, convenience], would you be open to exploring options that make it work?'},
-  {id:12,title:'Can I Pay Upfront for My Lease?',cat:'Pricing & Budget',preview:'Our communities make it easy to stay on track with rent payments. While we don\'t accept the full rent upfront, you can take advantage of our convenient auto-debit feature through the payment portal.'},
+  {id:9, title:'That\'s Too Expensive',cat:'Pricing & Budget',recordingUrl:'',aaa:{
+    acknowledge:'I hear you — price is a big factor in a decision like this.',
+    answer:'Just so I understand where you\'re coming from, this gives me a better sense of what you\'re comparing it to.',
+    ask:'When you say expensive, compared to what you\'ve seen so far?'
+  }},
+  {id:10,title:'I Found Something Cheaper',cat:'Pricing & Budget',recordingUrl:'',aaa:{
+    acknowledge:'That makes sense — there are definitely lower-priced options out there.',
+    answer:'I\'d love to understand what specifically caught your attention so I can see if there\'s something comparable here that fits just as well.',
+    ask:'Out of curiosity, what stood out to you about that one?'
+  }},
+  {id:11,title:'It\'s Out of My Budget',cat:'Pricing & Budget',recordingUrl:'',aaa:{
+    acknowledge:'Thanks for sharing that — budget is one of the most important pieces of this decision.',
+    answer:'If we found a place that actually solved what matters most to you — whether that\'s location, safety, or amenities — it might be worth exploring options that make the numbers work.',
+    ask:'Would you be open to exploring those options together?'
+  }},
+  {id:12,title:'Can I Pay Upfront for My Lease?',cat:'Pricing & Budget',recordingUrl:'',aaa:{
+    acknowledge:'I get it — some people prefer to handle things all at once rather than monthly.',
+    answer:'Our communities make it easy to stay on track with rent payments. While we don\'t accept the full rent upfront, you can take advantage of our convenient auto-debit feature through the payment portal.',
+    ask:'Would setting up auto-debit work for your situation?'
+  }},
   // Community & Policy Questions
-  {id:13,title:'Are You a Senior Community?',cat:'Community & Policy',preview:'"Thank you for checking us out! At this time, Avanti does not have 55+ designated communities, but anyone who meets our rental qualifications is welcome to apply."'},
-  {id:14,title:'Do You Do Virtual Tours?',cat:'Community & Policy',preview:'"At the moment, none of our Avanti communities offer virtual tours. All tours are conducted in person. However, we\'d be happy to walk you through the community details over the phone or guide you through the website."'},
-  {id:15,title:'How Long Is the Application Wait?',cat:'Community & Policy',preview:'Great question! Once you apply, the approval process can take up to 5 business days. If documents come in quickly and results are accepted, we can often approve much sooner — sometimes the same day. Most of the time we try to give an answer within 24 hours.'},
+  {id:13,title:'Are You a Senior Community?',cat:'Community & Policy',recordingUrl:'',aaa:{
+    acknowledge:'Thank you for checking us out — happy to clarify that for you.',
+    answer:'At this time, Avanti does not have 55+ designated communities, but anyone who meets our rental qualifications is welcome to apply.',
+    ask:'Would you like me to walk you through what those qualifications look like?'
+  }},
+  {id:14,title:'Do You Do Virtual Tours?',cat:'Community & Policy',recordingUrl:'',aaa:{
+    acknowledge:'Great question, especially if you\'re trying to plan around a busy schedule.',
+    answer:'At the moment, none of our Avanti communities offer virtual tours — all tours are conducted in person. I\'d be happy to walk you through the community details over the phone or guide you through the website in the meantime.',
+    ask:'Would it help if I did that with you right now, or would you rather schedule an in-person tour first?'
+  }},
+  {id:15,title:'How Long Is the Application Wait?',cat:'Community & Policy',recordingUrl:'',aaa:{
+    acknowledge:'Great question — I know that timeline matters a lot when you\'re planning a move.',
+    answer:'Once you apply, the approval process can take up to 5 business days. If documents are submitted right away and results are accepted, we can often approve much sooner — sometimes the same day. Most of the time we try to give an answer within 24 hours.',
+    ask:'Would you like to go ahead and get the application started today?'
+  }},
   // Empathy & Special Situations
-  {id:16,title:'Prospect Had a Recent Divorce',cat:'Empathy & Special Situations',preview:'"I\'m not sure if this is a fresh start or a tough transition, but either way, I\'m here to help make this next step easier for you." / "Whatever this transition looks like for you, I\'m here to support you and help you find the right place."'},
+  {id:16,title:'Prospect Had a Recent Divorce',cat:'Empathy & Special Situations',recordingUrl:'',aaa:{
+    acknowledge:'I\'m not sure if this is a fresh start or a tough transition, but either way, I\'m here to help make this next step easier for you.',
+    answer:'Whatever this transition looks like for you, I want you to know I\'m here to support you and help you find the right place.',
+    ask:'What\'s most important to you in this next home as you start this new chapter?'
+  }},
+];
+
+const DISCOVERY_QUESTIONS = [
+  // Reason for Move
+  {id:1, title:'What\'s bringing you into the market?', cat:'Reason for Move', recordingUrl:'', question:'What\'s bringing you into the market for a new place right now?'},
+  {id:2, title:'What\'s prompting your search?', cat:'Reason for Move', recordingUrl:'', question:'To make sure I recommend the right fit, what\'s prompting your search at the moment?'},
+  {id:3, title:'What\'s got you exploring new places?', cat:'Reason for Move', recordingUrl:'', question:'What\'s got you exploring new places these days?'},
+  // Pitching
+  {id:4, title:'What would make it feel right?', cat:'Pitching', recordingUrl:'', question:'What would make your next home feel like the right one for you?'},
+  {id:5, title:'Looking for something different?', cat:'Pitching', recordingUrl:'', question:'Are you looking for something different from your current home?'},
 ];
 
 const CALL_NOTES = {
@@ -356,22 +430,28 @@ let state = {
   expandedKb:null, expandedSpiel:null, expandedCoaching:null,
   showCoachingForm:false, coachingSearch:'', coachingCatFilter:'All',
   clCoachee:'', clDate:'', clCategory:'', clNotes:'', clFileName:'', clDriveUrl:'',
-  kbSearch:'', kbCat:'All', spielSearch:'', spielCat:'All',
+  kbSearch:'', kbCat:'All', spielSearch:'', spielCat:'All', spielTab:'objections', discoveryCat:'All',
   notesSearch:'', notesCat:'All',
+  showCallListeningForm:false, clwSheetUrl:'', clwFolderUrl:'',
   scTab:'mtd', expandedKpi:null,
-  sheetUrl:'', sheetUrlDraft:'', syncStatus:'idle', syncMsg:'', lastSynced:null,
+  sheetUrl:'', sheetUrlDraft:'', syncStatus:'idle', syncMsg:'', lastSynced:null, lastAutoSyncError:null,
   fenixMsg:'', 
   periodMTD:'June 2026',
-  periodMonthEnd:'May 2026',
-  periodQuarterly:'Q2 2026',
   teamScores:{call_completion:0,lead_engagement:0,task_management:0,lead_to_scheduled:0,lead_to_tour:0,fenix_scored_calls:0},
   agents:[
     {name:'Agent 1',lead_engagement:0,task_management:0,fenix_scored_calls:0},
     {name:'Agent 2',lead_engagement:0,task_management:0,fenix_scored_calls:0},
     {name:'Agent 3',lead_engagement:0,task_management:0,fenix_scored_calls:0},
   ],
-  monthend:KPI_CONFIG.map((k,i)=>({id:i+1,label:k.label,actual:0,goal:k.goal,unit:k.unit})),
-  quarterly:KPI_CONFIG.map((k,i)=>({id:i+1,label:k.label,actual:0,goal:k.goal,unit:k.unit})),
+  monthendHistory:[
+    {id:1, label:'May 2026', kpis:KPI_CONFIG.map(k=>({label:k.label,actual:0,goal:k.goal,unit:k.unit}))},
+  ],
+  quarterlyHistory:[
+    {id:1, label:'Q2 2026', kpis:KPI_CONFIG.map(k=>({label:k.label,actual:0,goal:k.goal,unit:k.unit}))},
+  ],
+  expandedPeriod:null, showAddPeriodForm:false, newPeriodLabel:'',
+  editingPeriodMetric:null,
+  denverNotes:'',
   editingMetric:null,
   loginEmail:'', loginLoading:false, loginError:'',
   // EOD
@@ -387,11 +467,30 @@ const NAV = [
   {id:'kb',       label:'Knowledge Base',icon:'📚'},
   {id:'spiels',   label:'Spiels',        icon:'💬'},
   {id:'notes',    label:'Call Notes',     icon:'🗒️'},
+  {id:'listening', label:'Call Listening', icon:'🎧'},
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
+  {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
 ];
 
+function toDriveEmbedUrl(url){
+  if(!url)return null;
+  // Matches both /file/d/FILEID/view and open?id=FILEID formats
+  const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(!m) return null;
+  return `https://drive.google.com/file/d/${m[1]}/preview`;
+}
+function toSheetsEmbedUrl(url){
+  if(!url)return null;
+  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if(!m) return null;
+  const id = m[1];
+  const gm = url.match(/[#&?]gid=(\d+)/);
+  const gid = gm ? gm[1] : '0';
+  // widget=true + headers=false gives a clean embedded read-only view
+  return `https://docs.google.com/spreadsheets/d/${id}/preview?gid=${gid}`;
+}
 function badge(cat,type='cat'){
   const c=CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
   return `<span class="badge" style="background:${c.bg};color:${c.c}">${cat}</span>`;
@@ -408,7 +507,33 @@ function renderNav(){
     `<button class="nav-btn${state.page===n.id?' active':''}" onclick="showPage('${n.id}')">${n.icon} ${n.label}</button>`
   ).join('');
 }
-function showPage(p){state.page=p;state.expandedKb=null;state.expandedSpiel=null;state.expandedKpi=null;state.eodSubmitted=false;render();window.scrollTo(0,0);}
+function showPage(p){
+  state.page=p;state.expandedKb=null;state.expandedSpiel=null;state.expandedKpi=null;state.eodSubmitted=false;
+  manageScorecardAutoSync(p);
+  render();window.scrollTo(0,0);
+}
+
+// ── SCORECARD AUTO-SYNC ───────────────────────────────────────────
+let scorecardAutoSyncInterval = null;
+const SCORECARD_AUTO_SYNC_MS = 3 * 60 * 1000; // every 3 minutes while the tab is open
+
+function manageScorecardAutoSync(page){
+  // Always clear any existing timer first to avoid stacking multiple intervals
+  if(scorecardAutoSyncInterval){
+    clearInterval(scorecardAutoSyncInterval);
+    scorecardAutoSyncInterval = null;
+  }
+  if(page === 'scorecard' && state.sheetUrl){
+    // Fetch immediately on entering the tab, don't wait for the first timer tick
+    syncSheet(true);
+    scorecardAutoSyncInterval = setInterval(()=>{
+      // Only keep syncing if we're still actually on the scorecard page
+      // (guards against a stray interval surviving an unexpected navigation path)
+      if(state.page === 'scorecard') syncSheet(true);
+      else { clearInterval(scorecardAutoSyncInterval); scorecardAutoSyncInterval = null; }
+    }, SCORECARD_AUTO_SYNC_MS);
+  }
+}
 
 // ── HOME ──────────────────────────────────────────────────────────
 function renderHome(){
@@ -438,7 +563,9 @@ function renderHome(){
           {id:'kb',icon:'📚',label:'Knowledge Base',desc:'SOPs and process guides',color:'#3b82f6'},
           {id:'spiels',icon:'💬',label:'Spiels Library',desc:'Scripts and talking points',color:'#0d9488'},
           {id:'notes',icon:'🗒️',label:'Call Notes',desc:'Disposition tags and note library',color:'#d97706'},
+          {id:'listening',icon:'🎧',label:'Call Listening',desc:'Weekly call recordings for review',color:'#9333ea'},
           {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, quarterly',color:'#16a34a'},
+          {id:'denver',icon:'🏔️',label:'Denver Pilot',desc:'Pilot program tracking',color:'#0891b2'},
           {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
           {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
         ].map(c=>`
@@ -785,7 +912,98 @@ function renderKB(){
 }
 
 // ── SPIELS ────────────────────────────────────────────────────────
+function addSpielRecording(spielId){
+  const spiel = SPIELS.find(s=>s.id===spielId);
+  if(!spiel)return;
+  const url = prompt('Paste the Google Drive share link for this recording (MP3/MP4):', spiel.recordingUrl||'');
+  if(url===null)return; // cancelled
+  spiel.recordingUrl = url.trim();
+  render();
+}
+function addDiscoveryRecording(qId){
+  const q = DISCOVERY_QUESTIONS.find(s=>s.id===qId);
+  if(!q)return;
+  const url = prompt('Paste the Google Drive share link for this recording (MP3/MP4):', q.recordingUrl||'');
+  if(url===null)return; // cancelled
+  q.recordingUrl = url.trim();
+  render();
+}
+function renderRecordingBlock(itemId, recordingUrl, type){
+  const embedUrl = toDriveEmbedUrl(recordingUrl);
+  const addFn = type==='spiel' ? 'addSpielRecording' : 'addDiscoveryRecording';
+  if(!embedUrl) return state.manager?`
+    <div style="margin-bottom:12px">
+      <button onclick="${addFn}(${itemId})" style="font-size:11px;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:600">🎧 + Add Recording Link</button>
+    </div>`:'';
+  return `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">🎧 Listen: Real Example</div>
+        ${state.manager?`<button onclick="${addFn}(${itemId})" style="font-size:10px;color:#7c3aed;background:none;border:none;cursor:pointer;font-weight:600">Change link</button>`:''}
+      </div>
+      <div style="position:relative;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;background:#000">
+        <iframe src="${embedUrl}" style="width:100%;height:200px;border:none;display:block" allow="autoplay"></iframe>
+      </div>
+    </div>`;
+}
+
 function renderSpiels(){
+  const tab = state.spielTab || 'objections';
+
+  const guidanceNote = `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">💬 How to use this library</div>
+      <div style="font-size:12px;color:#166534;line-height:1.7">
+        Treat these as a <strong>guide</strong>, not a script to read word-for-word. You're welcome to make these your own — the goal is to sound personable and conversational, not scripted. The only rule: if you adjust an objection handler, keep it following the <strong>3 A's</strong> — Acknowledge, Answer, Ask.
+      </div>
+    </div>`;
+
+  const tabBar = `
+    <div class="filters" style="margin-bottom:16px">
+      <button class="filter-btn${tab==='objections'?' active':''}" onclick="state.spielTab='objections';state.spielCat='All';renderPage()">🛡 Objection Handlers</button>
+      <button class="filter-btn${tab==='discovery'?' active':''}" onclick="state.spielTab='discovery';state.discoveryCat='All';renderPage()">🧭 Discovery Questions</button>
+    </div>`;
+
+  if (tab === 'discovery') {
+    const cats=['All',...new Set(DISCOVERY_QUESTIONS.map(s=>s.cat))];
+    const filtered=DISCOVERY_QUESTIONS.filter(s=>
+      (state.discoveryCat==='All'||s.cat===state.discoveryCat)&&
+      s.title.toLowerCase().includes(state.spielSearch.toLowerCase())
+    );
+    return`
+      <div class="page-header">
+        <div class="page-header-inner"><span style="font-size:22px">💬</span><h1>Spiels Library</h1></div>
+        <p>Approved scripts and discovery questions for prospect interactions</p>
+      </div>
+      <div class="content">
+        ${guidanceNote}
+        ${tabBar}
+        <div class="search-wrap"><span class="search-icon">🔍</span>
+          <input value="${state.spielSearch}" oninput="state.spielSearch=this.value;renderPage()" placeholder="Search questions..."/>
+        </div>
+        <div class="filters">
+          ${cats.map(c=>`<button class="filter-btn${state.discoveryCat===c?' active':''}" onclick="state.discoveryCat='${c}';renderPage()">${c}</button>`).join('')}
+        </div>
+        ${filtered.map(s=>`
+          <div class="card${state.expandedSpiel===('d'+s.id)?' open':''}" style="${state.expandedSpiel===('d'+s.id)?'border-color:#0d9488;box-shadow:0 0 0 3px rgba(13,148,136,.1)':''}">
+            <div class="card-header" onclick="state.expandedSpiel=state.expandedSpiel==='d${s.id}'?null:'d${s.id}';renderPage()">
+              <div class="card-left">${badge(s.cat)}<span class="card-title">${s.title}</span></div>
+              <span class="chevron${state.expandedSpiel===('d'+s.id)?' open':''}">▾</span>
+            </div>
+            ${state.expandedSpiel===('d'+s.id)?`
+              <div class="card-body">
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;font-size:12px;color:#334155;line-height:1.75;font-style:italic;margin:12px 0">
+                  "${s.question}"
+                </div>
+                ${renderRecordingBlock(s.id, s.recordingUrl, 'discovery')}
+                <button class="btn btn-teal" style="font-size:11px" onclick="navigator.clipboard.writeText(\`${s.question.replace(/`/g,'\\`')}\`).then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Question',2000)})">Copy Question</button>
+              </div>`:''
+            }
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Objection Handlers tab (default)
   const cats=['All',...new Set(SPIELS.map(s=>s.cat))];
   const filtered=SPIELS.filter(s=>
     (state.spielCat==='All'||s.cat===state.spielCat)&&
@@ -797,6 +1015,8 @@ function renderSpiels(){
       <p>Approved scripts and talking points for prospect interactions</p>
     </div>
     <div class="content">
+      ${guidanceNote}
+      ${tabBar}
       <div class="search-wrap"><span class="search-icon">🔍</span>
         <input value="${state.spielSearch}" oninput="state.spielSearch=this.value;renderPage()" placeholder="Search spiels..."/>
       </div>
@@ -811,10 +1031,22 @@ function renderSpiels(){
           </div>
           ${state.expandedSpiel===s.id?`
             <div class="card-body">
-              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;font-size:12px;color:#334155;line-height:1.75;font-style:italic;margin:12px 0">
-                ${s.preview}
+              <div style="margin:12px 0">
+                <div style="display:flex;gap:8px;margin-bottom:8px">
+                  <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;flex-shrink:0;align-self:flex-start;margin-top:2px">ACKNOWLEDGE</span>
+                  <span style="font-size:12px;color:#334155;line-height:1.7">${s.aaa.acknowledge}</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:8px">
+                  <span style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;flex-shrink:0;align-self:flex-start;margin-top:2px">ANSWER</span>
+                  <span style="font-size:12px;color:#334155;line-height:1.7">${s.aaa.answer}</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:8px">
+                  <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;flex-shrink:0;align-self:flex-start;margin-top:2px">ASK</span>
+                  <span style="font-size:12px;color:#334155;line-height:1.7">${s.aaa.ask}</span>
+                </div>
               </div>
-              <button class="btn btn-teal" style="font-size:11px" onclick="navigator.clipboard.writeText(\`${s.preview.replace(/`/g,'\\`')}\`).then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Script',2000)})">Copy Script</button>
+              ${renderRecordingBlock(s.id, s.recordingUrl, 'spiel')}
+              <button class="btn btn-teal" style="font-size:11px" onclick="navigator.clipboard.writeText(\`${(s.aaa.acknowledge+' '+s.aaa.answer+' '+s.aaa.ask).replace(/`/g,'\\`')}\`).then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Full Script',2000)})">Copy Full Script</button>
             </div>`:''
           }
         </div>`).join('')}
@@ -889,7 +1121,89 @@ function renderCallNotes(){
     </div>`;
 }
 
-// ── SCORECARD ─────────────────────────────────────────────────────
+// ── CALL LISTENING ────────────────────────────────────────────────
+function renderCallListening(){
+  const isManager = !!state.manager;
+
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#581c87 0%,#7c3aed 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">🎧</span><h1>Call Listening</h1></div>
+      <p>Weekly call recordings for huddle review and self-coaching</p>
+    </div>
+    <div class="content">
+
+      ${isManager&&state.showCallListeningForm?`
+        <div style="background:#fff;border:1.5px solid #7c3aed;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 0 3px rgba(124,58,237,.08)">
+          <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:14px">🎧 Edit Call Listening Links</div>
+
+          <label class="eod-label">Tracking Spreadsheet Link</label>
+          <input type="url" class="eod-input" placeholder="Paste the Google Sheets link..." value="${state.clwSheetUrl||''}" oninput="state.clwSheetUrl=this.value"/>
+
+          <label class="eod-label">Recordings Drive Folder Link</label>
+          <input type="url" class="eod-input" placeholder="Paste the Google Drive folder link..." value="${state.clwFolderUrl||''}" oninput="state.clwFolderUrl=this.value"/>
+
+          <button onclick="saveCallListeningLinks()" style="padding:10px 20px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Links</button>
+        </div>`:''
+      }
+
+      ${isManager?`
+        <button onclick="state.showCallListeningForm=!state.showCallListeningForm;render()"
+          style="width:100%;padding:10px;background:#fff;color:#7c3aed;border:1.5px solid #7c3aed;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:16px">
+          ${state.showCallListeningForm?'Cancel':'✏️ Edit Links'}
+        </button>`:''
+      }
+
+      <!-- Tracking Spreadsheet card -->
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:12px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📊</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px">Call Listening Tracker</div>
+          <div style="font-size:12px;color:#64748b">Weekly scores, notes, and call assignments by agent</div>
+        </div>
+        ${state.clwSheetUrl?
+          `<a href="${state.clwSheetUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">Open Sheet →</a>`:
+          `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
+        }
+      </div>
+
+      ${(()=>{
+        const sheetEmbed = toSheetsEmbedUrl(state.clwSheetUrl);
+        if(!sheetEmbed) return '';
+        return `
+          <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
+            <div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">📊 Live Preview — always shows the latest sheet content</div>
+            </div>
+            <iframe src="${sheetEmbed}" style="width:100%;height:420px;border:none;display:block"></iframe>
+          </div>`;
+      })()}
+
+      <!-- Recordings Drive Folder card -->
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:12px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🎙</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px">Recordings Drive Folder</div>
+          <div style="font-size:12px;color:#64748b">All weekly call recordings, named AgentName_Date</div>
+        </div>
+        ${state.clwFolderUrl?
+          `<a href="${state.clwFolderUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">Open Folder →</a>`:
+          `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
+        }
+      </div>
+
+      <div style="margin-top:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;font-size:11px;color:#64748b;line-height:1.7">
+        💡 <strong style="color:#0f172a">How this works:</strong> the tracking spreadsheet holds the weekly call schedule, scores, and coaching notes. The Drive folder holds the actual recordings. Both update independently — this page just keeps one-click access to each, fully sustainable since the hub never stores the files themselves.
+      </div>
+    </div>`;
+}
+
+function saveCallListeningLinks(){
+  state.showCallListeningForm=false;
+  render();
+}
+
+
+
 function toCsvUrl(url){
   try{
     const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -900,43 +1214,117 @@ function toCsvUrl(url){
     return`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
   }catch(e){return null;}
 }
-async function syncSheet(){
-  if(!state.sheetUrl){state.syncMsg='Paste your Google Sheet link first.';state.syncStatus='error';render();return;}
+async function syncSheet(silent){
+  if(!state.sheetUrl){
+    if(!silent){state.syncMsg='Paste your Google Sheet link first.';state.syncStatus='error';render();}
+    return;
+  }
   const csvUrl=toCsvUrl(state.sheetUrl);
-  if(!csvUrl){state.syncMsg='Invalid Google Sheets URL.';state.syncStatus='error';render();return;}
-  state.syncStatus='loading';state.syncMsg='';render();
+  if(!csvUrl){
+    if(!silent){state.syncMsg='Invalid Google Sheets URL.';state.syncStatus='error';render();}
+    return;
+  }
+  if(!silent){state.syncStatus='loading';state.syncMsg='';render();}
+
+  // Try a list of CORS proxies in order — fall back if one is down.
+  // Note: corsproxy.io was removed after being flagged by multiple security
+  // vendors for suspicious activity (as of March 2026). Using CodeTabs and
+  // allorigins.win instead, both long-standing free proxy services.
+  const proxies = [
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  ];
+
+  let text = null;
+  let lastError = '';
+
+  for (let i = 0; i < proxies.length; i++) {
+    try {
+      const proxyUrl = proxies[i](csvUrl);
+      const res = await fetch(proxyUrl, { cache: 'no-store' });
+      if (!res.ok) { lastError = `Proxy ${i+1} returned ${res.status}`; continue; }
+      const raw = await res.text();
+      // allorigins /get wraps response in JSON {contents: "..."}; /raw and codetabs return plain text
+      if (raw.trim().startsWith('{') && raw.includes('"contents"')) {
+        try {
+          const json = JSON.parse(raw);
+          text = json.contents || '';
+        } catch(e) { text = raw; }
+      } else {
+        text = raw;
+      }
+      if (text && text.trim() && !text.trim().startsWith('<')) break; // got usable CSV, not an HTML error page
+      lastError = `Proxy ${i+1} returned empty or invalid content`;
+      text = null;
+    } catch(err) {
+      lastError = `Proxy ${i+1} failed: ${err.message}`;
+    }
+  }
+
+  if (!text) {
+    if(!silent){
+      state.syncStatus='error';
+      state.syncMsg=`Failed to fetch. ${lastError||'All proxies failed.'} Make sure the sheet is shared as "Anyone with the link can view".`;
+      render();
+    } else {
+      // Auto-sync failures stay quiet in the UI but we still record the attempt
+      state.lastAutoSyncError = lastError || 'All proxies failed';
+    }
+    return;
+  }
+
   try{
-    // Use allorigins CORS proxy to bypass browser CORS restriction
-    const proxyUrl=`https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
-    const res=await fetch(proxyUrl);
-    if(!res.ok)throw new Error(`Could not fetch sheet (${res.status}). Make sure the sheet is shared as Anyone with the link can view.`);
-    const json=await res.json();
-    const text=json.contents||'';
-    if(!text.trim())throw new Error('Sheet appears empty. Make sure the Apps Script has run and the MTD Scores tab has data.');
     const lines=text.split('\n').filter(l=>l.trim());
-    if(lines.length<2)throw new Error('Not enough rows in sheet. Check that the Apps Script wrote data to the MTD Scores tab.');
-    const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
-    const ki=headers.findIndex(h=>h.includes('kpi')||h.includes('metric')||h.includes('name'));
-    const si=headers.findIndex(h=>h.includes('score')||h.includes('actual')||h.includes('value'));
-    if(ki===-1||si===-1)throw new Error('Could not find KPI and Score columns. Check your sheet headers.');
+    if(lines.length<1)throw new Error('Sheet appears empty.');
+
+    // Detect whether row 0 is a header row (contains "KPI" or "Score" as literal labels)
+    // or whether data starts immediately (your actual sheet format: KPI name in col A, score in col B, no header)
+    const firstRowCols = lines[0].split(',').map(c=>c.trim().toLowerCase().replace(/"/g,''));
+    const looksLikeHeader = firstRowCols.some(c=>c==='kpi'||c==='metric') && firstRowCols.some(c=>c==='score'||c==='actual'||c==='value');
+
+    let ki, si, dataLines;
+    if (looksLikeHeader) {
+      ki = firstRowCols.findIndex(h=>h.includes('kpi')||h.includes('metric')||h.includes('name'));
+      si = firstRowCols.findIndex(h=>h.includes('score')||h.includes('actual')||h.includes('value'));
+      dataLines = lines.slice(1);
+    } else {
+      // No header — assume column A = KPI name, column B = Score (your sheet's actual format)
+      ki = 0;
+      si = 1;
+      dataLines = lines;
+    }
+
     const u={...state.teamScores};
-    lines.slice(1).forEach(line=>{
+    let matchedAny=false;
+    dataLines.forEach(line=>{
       const cols=line.split(',').map(c=>c.trim().replace(/"/g,''));
       const n=(cols[ki]||'').toLowerCase();
+      if(!n)return; // skip blank rows
       const v=parseFloat((cols[si]||'').replace('%',''))||0;
-      if(n.includes('call')||n.includes('completion'))u.call_completion=v;
-      if(n.includes('lead eng')||n.includes('engagement'))u.lead_engagement=v;
-      if(n.includes('task'))u.task_management=v;
-      if(n.includes('scheduled')||n.includes('lead to sch'))u.lead_to_scheduled=v;
-      if(n.includes('lead to tour')&&!n.includes('sched'))u.lead_to_tour=v;
+      if(n.includes('call')&&n.includes('completion')){u.call_completion=v;matchedAny=true;}
+      else if(n.includes('lead engagement')||n.includes('lead eng')){u.lead_engagement=v;matchedAny=true;}
+      else if(n.includes('task management')||n.includes('task')){u.task_management=v;matchedAny=true;}
+      else if(n.includes('lead to scheduled')||n.includes('scheduled tour')){u.lead_to_scheduled=v;matchedAny=true;}
+      else if(n.includes('lead to tour')&&!n.includes('scheduled')){u.lead_to_tour=v;matchedAny=true;}
     });
+
+    if(!matchedAny)throw new Error('Could not find any matching KPI rows. Check that column A has KPI names like "Call Completion Rate" and column B has the scores.');
+
     state.teamScores=u;
-    state.syncStatus='success';state.syncMsg='Scores synced!';
+    state.lastAutoSyncError = null;
     state.lastSynced=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    setTimeout(()=>{state.syncStatus='idle';state.syncMsg='';render();},5000);
+    if(!silent){
+      state.syncStatus='success';state.syncMsg='Scores synced!';
+      setTimeout(()=>{state.syncStatus='idle';state.syncMsg='';render();},5000);
+    }
   }catch(err){
-    state.syncStatus='error';
-    state.syncMsg=err.message||'Sync failed. Check the sheet is set to Anyone with the link can view.';
+    if(!silent){
+      state.syncStatus='error';
+      state.syncMsg=err.message||'Could not parse sheet data.';
+    } else {
+      state.lastAutoSyncError = err.message||'Could not parse sheet data.';
+    }
   }
   render();
 }
@@ -972,18 +1360,47 @@ function handleFenixUpload(input){
   reader.readAsText(file);
 }
 function renderPeriodControl(tab){
-  const key   = tab==='mtd'?'periodMTD':tab==='monthend'?'periodMonthEnd':'periodQuarterly';
-  const type  = tab==='quarterly'?'Quarter':'Month';
-  const val   = state[key];
+  if(tab!=='mtd') return ''; // Month-End and Quarterly now use per-period labels in their own history list
+  const val = state.periodMTD;
   return`
-    <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">${type}</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Month</div>
     <div style="font-size:14px;color:#fff;font-weight:700">${val}</div>
     <button style="font-size:11px;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;padding:0;margin-top:3px"
-      onclick="let p=prompt('Edit ${type.toLowerCase()}:','${val}');if(p){state['${key}']=p;render()}">✏ Edit</button>`;
+      onclick="let p=prompt('Edit month:','${val}');if(p){state.periodMTD=p;render()}">✏ Edit</button>`;
 }
+// ── DENVER PILOT ──────────────────────────────────────────────────
+function renderDenverPilot(){
+  const isManager = !!state.manager;
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#0c4a6e 0%,#0891b2 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">🏔️</span><h1>Denver Pilot</h1></div>
+      <p>Pilot program tracking — metrics coming soon</p>
+    </div>
+    <div class="content">
+      <div style="text-align:center;padding:50px 24px;background:#fff;border:1.5px dashed #cbd5e1;border-radius:16px;margin-bottom:16px">
+        <div style="font-size:40px;margin-bottom:14px">🏗️</div>
+        <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:8px">Page reserved for the Denver Pilot</div>
+        <div style="font-size:13px;color:#64748b;max-width:380px;margin:0 auto;line-height:1.7">
+          This page is set up and ready. Metrics, KPIs, and structure for this pilot will be added once defined.
+        </div>
+      </div>
+
+      ${isManager?`
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:18px">
+          <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">📝 Notes (manager only, visible to team)</div>
+          <textarea class="eod-textarea" placeholder="Add any early notes, links, or context about the Denver Pilot here..." oninput="state.denverNotes=this.value" style="min-height:100px">${state.denverNotes||''}</textarea>
+        </div>`:
+        state.denverNotes?`
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px 18px">
+          <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Notes</div>
+          <div style="font-size:13px;color:#334155;line-height:1.7;white-space:pre-line">${state.denverNotes}</div>
+        </div>`:''
+      }
+    </div>`;
+}
+
 function renderScorecard(){
   const tabColor=state.scTab==='mtd'?'#3b82f6':state.scTab==='monthend'?'#0d9488':'#7c3aed';
-  const manualData=state.scTab==='monthend'?state.monthend:state.quarterly;
   return`
     <div class="sc-header">
       <div class="sc-top">
@@ -1006,7 +1423,7 @@ function renderScorecard(){
       </div>
     </div>
     <div class="content">
-      ${state.scTab==='mtd'?renderMTD():renderManualTab(manualData,tabColor)}
+      ${state.scTab==='mtd'?renderMTD():renderPeriodHistory(state.scTab,tabColor)}
     </div>`;
 }
 function renderMTD(){
@@ -1016,15 +1433,16 @@ function renderMTD(){
         <span style="font-size:18px">🔗</span>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Auto Sync</div>
-          <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`Connected · Last synced ${state.lastSynced}`:'Connected · Not yet synced'):'Connect your master Google Sheet to pull scores automatically'}</div>
+          <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`🟢 Auto-syncing every 3 min · Last updated ${state.lastSynced}`:'Connected · Waiting for first sync...'):'Connect your master Google Sheet to pull scores automatically'}</div>
         </div>
         ${state.sheetUrl?`<button class="edit-btn" onclick="state.sheetUrl='';render()">Change</button>`:''}
       </div>
       ${!state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
         <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="state.sheetUrlDraft=this.value"/>
-        <button class="sync-btn" onclick="state.sheetUrl=(state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();render()">Save Link</button>
+        <button class="sync-btn" onclick="state.sheetUrl=(state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();manageScorecardAutoSync('scorecard');render()">Save Link</button>
       </div>`:''}
-      <div class="sync-hint"><strong style="color:#0f172a">Sheet format:</strong> Columns — KPI and Score. The Google Apps Script writes to this sheet every morning at 8am EST.</div>
+      <div class="sync-hint"><strong style="color:#0f172a">Sheet format:</strong> Columns — KPI and Score. The Google Apps Script writes to this sheet every morning at 8am EST. This tab auto-refreshes from the sheet every 3 minutes while it's open — no need to click Sync Now, though it's still here as a manual backup.</div>
+      ${state.lastAutoSyncError?`<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px">⚠ Last auto-sync attempt failed quietly: ${state.lastAutoSyncError}. Showing the most recent successful data.</div>`:''}
       <div style="display:flex;align-items:center;gap:10px">
         <button class="sync-btn${state.syncStatus==='loading'?' disabled':''}" onclick="syncSheet()" ${state.syncStatus==='loading'?'disabled':''}>
           ${state.syncStatus==='loading'?'⏳ Syncing...':'↻ Sync Now'}
@@ -1100,45 +1518,126 @@ function renderAgentTable(kpiId,goal,unit){
       }).join('')}
     </div>`;
 }
-function renderManualTab(data,tabColor){
+function renderPeriodHistory(tab,tabColor){
+  const isManager = !!state.manager;
+  const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
+  const sorted = [...history].sort((a,b)=>b.id-a.id); // newest first
+  const labelType = tab==='monthend' ? 'Month' : 'Quarter';
+  const examplePlaceholder = tab==='monthend' ? 'e.g. June 2026' : 'e.g. Q3 2026';
+
   return`
     <div class="manual-hint" style="background:${tabColor}11;border:1px solid ${tabColor}22;color:${tabColor}">
-      📋 ${state.scTab==='monthend'?`${state.periodMonthEnd} — fill in once the month closes.`:`${state.periodQuarterly} — roll up once the quarter ends.`}
+      📋 ${tab==='monthend'?'Month-End history — fill in once each month closes.':'Quarterly history — roll up once each quarter ends.'}
     </div>
-    ${data.map(m=>{
-      const og=m.actual>0&&m.actual>=m.goal;
-      const isEditing=state.editingMetric===m.id;
-      return`<div class="kpi-card${m.actual>0?(og?' on-goal':' below'):''}" style="margin-bottom:8px">
-        ${isEditing?`<div style="padding:14px">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:10px">Editing: ${m.label}</div>
-          <div class="eod-grid" style="margin-bottom:10px">
-            <div><label class="eod-label">Actual</label><input type="number" id="ea_${m.id}" value="${m.actual}" class="eod-input" style="margin-bottom:0"/></div>
-            <div><label class="eod-label">Goal</label><input type="number" id="eg_${m.id}" value="${m.goal}" class="eod-input" style="margin-bottom:0"/></div>
-          </div>
+
+    ${isManager?`
+      ${state.showAddPeriodForm?`
+        <div style="background:#fff;border:1.5px solid ${tabColor};border-radius:12px;padding:14px;margin-bottom:14px">
+          <label class="eod-label">${labelType} Label</label>
+          <input type="text" class="eod-input" placeholder="${examplePlaceholder}" value="${state.newPeriodLabel}" oninput="state.newPeriodLabel=this.value"/>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-primary" style="font-size:12px" onclick="saveMetric(${m.id})">Save</button>
-            <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:12px" onclick="state.editingMetric=null;render()">Cancel</button>
+            <button onclick="addNewPeriod('${tab}')" style="padding:8px 16px;background:${tabColor};color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Add ${labelType}</button>
+            <button onclick="state.showAddPeriodForm=false;render()" style="padding:8px 16px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer">Cancel</button>
           </div>
-        </div>`:
-        `<div style="padding:13px 15px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div class="kpi-label">${m.label}</div>
-            <div style="display:flex;align-items:baseline;gap:6px">
-              <span class="kpi-score ${m.actual>0?(og?'on-goal':'below'):'no-data'}">${m.actual}${m.unit}</span>
-              <span class="kpi-goal">/ ${m.goal}${m.unit} goal</span>
-              ${m.actual>0?statusChip(m.actual,m.goal):''}
+        </div>`:`
+        <button onclick="state.showAddPeriodForm=true;state.newPeriodLabel='';render()"
+          style="width:100%;padding:10px;background:#fff;color:${tabColor};border:1.5px dashed ${tabColor};border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:14px">
+          + Add ${labelType}
+        </button>`
+      }`:''
+    }
+
+    ${sorted.length===0?`<div style="text-align:center;padding:30px 0;color:#64748b;font-size:13px;background:#fff;border:1px solid #e2e8f0;border-radius:12px">No ${labelType.toLowerCase()}s added yet.</div>`:''}
+
+    ${sorted.map(period=>{
+      const isOpen = state.expandedPeriod===period.id;
+      const onGoalCount = period.kpis.filter(k=>k.actual>0&&k.actual>=k.goal).length;
+      const totalCount = period.kpis.length;
+      return`
+        <div class="card${isOpen?' open':''}" style="${isOpen?`border-color:${tabColor};box-shadow:0 0 0 3px ${tabColor}1a`:''};margin-bottom:8px">
+          <div class="card-header" onclick="state.expandedPeriod=state.expandedPeriod===${period.id}?null:${period.id};render()">
+            <div class="card-left">
+              <span style="font-size:14px;font-weight:700;color:#0f172a">${period.label}</span>
+              <span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:20px">${onGoalCount}/${totalCount} on goal</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${isManager?`<button onclick="event.stopPropagation();deletePeriod('${tab}',${period.id})" style="font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer">✕</button>`:''}
+              <span class="chevron${isOpen?' open':''}">▾</span>
             </div>
           </div>
-          <button class="edit-btn" onclick="state.editingMetric=${m.id};render()">Edit</button>
-        </div>`}
-      </div>`;
+          ${isOpen?`
+            <div class="card-body" style="padding-top:12px">
+              ${period.kpis.map((m,kpiIdx)=>{
+                const og=m.actual>0&&m.actual>=m.goal;
+                const editKey = `${period.id}_${kpiIdx}`;
+                const isEditing = state.editingPeriodMetric===editKey;
+                return`<div class="kpi-card${m.actual>0?(og?' on-goal':' below'):''}" style="margin-bottom:8px">
+                  ${isEditing?`<div style="padding:14px">
+                    <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:10px">Editing: ${m.label}</div>
+                    <div class="eod-grid" style="margin-bottom:10px">
+                      <div><label class="eod-label">Actual</label><input type="number" id="pa_${editKey}" value="${m.actual}" class="eod-input" style="margin-bottom:0"/></div>
+                      <div><label class="eod-label">Goal</label><input type="number" id="pg_${editKey}" value="${m.goal}" class="eod-input" style="margin-bottom:0"/></div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button class="btn btn-primary" style="font-size:12px" onclick="savePeriodMetric('${tab}',${period.id},${kpiIdx})">Save</button>
+                      <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:12px" onclick="state.editingPeriodMetric=null;render()">Cancel</button>
+                    </div>
+                  </div>`:
+                  `<div style="padding:13px 15px;display:flex;align-items:center;justify-content:space-between">
+                    <div>
+                      <div class="kpi-label">${m.label}</div>
+                      <div style="display:flex;align-items:baseline;gap:6px">
+                        <span class="kpi-score ${m.actual>0?(og?'on-goal':'below'):'no-data'}">${m.actual}${m.unit}</span>
+                        <span class="kpi-goal">/ ${m.goal}${m.unit} goal</span>
+                        ${m.actual>0?statusChip(m.actual,m.goal):''}
+                      </div>
+                    </div>
+                    ${isManager?`<button class="edit-btn" onclick="state.editingPeriodMetric='${editKey}';render()">Edit</button>`:''}
+                  </div>`}
+                </div>`;
+              }).join('')}
+            </div>`:''
+          }
+        </div>`;
     }).join('')}`;
 }
-function saveMetric(id){
-  const data=state.scTab==='monthend'?state.monthend:state.quarterly;
-  const idx=data.findIndex(m=>m.id===id);
-  if(idx!==-1){data[idx]={...data[idx],actual:parseFloat(document.getElementById('ea_'+id).value)||0,goal:parseFloat(document.getElementById('eg_'+id).value)||0};}
-  state.editingMetric=null;render();
+
+function addNewPeriod(tab){
+  if(!state.newPeriodLabel||!state.newPeriodLabel.trim()){alert('Please enter a label.');return;}
+  const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
+  const newId = history.length ? Math.max(...history.map(p=>p.id))+1 : 1;
+  history.push({
+    id:newId,
+    label:state.newPeriodLabel.trim(),
+    kpis:KPI_CONFIG.map(k=>({label:k.label,actual:0,goal:k.goal,unit:k.unit})),
+  });
+  state.newPeriodLabel='';
+  state.showAddPeriodForm=false;
+  state.expandedPeriod=newId; // auto-expand the new one so they can fill it in right away
+  render();
+}
+
+function deletePeriod(tab,periodId){
+  if(!confirm('Delete this period entirely? This cannot be undone.'))return;
+  if(tab==='monthend'){
+    state.monthendHistory = state.monthendHistory.filter(p=>p.id!==periodId);
+  } else {
+    state.quarterlyHistory = state.quarterlyHistory.filter(p=>p.id!==periodId);
+  }
+  if(state.expandedPeriod===periodId) state.expandedPeriod=null;
+  render();
+}
+
+function savePeriodMetric(tab,periodId,kpiIdx){
+  const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
+  const period = history.find(p=>p.id===periodId);
+  if(!period)return;
+  const editKey = `${periodId}_${kpiIdx}`;
+  const actual = parseFloat(document.getElementById('pa_'+editKey).value)||0;
+  const goal   = parseFloat(document.getElementById('pg_'+editKey).value)||0;
+  period.kpis[kpiIdx] = {...period.kpis[kpiIdx], actual, goal};
+  state.editingPeriodMetric=null;
+  render();
 }
 
 // ── EOD REPORT ────────────────────────────────────────────────────
@@ -1152,21 +1651,32 @@ function renderEOD(){
     return`
       <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,#1a2f55 100%)">
         <div class="page-header-inner"><span style="font-size:22px">📝</span><h1>EOD Report</h1></div>
-        <p>Manager view — submitted reports and team summary</p>
+        <p>Manager view — EOD submissions and team summary</p>
       </div>
       <div class="content">
+
+        <div style="background:#fff;border:1.5px solid #0f1e3d;border-radius:14px;padding:20px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="font-size:24px">📊</span>
+            <div style="font-size:15px;font-weight:800;color:#0f172a">Where to see actual submissions</div>
+          </div>
+          <p style="font-size:13px;color:#475569;line-height:1.7;margin-bottom:14px">
+            Your agents submit through the <strong>Google Form</strong>, which writes directly to your <strong>EOD Reports Google Sheet</strong>.
+            This hub page doesn't store form submissions live, since it's a static site. The real source of truth is the sheet itself,
+            and you also receive a full summary email automatically every day at 11am Manila time.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a href="${EOD_FORM_URL}" target="_blank" style="font-size:12px;font-weight:700;color:#3b82f6;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 14px;text-decoration:none">📋 Open EOD Form</a>
+            <span style="font-size:12px;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px">📧 Summary email arrives daily at 11am Manila</span>
+          </div>
+        </div>
+
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-size:13px;color:#64748b">${eodSubmissions.length} submission${eodSubmissions.length!==1?'s':''} recorded this session</div>
+          <div style="font-size:13px;color:#64748b">Submissions made directly through this device's session: ${eodSubmissions.length}</div>
           <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:11px" onclick="state.manager=null;render()">Exit Manager View</button>
         </div>
 
-        ${eodSubmissions.length===0?`
-          <div style="text-align:center;padding:40px 20px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:16px">
-            <div style="font-size:36px;margin-bottom:10px">📋</div>
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px">No submissions yet today</div>
-            <div style="font-size:12px;color:#64748b">Submissions from the Google Form will appear here once agents start submitting.</div>
-          </div>`:
-          eodSubmissions.map(s=>`
+        ${eodSubmissions.length>0?eodSubmissions.map(s=>`
             <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:8px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
                 <div>
@@ -1177,13 +1687,8 @@ function renderEOD(){
               ${s.huddleTopic?`<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.06em">🎙 Huddle: </span><span style="font-size:12px;color:#334155">${s.huddleTopic}</span></div>`:''}
               ${s.wins?`<div style="margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.06em">🌟 Wins: </span><span style="font-size:12px;color:#334155">${s.wins}</span></div>`:''}
               ${s.challenges?`<div><span style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.06em">⚠ Challenges: </span><span style="font-size:12px;color:#334155">${s.challenges}</span></div>`:''}
-            </div>`).join('')
+            </div>`).join(''):''
         }
-
-        <div style="margin-top:20px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:12px;color:#64748b">Summary email sends automatically at 11am Manila time daily</div>
-          <a href="${EOD_FORM_URL}" target="_blank" style="font-size:12px;font-weight:600;color:#3b82f6;text-decoration:none">View Form →</a>
-        </div>
 
         <div class="eod-logout-banner" style="margin-top:16px">
           <span style="font-size:24px">⚠️</span>
@@ -1511,9 +2016,12 @@ function renderPage(){
   switch(state.page){
     case 'home':      html=renderHome();break;
     case 'announcements': html=renderAnnouncements();break;
+    case 'kb':        html=renderKB();break;
     case 'spiels':    html=renderSpiels();break;
     case 'notes':     html=renderCallNotes();break;
+    case 'listening': html=renderCallListening();break;
     case 'scorecard': html=renderScorecard();break;
+    case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
     default:          html=renderHome();
