@@ -6,6 +6,8 @@
   <title>PEC Hub — Avanti Residential</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
@@ -180,7 +182,85 @@
   </footer>
 </div>
 <script>
-// ── DATA ──────────────────────────────────────────────────────────
+// ── FIREBASE PERSISTENCE ──────────────────────────────────────────
+// Default password — change this from the manager Account Settings panel once
+// logged in, which saves the new password to Firestore for everyone going forward.
+let MANAGER_PASSWORD = 'PECHub2026';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxdrnU6ZKtXDadH4rc6otlrvNKnRfann8",
+  authDomain: "pec-hub-daf65.firebaseapp.com",
+  projectId: "pec-hub-daf65",
+  storageBucket: "pec-hub-daf65.firebasestorage.app",
+  messagingSenderId: "925629669258",
+  appId: "1:925629669258:web:dd7d92edb4d62bcae6f273"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// All manager-editable data lives under the "pechub" collection, one doc per item:
+//   - spiel_recordings:      { "17": "https://drive.google.com/...", "9": "..." }  (keyed by spiel id)
+//   - discovery_recordings:  { "1": "https://drive.google.com/..." }                (keyed by question id)
+//   - call_listening_links:  { sheetUrl: "...", folderUrl: "..." }
+//   - manager_auth:          { password: "..." }
+async function saveToFirestore(docId, data){
+  try{
+    await db.collection('pechub').doc(docId).set(data, {merge:true});
+    return true;
+  }catch(err){
+    console.error('Firestore save failed:', err);
+    return false;
+  }
+}
+async function loadAllFromFirestore(){
+  try{
+    const snapshot = await db.collection('pechub').get();
+    const result = {};
+    snapshot.forEach(doc => { result[doc.id] = doc.data(); });
+    return result;
+  }catch(err){
+    console.error('Firestore load failed:', err);
+    return {};
+  }
+}
+async function loadOneFromFirestore(docId){
+  try{
+    const doc = await db.collection('pechub').doc(docId).get();
+    return doc.exists ? doc.data() : {};
+  }catch(err){
+    console.error('Firestore load failed for', docId, ':', err);
+    return {};
+  }
+}
+
+// Pulls saved spiel recordings, discovery recordings, and call listening links
+// from Firestore and applies them on top of the hub's baked-in defaults.
+// Runs once on page load, before the first render, so everyone sees the same data.
+async function hydrateFromFirestore(){
+  const remote = await loadAllFromFirestore();
+
+  if(remote.spiel_recordings){
+    Object.entries(remote.spiel_recordings).forEach(([id, url])=>{
+      const spiel = SPIELS.find(s=>String(s.id)===String(id));
+      if(spiel) spiel.recordingUrl = url;
+    });
+  }
+  if(remote.discovery_recordings){
+    Object.entries(remote.discovery_recordings).forEach(([id, url])=>{
+      const q = DISCOVERY_QUESTIONS.find(s=>String(s.id)===String(id));
+      if(q) q.recordingUrl = url;
+    });
+  }
+  if(remote.call_listening_links){
+    state.clwSheetUrl  = remote.call_listening_links.sheetUrl  || state.clwSheetUrl;
+    state.clwFolderUrl = remote.call_listening_links.folderUrl || state.clwFolderUrl;
+  }
+  if(remote.manager_auth && remote.manager_auth.password){
+    MANAGER_PASSWORD = remote.manager_auth.password;
+  }
+}
+
+
 const TEAM = [
   {id:1,name:'Rowel De La Trinidad',role:'Lead Management Manager',emoji:'👑',color:'#1a2f55',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Rowel.jpg',funFact:'Over a decade in customer service and still loves a good call.',quote:'Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go. — Joshua 1:9',isSolo:true},
   {id:2,name:'Beverlyn Domingo',role:'Prospect Experience Coordinator',emoji:'🌟',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Beverlyn.png',funFact:'Fun fact coming soon!',quote:'Have more than you show, speak less than you know. — William Shakespeare'},
@@ -453,7 +533,7 @@ let state = {
   editingPeriodMetric:null,
   denverNotes:'',
   editingMetric:null,
-  loginEmail:'', loginLoading:false, loginError:'',
+  loginEmail:'', loginPassword:'', loginLoading:false, loginError:'',
   // EOD
   eodName:'', eodDate:'', eodDashPhoto:null, eodDashPhotoName:'',
   eodIsPOC:false, eodHuddleTopic:'', eodHuddleCovered:'',
@@ -912,21 +992,30 @@ function renderKB(){
 }
 
 // ── SPIELS ────────────────────────────────────────────────────────
-function addSpielRecording(spielId){
+async function addSpielRecording(spielId){
   const spiel = SPIELS.find(s=>s.id===spielId);
   if(!spiel)return;
   const url = prompt('Paste the Google Drive share link for this recording (MP3/MP4):', spiel.recordingUrl||'');
   if(url===null)return; // cancelled
   spiel.recordingUrl = url.trim();
   render();
+  // Persist to Firestore so every agent sees this without needing to be logged in
+  const existing = await loadOneFromFirestore('spiel_recordings');
+  existing[spielId] = spiel.recordingUrl;
+  const saved = await saveToFirestore('spiel_recordings', existing);
+  if(!saved) console.warn('Recording saved locally but failed to sync to Firestore — other agents may not see it yet.');
 }
-function addDiscoveryRecording(qId){
+async function addDiscoveryRecording(qId){
   const q = DISCOVERY_QUESTIONS.find(s=>s.id===qId);
   if(!q)return;
   const url = prompt('Paste the Google Drive share link for this recording (MP3/MP4):', q.recordingUrl||'');
   if(url===null)return; // cancelled
   q.recordingUrl = url.trim();
   render();
+  const existing = await loadOneFromFirestore('discovery_recordings');
+  existing[qId] = q.recordingUrl;
+  const saved = await saveToFirestore('discovery_recordings', existing);
+  if(!saved) console.warn('Recording saved locally but failed to sync to Firestore — other agents may not see it yet.');
 }
 function renderRecordingBlock(itemId, recordingUrl, type){
   const embedUrl = toDriveEmbedUrl(recordingUrl);
@@ -1197,9 +1286,14 @@ function renderCallListening(){
     </div>`;
 }
 
-function saveCallListeningLinks(){
+async function saveCallListeningLinks(){
   state.showCallListeningForm=false;
   render();
+  const saved = await saveToFirestore('call_listening_links', {
+    sheetUrl: state.clwSheetUrl||'',
+    folderUrl: state.clwFolderUrl||'',
+  });
+  if(!saved) console.warn('Links saved locally but failed to sync to Firestore — other agents may not see them yet.');
 }
 
 
@@ -1760,10 +1854,13 @@ function renderEOD(){
 function doLogin(type){
   if(type==='manager'){
     const e=prompt('Enter your Avanti email:');
-    if(e&&e.trim().toLowerCase()==='rdltrinidad@avantiresidential.com'){
+    if(!e)return;
+    const p=prompt('Enter the manager password:');
+    if(!p)return;
+    if(e.trim().toLowerCase()==='rdltrinidad@avantiresidential.com' && p.trim()===MANAGER_PASSWORD){
       state.manager={name:'Rowel De La Trinidad',email:e,role:'Lead Management Manager'};
       render();
-    } else if(e){alert('Access restricted. Only authorized managers can access this view.');}
+    } else {alert('Incorrect email or password.');}
     return;
   }
 }
@@ -1781,6 +1878,10 @@ function renderLogin(){
         <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Email address</label>
         <input class="login-input" type="email" id="loginEmail" placeholder="you@avantiresidential.com"
           value="${state.loginEmail}" oninput="state.loginEmail=this.value"
+          onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()"/>
+        <label style="font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px">Password</label>
+        <input class="login-input" type="password" id="loginPassword" placeholder="Enter password"
+          value="${state.loginPassword||''}" oninput="state.loginPassword=this.value"
           onkeydown="if(event.key==='Enter')doLoginPage()"/>
         ${state.loginError?`<div class="login-err">${state.loginError}</div>`:''}
         <button class="login-btn" onclick="doLoginPage()" ${state.loginLoading?'disabled':''}>
@@ -1796,15 +1897,31 @@ function renderLogin(){
       </div>
     </div>`;
 }
+async function changeManagerPassword(){
+  const newPassword = prompt('Enter the new manager password:');
+  if(!newPassword || !newPassword.trim()){return;}
+  const confirmPassword = prompt('Confirm the new password:');
+  if(newPassword.trim() !== confirmPassword){alert('Passwords did not match. Password was not changed.');return;}
+  MANAGER_PASSWORD = newPassword.trim();
+  const saved = await saveToFirestore('manager_auth', {password: MANAGER_PASSWORD});
+  if(saved){
+    alert('Password updated! This applies to all future logins for everyone with manager access.');
+  } else {
+    alert('Password changed for this session, but failed to save permanently. Try again or check your connection.');
+  }
+}
 function doLoginPage(){
   const email=state.loginEmail.trim().toLowerCase();
+  const password=(state.loginPassword||'').trim();
   if(!email.includes('@')){state.loginError='Please enter a valid email address.';render();return;}
+  if(!password){state.loginError='Please enter the manager password.';render();return;}
   state.loginError='';state.loginLoading=true;render();
   setTimeout(()=>{
-    if(email==='rdltrinidad@avantiresidential.com'){
+    if(email==='rdltrinidad@avantiresidential.com' && password===MANAGER_PASSWORD){
       state.manager={name:'Rowel De La Trinidad',email,role:'Lead Management Manager'};
       state.loginLoading=false;
-    }else{state.loginError='Access restricted. Only authorized managers can access coaching logs.';state.loginLoading=false;}
+      state.loginPassword='';
+    }else{state.loginError='Incorrect email or password.';state.loginLoading=false;}
     render();
   },1200);
 }
@@ -1848,7 +1965,10 @@ function renderCoaching(){
         <div style="text-align:right">
           <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9)">${state.manager.name}</div>
           <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px">${state.manager.role}</div>
-          <button class="signout-btn" onclick="state.manager=null;showPage('home')">Sign out</button>
+          <div style="display:flex;gap:6px;justify-content:flex-end">
+            <button class="signout-btn" onclick="changeManagerPassword()">🔑 Change Password</button>
+            <button class="signout-btn" onclick="state.manager=null;showPage('home')">Sign out</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2029,7 +2149,11 @@ function renderPage(){
   document.getElementById('pageContent').innerHTML=html;
 }
 function render(){renderNav();renderPage();}
+
+// Render immediately with baked-in defaults first so the page never looks blank,
+// then quietly hydrate from Firestore and re-render once real data arrives.
 render();
+hydrateFromFirestore().then(()=>render()).catch(err=>console.error('Hydrate failed:', err));
 </script>
 </body>
 </html>
