@@ -182,6 +182,34 @@
   </footer>
 </div>
 <script>
+// ── PERSISTED MANAGER LOGIN ──────────────────────────────────────
+// Stores manager login in localStorage so closing/reopening the browser
+// keeps you signed in. This is local to this specific browser/device —
+// anyone else using the same browser would also appear logged in unless
+// you sign out first.
+const MANAGER_SESSION_KEY = 'pechub_manager_session';
+
+function persistManagerSession(managerObj){
+  try{
+    localStorage.setItem(MANAGER_SESSION_KEY, JSON.stringify(managerObj));
+  }catch(e){
+    console.warn('Could not persist login — localStorage unavailable:', e);
+  }
+}
+function loadPersistedManagerSession(){
+  try{
+    const raw = localStorage.getItem(MANAGER_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    return null;
+  }
+}
+function clearPersistedManagerSession(){
+  try{
+    localStorage.removeItem(MANAGER_SESSION_KEY);
+  }catch(e){}
+}
+
 // ── FIREBASE PERSISTENCE ──────────────────────────────────────────
 // Default password — change this from the manager Account Settings panel once
 // logged in, which saves the new password to Firestore for everyone going forward.
@@ -267,6 +295,11 @@ async function hydrateFromFirestore(){
         state.announcements.push(item);
       }
     });
+  }
+  if(remote.scorecard_sheet_link && remote.scorecard_sheet_link.sheetUrl){
+    state.sheetUrl = remote.scorecard_sheet_link.sheetUrl;
+    // If we're already sitting on the Scorecard page when this loads, start auto-sync now
+    if(state.page === 'scorecard') manageScorecardAutoSync('scorecard');
   }
 }
 
@@ -902,10 +935,10 @@ function renderAnnouncements(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px">
         <div class="section-label" style="margin:0">Grace Hill Training Tracker</div>
         <div style="display:flex;gap:8px">
-          <label style="padding:6px 12px;background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+          ${isManager?`<label style="padding:6px 12px;background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
             📊 Upload XLS Report
             <input type="file" accept=".xls,.xlsx" style="display:none" onchange="parseGraceHillXLS(this)"/>
-          </label>
+          </label>`:''}
           ${isManager?`<button onclick="state.showTrainingForm=!state.showTrainingForm;render()" style="padding:6px 12px;background:#0f1e3d;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">
             ${state.showTrainingForm?'Cancel':'+ Add Manual'}
           </button>`:''}
@@ -1532,6 +1565,20 @@ function toCsvUrl(url){
     return`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
   }catch(e){return null;}
 }
+async function clearScorecardSheetLink(){
+  state.sheetUrl='';
+  if(scorecardAutoSyncInterval){clearInterval(scorecardAutoSyncInterval);scorecardAutoSyncInterval=null;}
+  render();
+  await saveToFirestore('scorecard_sheet_link', {sheetUrl: ''});
+}
+async function saveScorecardSheetLink(){
+  const url = (state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();
+  state.sheetUrl = url;
+  manageScorecardAutoSync('scorecard');
+  render();
+  const saved = await saveToFirestore('scorecard_sheet_link', {sheetUrl: url});
+  if(!saved) console.warn('Sheet link saved locally but failed to sync to Firestore — you may need to re-enter it next session.');
+}
 async function syncSheet(silent){
   if(!state.sheetUrl){
     if(!silent){state.syncMsg='Paste your Google Sheet link first.';state.syncStatus='error';render();}
@@ -1762,11 +1809,11 @@ function renderMTD(){
           <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Auto Sync</div>
           <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`🟢 Auto-syncing every 3 min · Last updated ${state.lastSynced}`:'Connected · Waiting for first sync...'):'Connect your master Google Sheet to pull scores automatically'}</div>
         </div>
-        ${state.sheetUrl?`<button class="edit-btn" onclick="state.sheetUrl='';render()">Change</button>`:''}
+        ${state.sheetUrl?`<button class="edit-btn" onclick="clearScorecardSheetLink()">Change</button>`:''}
       </div>
       ${!state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
         <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="state.sheetUrlDraft=this.value"/>
-        <button class="sync-btn" onclick="state.sheetUrl=(state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();manageScorecardAutoSync('scorecard');render()">Save Link</button>
+        <button class="sync-btn" onclick="saveScorecardSheetLink()">Save Link</button>
       </div>`:''}
       ${state.lastAutoSyncError?`<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px">⚠ Last auto-sync attempt failed quietly — likely a brief outage with the free sync service. Showing the most recent successful data below.</div>`:''}
       <div style="display:flex;align-items:center;gap:10px">
@@ -2003,7 +2050,7 @@ function renderEOD(){
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div style="font-size:13px;color:#64748b">Submissions made directly through this device's session: ${eodSubmissions.length}</div>
-          <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:11px" onclick="state.manager=null;render()">Exit Manager View</button>
+          <button class="btn" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:11px" onclick="state.manager=null;clearPersistedManagerSession();render()">Exit Manager View</button>
         </div>
 
         ${eodSubmissions.length>0?eodSubmissions.map(s=>`
@@ -2095,6 +2142,7 @@ function doLogin(type){
     if(!p)return;
     if(e.trim().toLowerCase()==='rdltrinidad@avantiresidential.com' && p.trim()===MANAGER_PASSWORD){
       state.manager={name:'Rowel De La Trinidad',email:e,role:'Lead Management Manager'};
+      persistManagerSession(state.manager);
       render();
     } else {alert('Incorrect email or password.');}
     return;
@@ -2155,6 +2203,7 @@ function doLoginPage(){
   setTimeout(()=>{
     if(email==='rdltrinidad@avantiresidential.com' && password===MANAGER_PASSWORD){
       state.manager={name:'Rowel De La Trinidad',email,role:'Lead Management Manager'};
+      persistManagerSession(state.manager);
       state.loginLoading=false;
       state.loginPassword='';
     }else{state.loginError='Incorrect email or password.';state.loginLoading=false;}
@@ -2203,7 +2252,7 @@ function renderCoaching(){
           <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px">${state.manager.role}</div>
           <div style="display:flex;gap:6px;justify-content:flex-end">
             <button class="signout-btn" onclick="changeManagerPassword()">🔑 Change Password</button>
-            <button class="signout-btn" onclick="state.manager=null;showPage('home')">Sign out</button>
+            <button class="signout-btn" onclick="state.manager=null;clearPersistedManagerSession();showPage('home')">Sign out</button>
           </div>
         </div>
       </div>
@@ -2389,6 +2438,10 @@ function render(){renderNav();renderPage();}
 
 // Render immediately with baked-in defaults first so the page never looks blank,
 // then quietly hydrate from Firestore and re-render once real data arrives.
+// Restore a previously persisted manager login, if any, before the first render
+const restoredManager = loadPersistedManagerSession();
+if(restoredManager) state.manager = restoredManager;
+
 render();
 hydrateFromFirestore().then(()=>render()).catch(err=>console.error('Hydrate failed:', err));
 </script>
