@@ -258,6 +258,16 @@ async function hydrateFromFirestore(){
   if(remote.manager_auth && remote.manager_auth.password){
     MANAGER_PASSWORD = remote.manager_auth.password;
   }
+  if(remote.announcements_list && Array.isArray(remote.announcements_list.items)){
+    // Merge saved announcements in, avoiding duplicates with the default seed announcement
+    const savedItems = remote.announcements_list.items;
+    const existingIds = new Set(state.announcements.map(a=>a.id));
+    savedItems.forEach(item=>{
+      if(!existingIds.has(item.id)){
+        state.announcements.push(item);
+      }
+    });
+  }
 }
 
 
@@ -580,7 +590,7 @@ let state = {
     {id:1, title:'Welcome to PEC Hub!', body:'This is your one-stop resource for everything you need. Explore SOPs and Policies, Spiels Library, Call Notes, and more.', date:'2026-06-11', pinned:true, type:'info'},
   ],
   showAnnouncementForm:false,
-  anTitle:'', anBody:'', anType:'info', anPinned:false,
+  anTitle:'', anBody:'', anType:'info', anPinned:false, anPdfUrl:'', anImageUrl:'',
   trainings:[],
   showTrainingForm:false,
   trTitle:'', trAgent:'All', trDue:'', trCompleted:false,
@@ -842,6 +852,10 @@ function renderAnnouncements(){
           <input type="text" class="eod-input" placeholder="e.g. Mandatory Grace Hill Training" value="${state.anTitle}" oninput="state.anTitle=this.value"/>
           <label class="eod-label">Message *</label>
           <textarea class="eod-textarea" placeholder="Details of the announcement..." oninput="state.anBody=this.value">${state.anBody}</textarea>
+          <label class="eod-label">Attach a PDF (optional) — paste Google Drive share link</label>
+          <input type="url" class="eod-input" placeholder="https://drive.google.com/file/d/..." value="${state.anPdfUrl||''}" oninput="state.anPdfUrl=this.value"/>
+          <label class="eod-label">Attach a Picture (optional) — paste Google Drive share link</label>
+          <input type="url" class="eod-input" placeholder="https://drive.google.com/file/d/..." value="${state.anImageUrl||''}" oninput="state.anImageUrl=this.value"/>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px;font-size:12px;color:#64748b">
             <input type="checkbox" ${state.anPinned?'checked':''} onchange="state.anPinned=this.checked" style="accent-color:#dc2626"/>
             Pin this announcement to the top
@@ -866,6 +880,18 @@ function renderAnnouncements(){
                 </div>
                 <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px">${a.title}</div>
                 <div style="font-size:13px;color:#475569;line-height:1.6">${a.body}</div>
+                ${a.imageUrl?`
+                  <img src="${a.imageUrl}" alt="${a.title}" style="max-width:100%;border-radius:10px;margin-top:10px;display:block;border:1px solid #e2e8f0" onerror="this.style.display='none'"/>
+                `:''}
+                ${a.pdfUrl?`
+                  <div style="margin-top:10px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+                    <div style="padding:8px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between">
+                      <span style="font-size:11px;font-weight:700;color:#64748b">📄 Attached Report</span>
+                      <a href="${a.pdfUrl}" target="_blank" style="font-size:11px;font-weight:700;color:#3b82f6;text-decoration:none">Open Full PDF →</a>
+                    </div>
+                    <iframe src="${toDriveEmbedUrl(a.pdfUrl)||a.pdfUrl}" style="width:100%;height:380px;border:none;display:block"></iframe>
+                  </div>
+                `:''}
               </div>
               ${isManager?`<button onclick="deleteAnnouncement(${a.id})" style="font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;flex-shrink:0">✕</button>`:''}
             </div>
@@ -944,14 +970,28 @@ function renderAnnouncements(){
     </div>`;
 }
 
-function saveAnnouncement(){
+async function saveAnnouncement(){
   if(!state.anTitle||!state.anBody){alert('Please fill in the title and message.');return;}
-  state.announcements.push({id:Date.now(),title:state.anTitle,body:state.anBody,type:state.anType||'info',pinned:state.anPinned,date:new Date().toISOString().split('T')[0]});
-  state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.showAnnouncementForm=false;
+  const newAnnouncement = {
+    id:Date.now(), title:state.anTitle, body:state.anBody, type:state.anType||'info',
+    pinned:state.anPinned, date:new Date().toISOString().split('T')[0],
+    pdfUrl:(state.anPdfUrl||'').trim(), imageUrl:(state.anImageUrl||'').trim(),
+  };
+  state.announcements.push(newAnnouncement);
+  state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.anPdfUrl='';state.anImageUrl='';state.showAnnouncementForm=false;
   render();
+  // Persist to Firestore so every agent sees this without needing to be logged in
+  const existing = await loadOneFromFirestore('announcements_list');
+  const list = existing.items || [];
+  list.push(newAnnouncement);
+  const saved = await saveToFirestore('announcements_list', {items: list});
+  if(!saved) console.warn('Announcement saved locally but failed to sync to Firestore — other agents may not see it yet.');
 }
-function deleteAnnouncement(id){
+async function deleteAnnouncement(id){
   state.announcements=state.announcements.filter(a=>a.id!==id);render();
+  const existing = await loadOneFromFirestore('announcements_list');
+  const list = (existing.items||[]).filter(a=>a.id!==id);
+  await saveToFirestore('announcements_list', {items: list});
 }
 function saveTraining(){
   if(!state.trTitle||!state.trDue){alert('Please fill in the training title and due date.');return;}
@@ -1719,24 +1759,31 @@ function renderMTD(){
       <div class="sync-row">
         <span style="font-size:18px">🔗</span>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Auto Sync</div>
-          <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`🟢 Auto-syncing every 3 min · Last updated ${state.lastSynced}`:'Connected · Waiting for first sync...'):'Connect your master Google Sheet to pull scores automatically'}</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Live Preview</div>
+          <div style="font-size:11px;color:#64748b">${state.sheetUrl?'🟢 Connected · Live view of the sheet below':'Connect your master Google Sheet to show it here'}</div>
         </div>
         ${state.sheetUrl?`<button class="edit-btn" onclick="state.sheetUrl='';render()">Change</button>`:''}
       </div>
       ${!state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
         <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="state.sheetUrlDraft=this.value"/>
-        <button class="sync-btn" onclick="state.sheetUrl=(state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();manageScorecardAutoSync('scorecard');render()">Save Link</button>
+        <button class="sync-btn" onclick="state.sheetUrl=(state.sheetUrlDraft||document.getElementById('sheetInput').value).trim();render()">Save Link</button>
       </div>`:''}
-      <div class="sync-hint"><strong style="color:#0f172a">Sheet format:</strong> Columns — KPI and Score. The Google Apps Script writes to this sheet every morning at 8am EST. This tab auto-refreshes from the sheet every 3 minutes while it's open — no need to click Sync Now, though it's still here as a manual backup.</div>
-      ${state.lastAutoSyncError?`<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px">⚠ Last auto-sync attempt failed quietly: ${state.lastAutoSyncError}. Showing the most recent successful data.</div>`:''}
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="sync-btn${state.syncStatus==='loading'?' disabled':''}" onclick="syncSheet()" ${state.syncStatus==='loading'?'disabled':''}>
-          ${state.syncStatus==='loading'?'⏳ Syncing...':'↻ Sync Now'}
-        </button>
-        ${state.syncMsg?`<span style="font-size:12px;font-weight:600;color:${state.syncStatus==='success'?'#15803d':'#dc2626'}">${state.syncStatus==='success'?'✓ ':'⚠ '}${state.syncMsg}</span>`:''}
-      </div>
+      <div class="sync-hint"><strong style="color:#0f172a">How this works:</strong> the Google Apps Script writes to this sheet every morning at 8am EST. This page shows a live, always-up-to-date view of that sheet directly — no proxy or sync button needed, so it never breaks due to third-party service outages.</div>
     </div>
+
+    ${(()=>{
+      const sheetEmbed = toSheetsEmbedUrl(state.sheetUrl);
+      if(!sheetEmbed) return '';
+      return `
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
+          <div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">📊 Live Preview — always shows the latest sheet content</div>
+            <a href="${state.sheetUrl}" target="_blank" style="font-size:11px;font-weight:700;color:#3b82f6;text-decoration:none">Open Sheet →</a>
+          </div>
+          <iframe src="${sheetEmbed}" style="width:100%;height:420px;border:none;display:block"></iframe>
+        </div>`;
+    })()}
+
     <div class="sync-panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:18px">📤</span>
@@ -1752,31 +1799,11 @@ function renderMTD(){
         </label>
       </div>
     </div>
-    <div class="section-label">Team Averages</div>
-    <div class="kpi-grid">
-      ${KPI_CONFIG.map(kpi=>{
-        const a=state.teamScores[kpi.id]||0;
-        const og=onGoal(a,kpi.goal);
-        const p=pct(a,kpi.goal);
-        const isOpen=state.expandedKpi===kpi.id;
-        return`<div class="kpi-card${a>0?(og?' on-goal':' below'):''}">
-          <div class="kpi-inner">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-              <div>
-                <div class="kpi-label">${kpi.label}</div>
-                <div><span class="kpi-score ${a>0?(og?'on-goal':'below'):'no-data'}">${a}${kpi.unit}</span><span class="kpi-goal">/ ${kpi.goal}${kpi.unit}</span></div>
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-                ${statusChip(a,kpi.goal)}
-                ${kpi.agentTable?`<button class="agent-toggle" style="color:#3b82f6;border-color:#3b82f644" onclick="state.expandedKpi=state.expandedKpi==='${kpi.id}'?null:'${kpi.id}';render()">${isOpen?'Hide ▲':'Per agent ▼'}</button>`:''}
-              </div>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${a>0?(og?'#16a34a':'#e05c45'):'#e2e8f0'}"></div></div>
-          </div>
-          ${isOpen&&kpi.agentTable?`<div style="padding:0 14px 14px;border-top:1px solid #f1f5f9">${renderAgentTable(kpi.id,kpi.goal,kpi.unit)}</div>`:''}
-        </div>`;
-      }).join('')}
-    </div>
+    ${state.agents&&state.agents.some(a=>a.fenix_scored_calls>0)?`
+    <div class="section-label">Fenix Scores by Agent</div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:14px">
+      ${renderAgentTable('fenix_scored_calls', KPI_CONFIG.find(k=>k.id==='fenix_scored_calls').goal, '%')}
+    </div>`:''}
     <div class="sources" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px">
       <div class="section-label" style="margin-bottom:8px">Data Sources</div>
       ${[
