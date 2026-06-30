@@ -181,7 +181,121 @@
     <span>Progress, not Perfection.</span>
   </footer>
 </div>
+<div id="presenceBar" style="display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#0f1e3d;border-radius:30px;padding:8px 16px;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:500;max-width:90vw;overflow-x:auto"></div>
 <script>
+// ── ONLINE PRESENCE (who's currently on the hub) ─────────────────
+// Each visitor writes a small "I'm here" heartbeat to Firestore every
+// 15 seconds while the hub is open, and reads everyone's heartbeats
+// every 10 seconds to build the "who's online" bar. Anyone whose last
+// heartbeat is older than 30 seconds is treated as offline (covers the
+// case where someone just closes the tab without a clean disconnect).
+const VISITOR_NAME_KEY = 'pechub_visitor_name';
+const PRESENCE_HEARTBEAT_MS = 15 * 1000;
+const PRESENCE_REFRESH_MS = 10 * 1000;
+const PRESENCE_STALE_MS = 30 * 1000;
+
+let presenceHeartbeatInterval = null;
+let presenceRefreshInterval = null;
+
+function getVisitorName(){
+  try{ return localStorage.getItem(VISITOR_NAME_KEY) || null; }catch(e){ return null; }
+}
+function setVisitorName(name){
+  try{ localStorage.setItem(VISITOR_NAME_KEY, name); }catch(e){}
+}
+
+async function sendPresenceHeartbeat(){
+  const name = getVisitorName();
+  if(!name) return;
+  try{
+    await db.collection('pechub_presence').doc(name).set({
+      name, lastSeen: Date.now(),
+    });
+  }catch(e){
+    console.warn('Presence heartbeat failed:', e);
+  }
+}
+
+async function refreshOnlineVisitors(){
+  try{
+    const snapshot = await db.collection('pechub_presence').get();
+    const now = Date.now();
+    const online = [];
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      if(data && data.lastSeen && (now - data.lastSeen) < PRESENCE_STALE_MS){
+        online.push(data.name);
+      }
+    });
+    state.onlineVisitors = online;
+    renderPresenceBar();
+  }catch(e){
+    console.warn('Could not refresh online visitors:', e);
+  }
+}
+
+function startPresenceSystem(){
+  const name = getVisitorName();
+  if(!name){
+    promptForVisitorName();
+    return;
+  }
+  sendPresenceHeartbeat();
+  refreshOnlineVisitors();
+  if(presenceHeartbeatInterval) clearInterval(presenceHeartbeatInterval);
+  if(presenceRefreshInterval) clearInterval(presenceRefreshInterval);
+  presenceHeartbeatInterval = setInterval(sendPresenceHeartbeat, PRESENCE_HEARTBEAT_MS);
+  presenceRefreshInterval = setInterval(refreshOnlineVisitors, PRESENCE_REFRESH_MS);
+}
+
+function promptForVisitorName(){
+  // Build a friendly name picker using the real team roster
+  const names = TEAM.map(t=>t.name);
+  const overlay = document.createElement('div');
+  overlay.id = 'visitorNameOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,30,61,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:360px;width:100%;text-align:center">
+      <div style="font-size:36px;margin-bottom:10px">👋</div>
+      <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:6px">Welcome to PEC Hub!</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.6">Pick your name so your teammates can see you're online. We'll remember it next time.</div>
+      <select id="visitorNameSelect" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:14px">
+        <option value="">Select your name...</option>
+        ${names.map(n=>`<option value="${n}">${n}</option>`).join('')}
+      </select>
+      <button id="visitorNameSubmit" style="width:100%;padding:11px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Continue →</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('visitorNameSubmit').onclick = ()=>{
+    const sel = document.getElementById('visitorNameSelect').value;
+    if(!sel){ alert('Please select your name first.'); return; }
+    setVisitorName(sel);
+    document.body.removeChild(overlay);
+    startPresenceSystem();
+  };
+}
+
+function renderPresenceBar(){
+  const container = document.getElementById('presenceBar');
+  if(!container) return;
+  const online = state.onlineVisitors || [];
+  if(online.length === 0){
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'flex';
+  container.innerHTML = online.map(name=>{
+    const animal = ANIMAL_AVATARS[name] || '🐾';
+    const firstName = name.split(' ')[0];
+    return `<div title="${name} is online" style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid #16a34a;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 1px 4px rgba(0,0,0,.15)">${animal}</div>
+      <div style="font-size:8px;color:#fff;font-weight:600;max-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${firstName}</div>
+    </div>`;
+  }).join('');
+}
+
 // ── PERSISTED MANAGER LOGIN ──────────────────────────────────────
 // Stores manager login in localStorage so closing/reopening the browser
 // keeps you signed in. This is local to this specific browser/device —
@@ -319,6 +433,24 @@ const TEAM = [
   {id:12,name:'Jo-Ann Atadero',role:'Prospect Experience Coordinator',emoji:'🌙',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jo-ann%20Atadero.png',funFact:'',quote:'I can be changed by what happens to me. But I refuse to be reduced by it. — Maya Angelou'},
   {id:13,name:'Kenneth Geronimo',role:'Prospect Experience Coordinator',emoji:'🦋',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Kenneth%20Geronimo.png',funFact:'',quote:'The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. — Brian Herbert'},
 ];
+
+// Fixed animal avatar per person — same animal every time they visit, for that
+// little bit of personality and recognizability in the "who's online" bar.
+const ANIMAL_AVATARS = {
+  'Rowel De La Trinidad': '🦁',
+  'Beverlyn Domingo': '🐰',
+  'Dianne Mercado': '🦊',
+  'Quigly Arias': '🐨',
+  'Russel Espaldon': '🐺',
+  'Mary Panimbagon': '🦋',
+  'Jeffrey Bolo': '🐯',
+  'Juliet Elaco': '🦄',
+  'Elhora Paule': '🐼',
+  'Charles Calidguid': '🐸',
+  'Carizza Estanislao': '🦉',
+  'Jo-Ann Atadero': '🐢',
+  'Kenneth Geronimo': '🦅',
+};
 
 const KB = [
   // Tour & Scheduling
@@ -618,7 +750,7 @@ const CAT_COLORS = {
 // ── STATE ─────────────────────────────────────────────────────────
 let eodSubmissions = [];
 let state = {
-  page:'home', manager:null,
+  page:'home', manager:null, onlineVisitors:[], commentDrafts:{},
   announcements:[
     {id:1, title:'Welcome to PEC Hub!', body:'This is your one-stop resource for everything you need. Explore SOPs and Policies, Spiels Library, Call Notes, and more.', date:'2026-06-11', pinned:true, type:'info'},
   ],
@@ -813,6 +945,90 @@ function daysUntil(dateStr){
   return Math.ceil((due - today) / (1000*60*60*24));
 }
 
+function renderAnnouncementComments(a){
+  const isManager = !!state.manager;
+  const comments = a.comments || [];
+  const draftKey = a.id;
+  const draftText = (state.commentDrafts && state.commentDrafts[draftKey]) || '';
+  const visitorName = getVisitorName();
+
+  return `
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9">
+      ${comments.length>0?`
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+          ${comments.map(c=>{
+            const animal = ANIMAL_AVATARS[c.name] || '🐾';
+            return `
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <div style="width:24px;height:24px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">${animal}</div>
+                <div style="flex:1;background:#f8fafc;border-radius:10px;padding:6px 10px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:11px;font-weight:700;color:#0f172a">${c.name}</span>
+                    ${isManager?`<button onclick="deleteAnnouncementComment(${a.id},${c.id})" style="font-size:10px;color:#cbd5e1;background:none;border:none;cursor:pointer;margin-left:auto">✕</button>`:''}
+                  </div>
+                  <div style="font-size:12px;color:#334155;line-height:1.5">${c.text}</div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      `:''}
+      ${visitorName?`
+        <div style="display:flex;gap:6px">
+          <input type="text" placeholder="Add a comment..." value="${draftText}"
+            oninput="state.commentDrafts=state.commentDrafts||{};state.commentDrafts[${draftKey}]=this.value"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();postAnnouncementComment(${a.id})}"
+            style="flex:1;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:20px;font-size:12px;outline:none"/>
+          <button onclick="postAnnouncementComment(${a.id})" style="padding:6px 14px;background:#0f1e3d;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer">Post</button>
+        </div>
+      `:`
+        <div style="font-size:11px;color:#94a3b8;font-style:italic">Pick your name (you'll be asked when you first open the hub) to leave a comment.</div>
+      `}
+    </div>`;
+}
+
+async function postAnnouncementComment(announcementId){
+  const visitorName = getVisitorName();
+  if(!visitorName){ alert('Please select your name first (refresh the page if you weren\'t asked).'); return; }
+  const text = ((state.commentDrafts||{})[announcementId]||'').trim();
+  if(!text) return;
+
+  const announcement = state.announcements.find(a=>a.id===announcementId);
+  if(!announcement) return;
+  if(!announcement.comments) announcement.comments = [];
+  const newComment = { id: Date.now(), name: visitorName, text };
+  announcement.comments.push(newComment);
+
+  state.commentDrafts[announcementId] = '';
+  render();
+
+  // Persist to Firestore — comments live as a sub-field on the announcement
+  // itself inside the same announcements_list document we already use.
+  const existing = await loadOneFromFirestore('announcements_list');
+  const list = existing.items || [];
+  const idx = list.findIndex(item=>item.id===announcementId);
+  if(idx !== -1){
+    if(!list[idx].comments) list[idx].comments = [];
+    list[idx].comments.push(newComment);
+  }
+  const saved = await saveToFirestore('announcements_list', {items: list});
+  if(!saved) console.warn('Comment saved locally but failed to sync to Firestore — other agents may not see it yet.');
+}
+
+async function deleteAnnouncementComment(announcementId, commentId){
+  const announcement = state.announcements.find(a=>a.id===announcementId);
+  if(!announcement || !announcement.comments) return;
+  announcement.comments = announcement.comments.filter(c=>c.id!==commentId);
+  render();
+
+  const existing = await loadOneFromFirestore('announcements_list');
+  const list = existing.items || [];
+  const idx = list.findIndex(item=>item.id===announcementId);
+  if(idx !== -1 && list[idx].comments){
+    list[idx].comments = list[idx].comments.filter(c=>c.id!==commentId);
+  }
+  await saveToFirestore('announcements_list', {items: list});
+}
+
 function renderAnnouncements(){
   const today = new Date().toISOString().split('T')[0];
   const isManager = !!state.manager;
@@ -925,6 +1141,7 @@ function renderAnnouncements(){
                     <iframe src="${toDriveEmbedUrl(a.pdfUrl)||a.pdfUrl}" style="width:100%;height:380px;border:none;display:block"></iframe>
                   </div>
                 `:''}
+                ${renderAnnouncementComments(a)}
               </div>
               ${isManager?`<button onclick="deleteAnnouncement(${a.id})" style="font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0;flex-shrink:0">✕</button>`:''}
             </div>
@@ -1009,6 +1226,7 @@ async function saveAnnouncement(){
     id:Date.now(), title:state.anTitle, body:state.anBody, type:state.anType||'info',
     pinned:state.anPinned, date:new Date().toISOString().split('T')[0],
     pdfUrl:(state.anPdfUrl||'').trim(), imageUrl:(state.anImageUrl||'').trim(),
+    comments:[],
   };
   state.announcements.push(newAnnouncement);
   state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.anPdfUrl='';state.anImageUrl='';state.showAnnouncementForm=false;
@@ -2444,6 +2662,10 @@ if(restoredManager) state.manager = restoredManager;
 
 render();
 hydrateFromFirestore().then(()=>render()).catch(err=>console.error('Hydrate failed:', err));
+
+// Start the online-presence system once Firestore (db) is ready.
+// If this is the visitor's first time, this will show the name picker.
+startPresenceSystem();
 </script>
 </body>
 </html>
