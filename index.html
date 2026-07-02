@@ -755,7 +755,7 @@ let state = {
     {id:1, title:'Welcome to PEC Hub!', body:'This is your one-stop resource for everything you need. Explore SOPs and Policies, Spiels Library, Call Notes, and more.', date:'2026-06-11', pinned:true, type:'info'},
   ],
   showAnnouncementForm:false,
-  anTitle:'', anBody:'', anType:'info', anPinned:false, anPdfUrl:'', anImageUrl:'',
+  anTitle:'', anBody:'', anType:'info', anPinned:false, anPdfUrl:'', anImageUrl:'', anLinkLabel:'', anLinkUrl:'',
   trainings:[],
   showTrainingForm:false,
   trTitle:'', trAgent:'All', trDue:'', trCompleted:false,
@@ -803,11 +803,26 @@ const NAV = [
   {id:'scripts',  label:'Call Notes V2', icon:'📋'},
   {id:'listening', label:'Call Listening', icon:'🎧'},
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
+  {id:'priorities', label:'Task Priorities', icon:'🎯'},
   {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
 ];
 
+function escapeHtml(text){
+  return (text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function linkify(text){
+  const escaped = escapeHtml(text);
+  const urlPattern = /(https?:\/\/[^\s<]+)/g;
+  return escaped.replace(urlPattern, raw=>{
+    let url = raw;
+    let trail = '';
+    const m = url.match(/[.,;:!?)\]]+$/);
+    if(m){ trail = m[0]; url = url.slice(0, url.length - trail.length); }
+    return `<a href="${url}" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline">${url}</a>${trail}`;
+  });
+}
 function toDriveEmbedUrl(url){
   if(!url)return null;
   // Matches both /file/d/FILEID/view and open?id=FILEID formats
@@ -1101,6 +1116,12 @@ function renderAnnouncements(){
           <input type="text" class="eod-input" placeholder="e.g. Mandatory Grace Hill Training" value="${state.anTitle}" oninput="state.anTitle=this.value"/>
           <label class="eod-label">Message *</label>
           <textarea class="eod-textarea" placeholder="Details of the announcement..." oninput="state.anBody=this.value">${state.anBody}</textarea>
+          <label class="eod-label">Add a Link (optional) — no file needed, just paste any URL</label>
+          <div class="eod-grid">
+            <input type="text" class="eod-input" style="margin-bottom:0" placeholder="Link text, e.g. View the SOP" value="${state.anLinkLabel||''}" oninput="state.anLinkLabel=this.value"/>
+            <input type="url" class="eod-input" style="margin-bottom:0" placeholder="https://..." value="${state.anLinkUrl||''}" oninput="state.anLinkUrl=this.value"/>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin:6px 0 14px">Tip: pasting a link straight into the Message box above also turns it into a clickable link automatically.</div>
           <label class="eod-label">Attach a PDF (optional) — paste Google Drive share link</label>
           <input type="url" class="eod-input" placeholder="https://drive.google.com/file/d/..." value="${state.anPdfUrl||''}" oninput="state.anPdfUrl=this.value"/>
           <label class="eod-label">Attach a Picture (optional) — paste Google Drive share link</label>
@@ -1128,7 +1149,10 @@ function renderAnnouncements(){
                   <span style="font-size:11px;color:#94a3b8">${dateStr}</span>
                 </div>
                 <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:5px">${a.title}</div>
-                <div style="font-size:13px;color:#475569;line-height:1.6">${a.body}</div>
+                <div style="font-size:13px;color:#475569;line-height:1.6;white-space:pre-line">${linkify(a.body)}</div>
+                ${a.linkUrl?`
+                  <a href="${a.linkUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:6px 12px;text-decoration:none">🔗 ${a.linkLabel||'Open Link'}</a>
+                `:''}
                 ${a.imageUrl?`
                   <img src="${a.imageUrl}" alt="${a.title}" style="max-width:100%;border-radius:10px;margin-top:10px;display:block;border:1px solid #e2e8f0" onerror="this.style.display='none'"/>
                 `:''}
@@ -1226,10 +1250,11 @@ async function saveAnnouncement(){
     id:Date.now(), title:state.anTitle, body:state.anBody, type:state.anType||'info',
     pinned:state.anPinned, date:new Date().toISOString().split('T')[0],
     pdfUrl:(state.anPdfUrl||'').trim(), imageUrl:(state.anImageUrl||'').trim(),
+    linkLabel:(state.anLinkLabel||'').trim(), linkUrl:(state.anLinkUrl||'').trim(),
     comments:[],
   };
   state.announcements.push(newAnnouncement);
-  state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.anPdfUrl='';state.anImageUrl='';state.showAnnouncementForm=false;
+  state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.anPdfUrl='';state.anImageUrl='';state.anLinkLabel='';state.anLinkUrl='';state.showAnnouncementForm=false;
   render();
   // Persist to Firestore so every agent sees this without needing to be logged in
   const existing = await loadOneFromFirestore('announcements_list');
@@ -1961,6 +1986,60 @@ function renderPeriodControl(tab){
       onclick="let p=prompt('Edit month:','${val}');if(p){state.periodMTD=p;render()}">✏ Edit</button>`;
 }
 // ── DENVER PILOT ──────────────────────────────────────────────────
+function renderPriorities(){
+  const PRIORITIES = [
+    {n:1,title:'Inbound Call',desc:'A live prospect on the line is the single most time sensitive interaction. Answer first, every time, ahead of any other task.'},
+    {n:2,title:'Ready to Countersign',desc:'Complete any applications waiting on countersign first. This is the final step before move in, so it should never sit.'},
+    {n:3,title:'Unassigned Leads',desc:"Claim and assign new leads right away. Every minute a lead sits unassigned is a minute our response time and Lead to Tour numbers slip."},
+    {n:4,title:'Pending',desc:'Review applications missing identity verification or an application fee. These prospects either just started or are stuck on something, so check what is missing and set a follow up task for the next day.'},
+    {n:5,title:"Today's Tasks",desc:'Work through tasks due today before they age into overdue. This keeps the queue current and follow ups on schedule.'},
+    {n:6,title:'Ready for Decision',desc:'Verify income and asset documentation before approval. Watch for duplicate sources being counted twice (for example, a linked bank account and a tax form for the same income, or the same pay stub uploaded twice), since this can lead to an incorrect approval.'},
+    {n:7,title:'Ready to Send',desc:'Confirm the memo and any additional requirements (Jetty, pet screening, and so on) are complete before the lease goes out. If Leasing still needs to add a memo, task them and note the move in date so urgent ones get rushed.'},
+    {n:8,title:'Action Required',desc:'These are typically already assigned to a specific coordinator and just need to be completed. Clear your own queue first, since ownership is already set.'},
+    {n:9,title:'Overdue Tasks',desc:'Clear overdue items once the above are handled. These are prospects we already owe a response to, so treat this as a same day priority, not a leftover.'},
+    {n:10,title:'Identity Verification Sweep',desc:'Do a final sweep across Pending and Ready for Decision to confirm nothing is left unverified before closing out the day.'},
+  ];
+  const GUIDELINES = [
+    'Point of Contact (POC) for the day owns the AA queue and delegates by tab. The POC assigns which coordinator works which application so nothing is duplicated or missed.',
+    'Only reach out to a prospect or applicant when they are on Pending or Ready for Decision. Those are the two stages where we are waiting on something from them.',
+    'Ready to Send and Ready to Countersign do not need outreach unless a document is missing (for example, confirming pet screening or Jetty use before sending the lease).',
+    "Follow up cadence for incomplete applications is 5 consecutive days. If there is still no response by day 6, the application is cancelled to open the unit back up, per Lauren's guidance. Use judgment and extend slightly for an applicant who has clearly communicated they are still working on it.",
+    'Always complete and re task an item the same day you touch it, even if you are only waiting on someone else (like Leasing). This shows the account is actively being worked, not just sitting.',
+  ];
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#92400e 0%,#d97706 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">🎯</span><h1>Task Priorities</h1></div>
+      <p>Daily task order — LMS Queue + Application Admin Queue</p>
+    </div>
+    <div class="content" style="padding:20px 24px">
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:12.5px;color:#475569;line-height:1.6">
+        PEC brings together the Lead Management (LMS) and Application Admin (AA) functions under one team. This guide sets a single, unified daily task order across both queues, so every prospect and applicant gets a timely, consistent response, and nothing gets left behind. <strong style="color:#0f172a">When in doubt, work top to bottom. Progress, not perfection.</strong>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
+        ${PRIORITIES.map((p,i)=>`
+          <div style="display:flex;gap:12px;padding:11px 16px;${i<PRIORITIES.length-1?'border-bottom:1px solid #f1f5f9':''};align-items:flex-start">
+            <div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:${p.n<=2?'#fee2e2':p.n<=5?'#fef3c7':'#e0f2fe'};color:${p.n<=2?'#b91c1c':p.n<=5?'#92400e':'#0369a1'};font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px">${p.n}</div>
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:2px">${p.title}</div>
+              <div style="font-size:12px;color:#64748b;line-height:1.55">${p.desc}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px">Guidelines That Apply Across the Whole List</div>
+        <ul style="margin:0;padding-left:18px;font-size:12px;color:#78350f;line-height:1.65">
+          ${GUIDELINES.map(g=>`<li style="margin-bottom:6px">${g}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="font-size:11px;color:#94a3b8;line-height:1.6;font-style:italic;padding:0 2px">
+        This document reflects the June 30, 2026 PEC Weekly Huddle plus the finalized unified ranking, and should be updated as our workflows evolve. For the full walkthrough with screenshots, see the Application Admin SOP and Training Playbook on the PEC Hub.
+      </div>
+    </div>`;
+}
+
 function renderDenverPilot(){
   const isManager = !!state.manager;
   return`
@@ -2645,6 +2724,7 @@ function renderPage(){
     case 'scripts':   html=renderCallScripts();break;
     case 'listening': html=renderCallListening();break;
     case 'scorecard': html=renderScorecard();break;
+    case 'priorities': html=renderPriorities();break;
     case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
