@@ -354,6 +354,14 @@ async function saveToFirestore(docId, data){
     return false;
   }
 }
+async function savePeriodHistory(){
+  const saved = await saveToFirestore('scorecard_period_history', {
+    monthendHistory: state.monthendHistory,
+    quarterlyHistory: state.quarterlyHistory,
+  });
+  if(!saved) console.warn('Period history saved locally but failed to sync to Firestore — it may not persist after refresh.');
+  return saved;
+}
 async function loadAllFromFirestore(){
   try{
     const snapshot = await db.collection('pechub').get();
@@ -409,6 +417,14 @@ async function hydrateFromFirestore(){
         state.announcements.push(item);
       }
     });
+  }
+  if(remote.scorecard_period_history){
+    if(Array.isArray(remote.scorecard_period_history.monthendHistory) && remote.scorecard_period_history.monthendHistory.length){
+      state.monthendHistory = remote.scorecard_period_history.monthendHistory;
+    }
+    if(Array.isArray(remote.scorecard_period_history.quarterlyHistory) && remote.scorecard_period_history.quarterlyHistory.length){
+      state.quarterlyHistory = remote.scorecard_period_history.quarterlyHistory;
+    }
   }
   if(remote.scorecard_sheet_link && remote.scorecard_sheet_link.sheetUrl){
     state.sheetUrl = remote.scorecard_sheet_link.sheetUrl;
@@ -2408,7 +2424,7 @@ function renderPeriodHistory(tab,tabColor){
     }).join('')}`;
 }
 
-function addNewPeriod(tab){
+async function addNewPeriod(tab){
   if(!state.newPeriodLabel||!state.newPeriodLabel.trim()){alert('Please enter a label.');return;}
   const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
   const newId = history.length ? Math.max(...history.map(p=>p.id))+1 : 1;
@@ -2421,9 +2437,10 @@ function addNewPeriod(tab){
   state.showAddPeriodForm=false;
   state.expandedPeriod=newId; // auto-expand the new one so they can fill it in right away
   render();
+  await savePeriodHistory();
 }
 
-function deletePeriod(tab,periodId){
+async function deletePeriod(tab,periodId){
   if(!confirm('Delete this period entirely? This cannot be undone.'))return;
   if(tab==='monthend'){
     state.monthendHistory = state.monthendHistory.filter(p=>p.id!==periodId);
@@ -2432,9 +2449,10 @@ function deletePeriod(tab,periodId){
   }
   if(state.expandedPeriod===periodId) state.expandedPeriod=null;
   render();
+  await savePeriodHistory();
 }
 
-function savePeriodMetric(tab,periodId,kpiIdx){
+async function savePeriodMetric(tab,periodId,kpiIdx){
   const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
   const period = history.find(p=>p.id===periodId);
   if(!period)return;
@@ -2444,6 +2462,7 @@ function savePeriodMetric(tab,periodId,kpiIdx){
   period.kpis[kpiIdx] = {...period.kpis[kpiIdx], actual, goal};
   state.editingPeriodMetric=null;
   render();
+  await savePeriodHistory();
 }
 
 // ── EOD REPORT ────────────────────────────────────────────────────
