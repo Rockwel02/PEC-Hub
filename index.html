@@ -418,6 +418,9 @@ async function hydrateFromFirestore(){
       }
     });
   }
+  if(remote.applicant_tracker && Array.isArray(remote.applicant_tracker.items)){
+    state.applicantEntries = remote.applicant_tracker.items;
+  }
   if(remote.scorecard_period_history){
     if(Array.isArray(remote.scorecard_period_history.monthendHistory) && remote.scorecard_period_history.monthendHistory.length){
       state.monthendHistory = remote.scorecard_period_history.monthendHistory;
@@ -802,6 +805,10 @@ let state = {
   editingPeriodMetric:null,
   denverNotes:'',
   checklistChecked:{}, checklistCopyMsg:'', checklistRevision:'',
+  applicantEntries:[],
+  showApplicantForm:false, editingApplicantId:null,
+  apName:'', apProperty:'', apUnitNumber:'', apStatus:'Ready to Send', apMoveIn:'', apBlocker:'', apTrackingStatus:'inprogress',
+  apGuestcardUrl:'', apApplicationUrl:'',
   editingMetric:null,
   loginEmail:'', loginPassword:'', loginLoading:false, loginError:'',
   // EOD
@@ -822,6 +829,7 @@ const NAV = [
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
   {id:'checklist', label:'Application Checklist', icon:'✅'},
+  {id:'applicants', label:'Applicant Status', icon:'🗂️'},
   {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
@@ -2114,7 +2122,7 @@ function finalizeChecklist(){
     const revisionLine = (sec.hasRevisionToggle && state.checklistRevision)
       ? [state.checklistRevision==='with' ? 'With Revision' : 'Without Revision']
       : [];
-    const allLines = [...revisionLine, ...checkedItems];
+    const allLines = [...revisionLine, ...checkedItems.map(item=>'✅ '+item)];
     if(allLines.length){
       lines.push(sec.title+':');
       allLines.forEach(item=>lines.push('- '+item));
@@ -2185,7 +2193,7 @@ function renderChecklist(){
             return`
             <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-top:1px solid #f1f5f9;cursor:pointer">
               <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${id}')" style="width:16px;height:16px;margin-top:1px;flex-shrink:0;accent-color:#16a34a;cursor:pointer"/>
-              <span style="font-size:12.5px;color:${checked?'#94a3b8':'#334155'};line-height:1.55;text-decoration:${checked?'line-through':'none'};display:flex;align-items:center;gap:7px">${checked?'<span style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:#16a34a;color:#fff;border-radius:50%;font-size:10px;font-weight:900;line-height:1;text-decoration:none">✓</span>':''}${item}</span>
+              <span style="font-size:12.5px;color:${checked?'#94a3b8':'#334155'};line-height:1.55;text-decoration:${checked?'line-through':'none'};display:flex;align-items:center;gap:7px">${checked?'<span style="text-decoration:none">✅</span>':''}${item}</span>
             </label>`;
           }).join('')}
         </div>`;
@@ -2203,6 +2211,207 @@ function renderChecklist(){
           Treat this as two gates, not one. The Before Approving gate stops a bad income or asset file from ever reaching an Accept decision. The Before Sending Lease, Before Counter Signing, and System Accuracy After Countersign gates stop a correct decision from going out the door with the wrong numbers attached. A file can pass the first gate and still fail the second if the unit, dates, or rate were never reconciled against Yardi.
         </div>
       </div>
+    </div>`;
+}
+
+
+const PROPERTIES = [
+  '29x','Beacon House','Centre Court','Copper Ridge','Forum Fitzsimons','Heights on Huron',
+  'Mountain Village','Sunset Peak','The Economist','The Overland','Aura at Midtown','Latitude',
+  'Mandarina','Omnia on Thomas','Pavilions at Arrowhead','Springs at Alta Mesa','Tempe Vista','Villas at MVR',
+];
+const APPLICANT_STATUS_OPTIONS = [
+  {label:'Action Required',        color:'#dc2626', bg:'#fee2e2'},
+  {label:'Needs Identity Verification', color:'#c2410c', bg:'#ffedd5'},
+  {label:'Pending Guarantor Request',   color:'#a16207', bg:'#fef9c3'},
+  {label:'Ready for Decision',     color:'#1d4ed8', bg:'#dbeafe'},
+  {label:'Ready to Send',          color:'#7c3aed', bg:'#ede9fe'},
+  {label:'Lease Sent',             color:'#15803d', bg:'#dcfce7'},
+  {label:'Ready to Countersign',   color:'#0f766e', bg:'#ccfbf1'},
+  {label:'Pending',                color:'#475569', bg:'#f1f5f9'},
+];
+function apStatusStyle(label){
+  return APPLICANT_STATUS_OPTIONS.find(s=>s.label===label) || APPLICANT_STATUS_OPTIONS[APPLICANT_STATUS_OPTIONS.length-1];
+}
+async function saveApplicantList(){
+  const saved = await saveToFirestore('applicant_tracker', {items: state.applicantEntries});
+  if(!saved) console.warn('Applicant entry saved locally but failed to sync to Firestore — others may not see it yet.');
+  return saved;
+}
+function resetApplicantForm(){
+  state.apName=''; state.apProperty=''; state.apUnitNumber=''; state.apStatus='Ready to Send'; state.apMoveIn='';
+  state.apGuestcardUrl=''; state.apApplicationUrl='';
+  state.apBlocker=''; state.apTrackingStatus='inprogress';
+  state.showApplicantForm=false; state.editingApplicantId=null;
+}
+async function saveApplicantEntry(){
+  if(!state.apName.trim()||!state.apProperty){ alert('Please fill in the applicant name and select a property.'); return; }
+  const visitorName = getVisitorName() || 'Team';
+  if(state.editingApplicantId){
+    const entry = state.applicantEntries.find(e=>e.id===state.editingApplicantId);
+    if(entry){
+      Object.assign(entry, {
+        name:state.apName.trim(), property:state.apProperty, unitNumber:state.apUnitNumber.trim(), status:state.apStatus,
+        moveIn:state.apMoveIn, guestcardUrl:state.apGuestcardUrl.trim(), applicationUrl:state.apApplicationUrl.trim(),
+        blocker:state.apBlocker.trim(), trackingStatus:state.apTrackingStatus,
+        updatedBy:visitorName, updatedAt:new Date().toISOString().split('T')[0],
+      });
+    }
+  } else {
+    state.applicantEntries.unshift({
+      id:Date.now(), name:state.apName.trim(), property:state.apProperty, unitNumber:state.apUnitNumber.trim(), status:state.apStatus,
+      moveIn:state.apMoveIn, guestcardUrl:state.apGuestcardUrl.trim(), applicationUrl:state.apApplicationUrl.trim(),
+      blocker:state.apBlocker.trim(), trackingStatus:'inprogress',
+      addedBy:visitorName, addedAt:new Date().toISOString().split('T')[0],
+    });
+  }
+  resetApplicantForm();
+  render();
+  await saveApplicantList();
+}
+function editApplicantEntry(id){
+  const entry = state.applicantEntries.find(e=>e.id===id);
+  if(!entry) return;
+  state.apName=entry.name; state.apProperty=entry.property||''; state.apUnitNumber=entry.unitNumber||''; state.apStatus=entry.status;
+  state.apMoveIn=entry.moveIn||''; state.apGuestcardUrl=entry.guestcardUrl||''; state.apApplicationUrl=entry.applicationUrl||'';
+  state.apBlocker=entry.blocker||''; state.apTrackingStatus=entry.trackingStatus;
+  state.editingApplicantId=id; state.showApplicantForm=true;
+  render();
+}
+async function toggleApplicantComplete(id){
+  const entry = state.applicantEntries.find(e=>e.id===id);
+  if(!entry) return;
+  entry.trackingStatus = entry.trackingStatus==='complete' ? 'inprogress' : 'complete';
+  render();
+  await saveApplicantList();
+}
+async function deleteApplicantEntry(id){
+  if(!confirm('Remove this applicant from the tracker?')) return;
+  state.applicantEntries = state.applicantEntries.filter(e=>e.id!==id);
+  render();
+  await saveApplicantList();
+}
+function renderApplicantCard(entry){
+  const st = apStatusStyle(entry.status);
+  const isComplete = entry.trackingStatus==='complete';
+  return`
+    <div style="background:#fff;border:1.5px solid #e2e8f0;border-left:4px solid ${isComplete?'#94a3b8':st.color};border-radius:12px;padding:14px 16px;margin-bottom:10px;${isComplete?'opacity:.65':''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
+            <span style="font-size:14px;font-weight:700;color:#0f172a">${entry.name}</span>
+            <span style="font-size:10px;font-weight:700;background:${st.bg};color:${st.color};padding:2px 8px;border-radius:20px">${entry.status}</span>
+            ${isComplete?`<span style="font-size:10px;font-weight:700;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px">✓ Complete</span>`:''}
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:6px">${entry.property||''}${entry.unitNumber?` - ${entry.unitNumber}`:''}${entry.moveIn?` · Move-in ${new Date(entry.moveIn+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`:''}</div>
+          ${(entry.guestcardUrl||entry.applicationUrl)?`
+            <div style="display:flex;gap:12px;margin-bottom:6px">
+              ${entry.guestcardUrl?`<a href="${entry.guestcardUrl}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:#4f46e5;text-decoration:none">🔗 View Guestcard</a>`:''}
+              ${entry.applicationUrl?`<a href="${entry.applicationUrl}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:#4f46e5;text-decoration:none">🔗 View Application</a>`:''}
+            </div>`:''
+          }
+          ${entry.blocker?`
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin-top:6px">
+              <div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px">Why the lease hasn't gone out yet</div>
+              <div style="font-size:12px;color:#78350f;line-height:1.5">${entry.blocker}</div>
+            </div>`:''
+          }
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:7px">Added by ${entry.addedBy} · ${entry.addedAt}${entry.updatedBy?` · Updated by ${entry.updatedBy} on ${entry.updatedAt}`:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button onclick="toggleApplicantComplete(${entry.id})" style="font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:7px;border:1px solid ${isComplete?'#e2e8f0':'#bbf7d0'};background:${isComplete?'#fff':'#f0fdf4'};color:${isComplete?'#64748b':'#15803d'};cursor:pointer;white-space:nowrap">${isComplete?'↺ Reopen':'✓ Complete'}</button>
+          <button onclick="editApplicantEntry(${entry.id})" style="font-size:10.5px;color:#3b82f6;background:none;border:none;cursor:pointer;padding:0">Edit</button>
+          <button onclick="deleteApplicantEntry(${entry.id})" style="font-size:10.5px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">Remove</button>
+        </div>
+      </div>
+    </div>`;
+}
+function renderApplicantStatus(){
+  const active = state.applicantEntries.filter(e=>e.trackingStatus!=='complete');
+  const completed = state.applicantEntries.filter(e=>e.trackingStatus==='complete');
+  const counts = {};
+  APPLICANT_STATUS_OPTIONS.forEach(s=>counts[s.label]=0);
+  active.forEach(e=>{ if(counts[e.status]!==undefined) counts[e.status]++; });
+
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#312e81 0%,#4f46e5 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">🗂️</span><h1>Applicant Status</h1></div>
+      <p>Daily at-a-glance tracker — log where each applicant stands and what's holding up the lease</p>
+    </div>
+    <div class="content" style="padding:20px 24px">
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+        ${APPLICANT_STATUS_OPTIONS.map(s=>`
+          <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px">
+            <div style="font-size:18px;font-weight:800;color:${s.color}">${counts[s.label]}</div>
+            <div style="font-size:10px;color:#64748b;line-height:1.3;margin-top:2px">${s.label}</div>
+          </div>`).join('')}
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:12.5px;color:#475569">POC for the day: log new applicants here and update them as they move through the pipeline.</div>
+        ${!state.showApplicantForm?`<button onclick="state.showApplicantForm=true;render()" style="flex-shrink:0;padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">+ Add Applicant</button>`:''}
+      </div>
+
+      ${state.showApplicantForm?`
+        <div style="background:#fff;border:1.5px solid #4f46e5;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 0 0 3px rgba(79,70,229,.08)">
+          <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:14px">${state.editingApplicantId?'✏️ Edit Applicant':'🗂️ New Applicant'}</div>
+          <div class="eod-grid">
+            <div>
+              <label class="eod-label">Applicant Name *</label>
+              <input type="text" class="eod-input" placeholder="e.g. Nicole Green" value="${state.apName}" oninput="state.apName=this.value"/>
+            </div>
+            <div>
+              <label class="eod-label">Unit Number</label>
+              <input type="text" class="eod-input" placeholder="e.g. 1307, 2 BR" value="${state.apUnitNumber}" oninput="state.apUnitNumber=this.value"/>
+            </div>
+          </div>
+          <div class="eod-grid">
+            <div>
+              <label class="eod-label">Property *</label>
+              <select class="eod-select" style="margin-bottom:0" onchange="state.apProperty=this.value">
+                <option value="" ${!state.apProperty?'selected':''} disabled>Select a property</option>
+                ${PROPERTIES.map(p=>`<option value="${p}" ${state.apProperty===p?'selected':''}>${p}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="eod-label">Move-In Date</label>
+              <input type="date" class="eod-input" style="margin-bottom:0" value="${state.apMoveIn}" onchange="state.apMoveIn=this.value"/>
+            </div>
+          </div>
+          <div class="eod-grid">
+            <div>
+              <label class="eod-label">Guestcard Link</label>
+              <input type="url" class="eod-input" style="margin-bottom:0" placeholder="https://..." value="${state.apGuestcardUrl}" oninput="state.apGuestcardUrl=this.value"/>
+            </div>
+            <div>
+              <label class="eod-label">Application Link</label>
+              <input type="url" class="eod-input" style="margin-bottom:0" placeholder="https://..." value="${state.apApplicationUrl}" oninput="state.apApplicationUrl=this.value"/>
+            </div>
+          </div>
+          <label class="eod-label" style="margin-top:14px">Application Status</label>
+          <select class="eod-select" onchange="state.apStatus=this.value">
+            ${APPLICANT_STATUS_OPTIONS.map(s=>`<option value="${s.label}" ${state.apStatus===s.label?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+          <label class="eod-label">Why hasn't the lease been sent yet? (optional)</label>
+          <textarea class="eod-textarea" placeholder="e.g. Waiting on guarantor to complete income verification" oninput="state.apBlocker=this.value">${state.apBlocker}</textarea>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button onclick="saveApplicantEntry()" style="padding:10px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">${state.editingApplicantId?'Save Changes':'Add to Tracker'}</button>
+            <button onclick="resetApplicantForm();render()" style="padding:10px 20px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer">Cancel</button>
+          </div>
+        </div>`:''
+      }
+
+      ${active.length===0?`<div style="text-align:center;padding:24px;color:#64748b;font-size:13px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:16px">No applicants being tracked right now.</div>`:
+        active.map(renderApplicantCard).join('')
+      }
+
+      ${completed.length?`
+        <div style="margin-top:20px">
+          <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">✓ Completed (${completed.length})</div>
+          ${completed.map(renderApplicantCard).join('')}
+        </div>`:''
+      }
     </div>`;
 }
 
@@ -2895,6 +3104,7 @@ function renderPage(){
     case 'scorecard': html=renderScorecard();break;
     case 'priorities': html=renderPriorities();break;
     case 'checklist': html=renderChecklist();break;
+    case 'applicants': html=renderApplicantStatus();break;
     case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
