@@ -13,12 +13,16 @@
     body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
     button,input,textarea,select{font-family:'DM Sans',sans-serif}
     .hub{max-width:820px;margin:0 auto;min-height:100vh;border:1px solid #e2e8f0;box-shadow:0 8px 40px rgba(0,0,0,.12)}
-    nav{background:#0f1e3d;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
-    .nav-logo{display:flex;align-items:center;gap:8px;cursor:pointer}
+    nav{background:#0f1e3d;padding:0 16px;display:flex;align-items:center;justify-content:space-between;min-height:52px;position:sticky;top:0;z-index:100;gap:10px}
+    .nav-logo{display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0}
     .nav-logo span{color:#fff;font-weight:800;font-size:15px}
     .nav-badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
-    .nav-links{display:flex;gap:2px;flex-wrap:wrap}
-    .nav-btn{background:transparent;color:rgba(255,255,255,.6);border:none;padding:5px 8px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+    .nav-links-wrap{position:relative;display:flex;align-items:center;min-width:0;flex:1}
+    .nav-links{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-width:0}
+    .nav-links::-webkit-scrollbar{display:none}
+    .nav-arrow{background:rgba(255,255,255,.08);color:#fff;border:none;width:22px;height:26px;flex-shrink:0;cursor:pointer;font-size:15px;font-weight:700;border-radius:6px;margin:0 2px;z-index:2}
+    .nav-arrow:hover{background:rgba(255,255,255,.18)}
+    .nav-btn{background:transparent;color:rgba(255,255,255,.6);border:none;padding:5px 8px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
     .nav-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
     .nav-btn.active{color:#fff;background:rgba(255,255,255,.15)}
     .page{min-height:500px}
@@ -161,7 +165,8 @@
       .video-grid{grid-template-columns:1fr}
       .stats-grid{grid-template-columns:repeat(2,1fr)}
       .eod-grid{grid-template-columns:1fr}
-      .nav-links{display:none}
+      .nav-badge{display:none}
+      .nav-btn{font-size:10.5px;padding:5px 7px}
     }
   </style>
 </head>
@@ -173,8 +178,13 @@
       <span>PEC Hub</span>
       <span class="nav-badge">Avanti</span>
     </div>
-    <div class="nav-links" id="navLinks"></div>
+    <div class="nav-links-wrap">
+      <button id="navArrowLeft" class="nav-arrow" onclick="scrollNav(-160)" style="display:none">‹</button>
+      <div class="nav-links" id="navLinks"></div>
+      <button id="navArrowRight" class="nav-arrow" onclick="scrollNav(160)" style="display:none">›</button>
+    </div>
   </nav>
+  <div id="syncErrorBanner"></div>
   <div class="page" id="pageContent"></div>
   <footer>
     <span>PEC Hub · Prospect Experience Coordinators · Avanti Residential</span>
@@ -359,7 +369,12 @@ async function savePeriodHistory(){
     monthendHistory: state.monthendHistory,
     quarterlyHistory: state.quarterlyHistory,
   });
-  if(!saved) console.warn('Period history saved locally but failed to sync to Firestore — it may not persist after refresh.');
+  if(!saved){
+    console.warn('Period history saved locally but failed to sync to Firestore — it may not persist after refresh.');
+    flagSaveFailed('Scorecard period');
+  } else if(state.syncError){
+    clearSyncIssue();
+  }
   return saved;
 }
 async function loadAllFromFirestore(){
@@ -367,10 +382,10 @@ async function loadAllFromFirestore(){
     const snapshot = await db.collection('pechub').get();
     const result = {};
     snapshot.forEach(doc => { result[doc.id] = doc.data(); });
-    return result;
+    return {data: result, failed: false};
   }catch(err){
     console.error('Firestore load failed:', err);
-    return {};
+    return {data: {}, failed: true};
   }
 }
 async function loadOneFromFirestore(docId){
@@ -387,7 +402,10 @@ async function loadOneFromFirestore(docId){
 // from Firestore and applies them on top of the hub's baked-in defaults.
 // Runs once on page load, before the first render, so everyone sees the same data.
 async function hydrateFromFirestore(){
-  const remote = await loadAllFromFirestore();
+  const {data: remote, failed} = await loadAllFromFirestore();
+  if(failed){
+    flagSyncIssue("Couldn't load your saved data (Announcements, Scorecard history, Applicant Status, etc.) from the shared database. What you see may be out of date, and any changes you make right now may not save. Check your internet connection and refresh — if it keeps happening, the Firebase project may need attention (security rules can expire after 30 days in test mode).");
+  }
 
   if(remote.spiel_recordings){
     Object.entries(remote.spiel_recordings).forEach(([id, url])=>{
@@ -806,6 +824,7 @@ let state = {
   denverNotes:'',
   checklistChecked:{}, checklistCopyMsg:'', checklistRevision:'',
   applicantEntries:[],
+  syncError:null,
   showApplicantForm:false, editingApplicantId:null,
   apName:'', apProperty:'', apUnitNumber:'', apStatus:'Ready to Send', apMoveIn:'', apBlocker:'', apTrackingStatus:'inprogress',
   apGuestcardUrl:'', apApplicationUrl:'',
@@ -881,6 +900,23 @@ function renderNav(){
   document.getElementById('navLinks').innerHTML=NAV.map(n=>
     `<button class="nav-btn${state.page===n.id?' active':''}" onclick="showPage('${n.id}')">${n.icon} ${n.label}</button>`
   ).join('');
+  // Scroll the active tab into view, then refresh whether the arrows should show
+  const activeBtn = document.querySelector('.nav-btn.active');
+  if(activeBtn) activeBtn.scrollIntoView({block:'nearest', inline:'nearest'});
+  updateNavArrows();
+}
+function scrollNav(delta){
+  document.getElementById('navLinks').scrollBy({left:delta, behavior:'smooth'});
+}
+function updateNavArrows(){
+  const el = document.getElementById('navLinks');
+  const left = document.getElementById('navArrowLeft');
+  const right = document.getElementById('navArrowRight');
+  if(!el||!left||!right) return;
+  // A tiny buffer avoids the arrows flickering on/off from sub-pixel rounding
+  const canScroll = el.scrollWidth > el.clientWidth + 2;
+  left.style.display = (canScroll && el.scrollLeft > 2) ? 'block' : 'none';
+  right.style.display = (canScroll && el.scrollLeft < (el.scrollWidth - el.clientWidth - 2)) ? 'block' : 'none';
 }
 function showPage(p){
   state.page=p;state.expandedKb=null;state.expandedSpiel=null;state.expandedKpi=null;state.eodSubmitted=false;
@@ -2235,7 +2271,12 @@ function apStatusStyle(label){
 }
 async function saveApplicantList(){
   const saved = await saveToFirestore('applicant_tracker', {items: state.applicantEntries});
-  if(!saved) console.warn('Applicant entry saved locally but failed to sync to Firestore — others may not see it yet.');
+  if(!saved){
+    console.warn('Applicant entry saved locally but failed to sync to Firestore — others may not see it yet.');
+    flagSaveFailed('Applicant Status entry');
+  } else if(state.syncError){
+    clearSyncIssue();
+  }
   return saved;
 }
 function resetApplicantForm(){
@@ -3112,7 +3153,27 @@ function renderPage(){
   }
   document.getElementById('pageContent').innerHTML=html;
 }
-function render(){renderNav();renderPage();}
+function flagSyncIssue(message){
+  state.syncError = message;
+  renderSyncBanner();
+}
+function flagSaveFailed(label){
+  flagSyncIssue(`Couldn't save "${label}" to the shared database. It's visible on your screen right now, but it will likely disappear if you refresh. Check your internet connection and try again — if it keeps happening, the Firebase project may need attention (security rules can expire after 30 days in test mode).`);
+}
+function clearSyncIssue(){
+  state.syncError = null;
+  renderSyncBanner();
+}
+function renderSyncBanner(){
+  const el = document.getElementById('syncErrorBanner');
+  if(!el) return;
+  el.innerHTML = state.syncError ? `
+    <div style="background:#fef2f2;border-bottom:1.5px solid #fecaca;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="font-size:12px;color:#991b1b;line-height:1.5">⚠️ ${state.syncError}</div>
+      <button onclick="clearSyncIssue()" style="flex-shrink:0;background:none;border:none;color:#991b1b;font-weight:700;cursor:pointer;font-size:14px">✕</button>
+    </div>` : '';
+}
+function render(){renderNav();renderPage();renderSyncBanner();}
 
 // Render immediately with baked-in defaults first so the page never looks blank,
 // then quietly hydrate from Firestore and re-render once real data arrives.
@@ -3122,6 +3183,10 @@ if(restoredManager) state.manager = restoredManager;
 
 render();
 hydrateFromFirestore().then(()=>render()).catch(err=>console.error('Hydrate failed:', err));
+
+// Keep the nav scroll arrows in sync with actual scroll position and window size
+document.getElementById('navLinks').addEventListener('scroll', updateNavArrows);
+window.addEventListener('resize', updateNavArrows);
 
 // Start the online-presence system once Firestore (db) is ready.
 // If this is the visitor's first time, this will show the name picker.
