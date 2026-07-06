@@ -801,7 +801,7 @@ let state = {
   expandedPeriod:null, showAddPeriodForm:false, newPeriodLabel:'',
   editingPeriodMetric:null,
   denverNotes:'',
-  checklistChecked:{}, checklistCopyMsg:'',
+  checklistChecked:{}, checklistCopyMsg:'', checklistRevision:'',
   editingMetric:null,
   loginEmail:'', loginPassword:'', loginLoading:false, loginError:'',
   // EOD
@@ -2075,8 +2075,9 @@ const CHECKLIST_SECTIONS = [
     'Concessions verified, match memo and current rate',
     'Animals, fees match approved Pet Screening',
     'Rentable items marked "unrentable"',
+    'Lease Sent 😊',
   ]},
-  {key:'sysBefore', title:'System Accuracy Before Lease Send', color:'#166534', bg:'#dcfce7', items:[
+  {key:'sysBefore', title:'Before Counter Signing', color:'#166534', bg:'#dcfce7', hasRevisionToggle:true, items:[
     'Reba Matrix uploaded',
     'Memo uploaded',
     'Jetty bond uploaded, if applicable',
@@ -2091,6 +2092,10 @@ const CHECKLIST_SECTIONS = [
     'Rate matches Yardi',
   ]},
 ];
+function setChecklistRevision(val){
+  state.checklistRevision = state.checklistRevision===val ? '' : val;
+  render();
+}
 function toggleChecklistItem(id){
   state.checklistChecked[id]=!state.checklistChecked[id];
   render();
@@ -2098,15 +2103,20 @@ function toggleChecklistItem(id){
 function resetChecklist(){
   state.checklistChecked={};
   state.checklistCopyMsg='';
+  state.checklistRevision='';
   render();
 }
 function finalizeChecklist(){
   const lines=[];
   CHECKLIST_SECTIONS.forEach(sec=>{
     const checkedItems = sec.items.filter((_,i)=>state.checklistChecked[sec.key+i]);
-    if(checkedItems.length){
+    const revisionLine = (sec.hasRevisionToggle && state.checklistRevision)
+      ? [state.checklistRevision==='with' ? 'With Revision' : 'Without Revision']
+      : [];
+    const allLines = [...revisionLine, ...checkedItems];
+    if(allLines.length){
       lines.push(sec.title+':');
-      checkedItems.forEach(item=>lines.push('- '+item));
+      allLines.forEach(item=>lines.push('- '+item));
       lines.push('');
     }
   });
@@ -2119,6 +2129,7 @@ function finalizeChecklist(){
   const done = ()=>{
     state.checklistCopyMsg='✓ Copied to clipboard. Checklist cleared for the next file.';
     state.checklistChecked={};
+    state.checklistRevision='';
     render();
   };
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -2158,9 +2169,15 @@ function renderChecklist(){
         return`
         <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
           <div style="padding:10px 16px;background:${sec.bg};display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:12.5px;font-weight:800;color:${sec.color};text-transform:uppercase;letter-spacing:.04em">${sec.title}</div>
+            <div style="font-size:12.5px;font-weight:800;color:${sec.color};text-transform:uppercase;letter-spacing:.04em"><span style="color:#16a34a">✅</span> ${sec.title}</div>
             <div style="font-size:11px;font-weight:700;color:${sec.color}">${secChecked}/${sec.items.length}</div>
           </div>
+          ${sec.hasRevisionToggle?`
+          <div style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid #f1f5f9;align-items:center">
+            <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-right:2px">Lease:</span>
+            <button onclick="setChecklistRevision('with')" style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${state.checklistRevision==='with'?sec.color:sec.color+'55'};background:${state.checklistRevision==='with'?sec.color:'#fff'};color:${state.checklistRevision==='with'?'#fff':sec.color}">With Revision</button>
+            <button onclick="setChecklistRevision('without')" style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${state.checklistRevision==='without'?sec.color:sec.color+'55'};background:${state.checklistRevision==='without'?sec.color:'#fff'};color:${state.checklistRevision==='without'?'#fff':sec.color}">Without Revision</button>
+          </div>`:''}
           ${sec.items.map((item,i)=>{
             const id=sec.key+i;
             const checked=!!state.checklistChecked[id];
@@ -2182,7 +2199,7 @@ function renderChecklist(){
       <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:14px 16px">
         <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">How to use this in real files</div>
         <div style="font-size:12px;color:#166534;line-height:1.65">
-          Treat this as two gates, not one. The Before Approving gate stops a bad income or asset file from ever reaching an Accept decision. The Before Sending Lease and System Accuracy gates stop a correct decision from going out the door with the wrong numbers attached. A file can pass the first gate and still fail the second if the unit, dates, or rate were never reconciled against Yardi.
+          Treat this as two gates, not one. The Before Approving gate stops a bad income or asset file from ever reaching an Accept decision. The Before Sending Lease, Before Counter Signing, and System Accuracy After Countersign gates stop a correct decision from going out the door with the wrong numbers attached. A file can pass the first gate and still fail the second if the unit, dates, or rate were never reconciled against Yardi.
         </div>
       </div>
     </div>`;
