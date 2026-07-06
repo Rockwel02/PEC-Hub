@@ -785,6 +785,7 @@ let state = {
   expandedPeriod:null, showAddPeriodForm:false, newPeriodLabel:'',
   editingPeriodMetric:null,
   denverNotes:'',
+  checklistChecked:{}, checklistCopyMsg:'',
   editingMetric:null,
   loginEmail:'', loginPassword:'', loginLoading:false, loginError:'',
   // EOD
@@ -804,6 +805,7 @@ const NAV = [
   {id:'listening', label:'Call Listening', icon:'🎧'},
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
+  {id:'checklist', label:'Application Checklist', icon:'✅'},
   {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
@@ -2040,6 +2042,136 @@ function renderPriorities(){
     </div>`;
 }
 
+const CHECKLIST_SECTIONS = [
+  {key:'approve', title:'Before Approving', color:'#0369a1', bg:'#e0f2fe', items:[
+    'Income verified, no duplicate sources, name match',
+    'Assets verified, no duplicate sources, amounts match, dates in range, name match',
+    'Warnings reviewed and addressed, if applicable',
+    'Screenings reviewed',
+  ]},
+  {key:'lease', title:'Before Sending Lease', color:'#92400e', bg:'#fef3c7', items:[
+    'Unit number verified',
+    'Move-in date verified',
+    'Move-out date verified',
+    'Lease term verified',
+    'Rate verified, matches Reba Matrix',
+    'Deposit verified, standard deposit, 1-month rent, 1.5-month rent, or Jetty uploaded',
+    'Concessions verified, match memo and current rate',
+    'Animals, fees match approved Pet Screening',
+    'Rentable items marked "unrentable"',
+  ]},
+  {key:'sysBefore', title:'System Accuracy Before Lease Send', color:'#166534', bg:'#dcfce7', items:[
+    'Reba Matrix uploaded',
+    'Memo uploaded',
+    'Jetty bond uploaded, if applicable',
+    "Unit matches Yardi",
+    'Lease dates match Yardi',
+    'Rate matches Yardi',
+  ]},
+  {key:'sysAfter', title:'System Accuracy After Countersign', color:'#6d28d9', bg:'#ede9fe', items:[
+    "Rentable items marked \"rentable\" and assigned on the resident's Yardi Move In Calculator",
+    "Unit matches Yardi",
+    'Lease dates match Yardi',
+    'Rate matches Yardi',
+  ]},
+];
+function toggleChecklistItem(id){
+  state.checklistChecked[id]=!state.checklistChecked[id];
+  render();
+}
+function resetChecklist(){
+  state.checklistChecked={};
+  state.checklistCopyMsg='';
+  render();
+}
+function finalizeChecklist(){
+  const lines=[];
+  CHECKLIST_SECTIONS.forEach(sec=>{
+    const checkedItems = sec.items.filter((_,i)=>state.checklistChecked[sec.key+i]);
+    if(checkedItems.length){
+      lines.push(sec.title+':');
+      checkedItems.forEach(item=>lines.push('- '+item));
+      lines.push('');
+    }
+  });
+  if(!lines.length){
+    state.checklistCopyMsg='Nothing checked yet — check off the items you completed first.';
+    render();
+    return;
+  }
+  const text = lines.join('\n').trim();
+  const done = ()=>{
+    state.checklistCopyMsg='✓ Copied to clipboard. Checklist cleared for the next file.';
+    state.checklistChecked={};
+    render();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>{
+      state.checklistCopyMsg='Could not copy automatically — please copy manually.';
+      render();
+    });
+  }else{
+    // Fallback for older browsers without the async Clipboard API
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }
+    catch(e){ state.checklistCopyMsg='Could not copy automatically — please copy manually.'; render(); }
+    document.body.removeChild(ta);
+  }
+}
+function renderChecklist(){
+  const SECTIONS = CHECKLIST_SECTIONS;
+  const totalItems = SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
+  const checkedCount = Object.values(state.checklistChecked).filter(Boolean).length;
+
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#065f46 0%,#10b981 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">✅</span><h1>Application Checklist</h1></div>
+      <p>Application &amp; Lease Review — final gate check before approving and before sending the lease</p>
+    </div>
+    <div class="content" style="padding:20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:14px">
+        <div style="font-size:12.5px;color:#475569">
+          <strong style="color:#0f172a">${checkedCount} of ${totalItems}</strong> checked. Use this as a live gate check on the file you're working right now, then reset it for the next one.
+        </div>
+        <button onclick="resetChecklist()" style="flex-shrink:0;padding:6px 14px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">Reset</button>
+      </div>
+
+      ${SECTIONS.map(sec=>{
+        const secChecked = sec.items.filter((_,i)=>state.checklistChecked[sec.key+i]).length;
+        return`
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
+          <div style="padding:10px 16px;background:${sec.bg};display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:12.5px;font-weight:800;color:${sec.color};text-transform:uppercase;letter-spacing:.04em">${sec.title}</div>
+            <div style="font-size:11px;font-weight:700;color:${sec.color}">${secChecked}/${sec.items.length}</div>
+          </div>
+          ${sec.items.map((item,i)=>{
+            const id=sec.key+i;
+            const checked=!!state.checklistChecked[id];
+            return`
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-top:1px solid #f1f5f9;cursor:pointer">
+              <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${id}')" style="width:16px;height:16px;margin-top:1px;flex-shrink:0;accent-color:${sec.color};cursor:pointer"/>
+              <span style="font-size:12.5px;color:${checked?'#94a3b8':'#334155'};line-height:1.55;text-decoration:${checked?'line-through':'none'}">${item}</span>
+            </label>`;
+          }).join('')}
+        </div>`;
+      }).join('')}
+
+      <div style="text-align:center;margin-bottom:14px">
+        <button onclick="finalizeChecklist()" style="padding:11px 24px;background:#065f46;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✓ Finalize &amp; Copy Checked Items</button>
+        <div style="font-size:11px;color:#64748b;margin-top:8px">Stopping here for now? This copies just what you've checked so far, ready to paste into Funnel — then clears the list for the next file.</div>
+        ${state.checklistCopyMsg?`<div style="margin-top:8px;font-size:12px;font-weight:700;color:${state.checklistCopyMsg.startsWith('✓')?'#166534':'#b45309'}">${state.checklistCopyMsg}</div>`:''}
+      </div>
+
+      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:14px 16px">
+        <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">How to use this in real files</div>
+        <div style="font-size:12px;color:#166534;line-height:1.65">
+          Treat this as two gates, not one. The Before Approving gate stops a bad income or asset file from ever reaching an Accept decision. The Before Sending Lease and System Accuracy gates stop a correct decision from going out the door with the wrong numbers attached. A file can pass the first gate and still fail the second if the unit, dates, or rate were never reconciled against Yardi.
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderDenverPilot(){
   const isManager = !!state.manager;
   return`
@@ -2725,6 +2857,7 @@ function renderPage(){
     case 'listening': html=renderCallListening();break;
     case 'scorecard': html=renderScorecard();break;
     case 'priorities': html=renderPriorities();break;
+    case 'checklist': html=renderChecklist();break;
     case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
