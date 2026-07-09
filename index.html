@@ -428,6 +428,9 @@ async function hydrateFromFirestore(){
       }
     });
   }
+  if(remote.coaching_logs && Array.isArray(remote.coaching_logs.items) && remote.coaching_logs.items.length){
+    coachingLogs = remote.coaching_logs.items;
+  }
   if(remote.applicant_tracker && Array.isArray(remote.applicant_tracker.items)){
     state.applicantEntries = remote.applicant_tracker.items;
   }
@@ -2227,7 +2230,7 @@ function renderChecklist(){
 
 
 const PROPERTIES = [
-  '29x','Beacon House','Centre Court','Copper Ridge','Forum Fitzsimons','Heights on Huron',
+  '29x','Beacon House','Centre Court','Copper Ridge','Enclave at Rigden Farm','Forum Fitzsimons','Heights on Huron',
   'Mountain Village','Sunset Peak','The Economist','The Overland','Aura at Midtown','Latitude',
   'Mandarina','Omnia on Thomas','Pavilions at Arrowhead','Springs at Alta Mesa','Tempe Vista','Villas at MVR',
 ];
@@ -2908,6 +2911,16 @@ let coachingLogs = [
   {id:3, coachee:'Dianne Mercado',   date:'2026-05-27', category:'Process',    notes:'Confidence building on cold re-engagements. Reviewed voicemail script delivery. Action: listen to 3 own call recordings before next session.', fileName:'', driveUrl:''},
   {id:4, coachee:'Kenneth Geronimo', date:'2026-05-22', category:'Process',    notes:'Addressed scheduling errors. SOPs reviewed together. Action: double-check confirmation texts against template before sending.', fileName:'', driveUrl:''},
 ];
+async function saveCoachingLogs(){
+  const saved = await saveToFirestore('coaching_logs', {items: coachingLogs});
+  if(!saved){
+    console.warn('Coaching log saved locally but failed to sync to Firestore — it may not persist after refresh.');
+    flagSaveFailed('Coaching log');
+  } else if(state.syncError){
+    clearSyncIssue();
+  }
+  return saved;
+}
 
 const DRIVE_FOLDER = 'https://drive.google.com/drive/u/0/folders/1KGXELajQfXuM5bZ-fQa1dGTBegyEOkjd';
 const COACHING_CATS = ['KPI','Process','Call Spiel','Attendance','General'];
@@ -3079,7 +3092,7 @@ function renderCoaching(){
     </div>`;
 }
 
-function saveCoachingLog(){
+async function saveCoachingLog(){
   if(!state.clCoachee){alert('Please select a coachee.');return;}
   if(!state.clDate){alert('Please select a date.');return;}
   if(!state.clCategory){alert('Please select a category.');return;}
@@ -3097,13 +3110,15 @@ function saveCoachingLog(){
   state.showCoachingForm=false;
   state.clCoachee='';state.clDate='';state.clCategory='';state.clNotes='';state.clFileName='';state.clDriveUrl='';
   render();
+  await saveCoachingLogs();
 }
 
-function deleteCoachingLog(id){
+async function deleteCoachingLog(id){
   if(!confirm('Delete this coaching log?'))return;
   coachingLogs=coachingLogs.filter(l=>l.id!==id);
   state.expandedCoaching=null;
   render();
+  await saveCoachingLogs();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────
