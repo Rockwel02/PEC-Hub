@@ -166,6 +166,10 @@
       .nav-badge{display:none}
       .nav-btn{font-size:10.5px;padding:5px 7px}
     }
+    @media(max-width:700px){
+      #cmLayout{grid-template-columns:1fr}
+      #cmMap{height:320px !important}
+    }
   </style>
 </head>
 <body>
@@ -2833,14 +2837,18 @@ function renderCommunitiesMap(){
     </div>
     <div class="content">
       <div class="filters" id="cmMarketFilters" style="margin-bottom:14px"></div>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#15803d;line-height:1.6" id="cmHomeNote"></div>
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input id="cmSearchBox" placeholder="Filter this market by name or city..." oninput="cmHandleSearch(this.value)"/>
-      </div>
-      <div id="cmList" style="margin-bottom:16px"></div>
-      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
-        <div id="cmMap" style="height:380px;width:100%"></div>
+      <div id="cmLayout" style="display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start;margin-bottom:14px">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;font-size:11px;color:#15803d;line-height:1.6" id="cmHomeNote"></div>
+          <div class="search-wrap" style="margin-bottom:0">
+            <span class="search-icon">🔍</span>
+            <input id="cmSearchBox" placeholder="Filter by name or city..." oninput="cmHandleSearch(this.value)"/>
+          </div>
+          <div id="cmList" style="max-height:520px;overflow-y:auto;padding-right:2px"></div>
+        </div>
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;min-width:0">
+          <div id="cmMap" style="height:520px;width:100%"></div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div class="section-label" style="margin:0">Full distance &amp; drive-time matrix <span id="cmMarketCount" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8"></span></div>
