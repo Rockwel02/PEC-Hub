@@ -8,6 +8,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
@@ -844,6 +846,7 @@ const NAV = [
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
   {id:'checklist', label:'Application Checklist', icon:'✅'},
   {id:'applicants', label:'Applicant Status', icon:'🗂️'},
+  {id:'communities', label:'Communities Map', icon:'🗺️'},
   {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
@@ -865,7 +868,6 @@ function linkify(text){
 }
 function toDriveEmbedUrl(url){
   if(!url)return null;
-  // Matches both /file/d/FILEID/view and open?id=FILEID formats
   const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if(!m) return null;
   return `https://drive.google.com/file/d/${m[1]}/preview`;
@@ -877,7 +879,6 @@ function toSheetsEmbedUrl(url){
   const id = m[1];
   const gm = url.match(/[#&?]gid=(\d+)/);
   const gid = gm ? gm[1] : '0';
-  // widget=true + headers=false gives a clean embedded read-only view
   return `https://docs.google.com/spreadsheets/d/${id}/preview?gid=${gid}`;
 }
 function badge(cat,type='cat'){
@@ -904,20 +905,16 @@ function showPage(p){
 
 // ── SCORECARD AUTO-SYNC ───────────────────────────────────────────
 let scorecardAutoSyncInterval = null;
-const SCORECARD_AUTO_SYNC_MS = 3 * 60 * 1000; // every 3 minutes while the tab is open
+const SCORECARD_AUTO_SYNC_MS = 3 * 60 * 1000;
 
 function manageScorecardAutoSync(page){
-  // Always clear any existing timer first to avoid stacking multiple intervals
   if(scorecardAutoSyncInterval){
     clearInterval(scorecardAutoSyncInterval);
     scorecardAutoSyncInterval = null;
   }
   if(page === 'scorecard' && state.sheetUrl){
-    // Fetch immediately on entering the tab, don't wait for the first timer tick
     syncSheet(true);
     scorecardAutoSyncInterval = setInterval(()=>{
-      // Only keep syncing if we're still actually on the scorecard page
-      // (guards against a stray interval surviving an unexpected navigation path)
       if(state.page === 'scorecard') syncSheet(true);
       else { clearInterval(scorecardAutoSyncInterval); scorecardAutoSyncInterval = null; }
     }, SCORECARD_AUTO_SYNC_MS);
@@ -955,6 +952,7 @@ function renderHome(){
           {id:'scripts',icon:'📋',label:'Call Notes V2',desc:'Full sentences with Yes/No follow-ups',color:'#0d9488'},
           {id:'listening',icon:'🎧',label:'Call Listening',desc:'Weekly call recordings for review',color:'#9333ea'},
           {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, quarterly',color:'#16a34a'},
+          {id:'communities',icon:'🗺️',label:'Communities Map',desc:'Distance & drive time by market',color:'#1d4ed8'},
           {id:'denver',icon:'🏔️',label:'Denver Pilot',desc:'Pilot program tracking',color:'#0891b2'},
           {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
           {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
@@ -1056,8 +1054,6 @@ async function postAnnouncementComment(announcementId){
   state.commentDrafts[announcementId] = '';
   render();
 
-  // Persist to Firestore — comments live as a sub-field on the announcement
-  // itself inside the same announcements_list document we already use.
   const existing = await loadOneFromFirestore('announcements_list');
   const list = existing.items || [];
   const idx = list.findIndex(item=>item.id===announcementId);
@@ -1088,10 +1084,8 @@ function renderAnnouncements(){
   const today = new Date().toISOString().split('T')[0];
   const isManager = !!state.manager;
 
-  // Sort: pinned first, then by date desc
   const sorted = [...state.announcements].sort((a,b)=>(b.pinned-a.pinned)||(b.date.localeCompare(a.date)));
 
-  // Training urgency
   const urgent   = state.trainings.filter(t=>!t.completed && daysUntil(t.due)<=7);
   const upcoming = state.trainings.filter(t=>!t.completed && daysUntil(t.due)>7);
   const done     = state.trainings.filter(t=>t.completed);
@@ -1111,7 +1105,6 @@ function renderAnnouncements(){
 
     <div class="content">
 
-      <!-- URGENT TRAINING BANNER -->
       ${urgent.length>0?`
         <div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:14px;padding:16px 18px;margin-bottom:20px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
@@ -1135,7 +1128,6 @@ function renderAnnouncements(){
         </div>`:''
       }
 
-      <!-- ANNOUNCEMENTS SECTION -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="section-label" style="margin:0">Announcements</div>
         ${isManager?`<button onclick="state.showAnnouncementForm=!state.showAnnouncementForm;render()" style="padding:6px 14px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">
@@ -1212,7 +1204,6 @@ function renderAnnouncements(){
           </div>`;
       }).join('')}
 
-      <!-- GRACE HILL TRAINING TRACKER -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px">
         <div class="section-label" style="margin:0">Grace Hill Training Tracker</div>
         <div style="display:flex;gap:8px">
@@ -1296,7 +1287,6 @@ async function saveAnnouncement(){
   state.announcements.push(newAnnouncement);
   state.anTitle='';state.anBody='';state.anType='info';state.anPinned=false;state.anPdfUrl='';state.anImageUrl='';state.anLinkLabel='';state.anLinkUrl='';state.showAnnouncementForm=false;
   render();
-  // Persist to Firestore so every agent sees this without needing to be logged in
   const existing = await loadOneFromFirestore('announcements_list');
   const list = existing.items || [];
   list.push(newAnnouncement);
@@ -1333,7 +1323,6 @@ function parseGraceHillXLS(input){
       const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
       if(!rows.length){alert('No data found in the file.');return;}
 
-      // Map column names flexibly
       const first=rows[0];
       const keys=Object.keys(first);
       const empKey   =keys.find(k=>k.toLowerCase().includes('employee')&&!k.toLowerCase().includes('id')&&!k.toLowerCase().includes('position'));
@@ -1346,7 +1335,6 @@ function parseGraceHillXLS(input){
         return;
       }
 
-      // Clear existing non-completed trainings and reload from file
       state.trainings=state.trainings.filter(t=>t.completed);
 
       rows.forEach((row,i)=>{
@@ -1354,24 +1342,20 @@ function parseGraceHillXLS(input){
         const title=String(row[titleKey]||'').trim();
         if(!emp||!title)return;
 
-        // Parse due date
         let dueStr='';
         const rawDue=row[dueKey];
         if(rawDue instanceof Date){
           dueStr=rawDue.toISOString().split('T')[0];
         } else if(typeof rawDue==='string'&&rawDue.includes('/')){
-          // MM/DD/YYYY → YYYY-MM-DD
           const parts=rawDue.split('/');
           if(parts.length===3) dueStr=`${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
         } else if(typeof rawDue==='number'){
-          // Excel serial date
           const d=new Date(Math.round((rawDue-25569)*86400*1000));
           dueStr=d.toISOString().split('T')[0];
         }
 
         if(!dueStr)return;
 
-        // Check if same training+agent already exists from a previous manual entry
         const exists=state.trainings.find(t=>t.title===title&&t.agent===emp);
         if(!exists){
           state.trainings.push({id:Date.now()+i,title,agent:emp,due:dueStr,completed:false});
@@ -1388,7 +1372,6 @@ function parseGraceHillXLS(input){
   reader.readAsArrayBuffer(file);
   input.value='';
 }
-
 
 function renderKB(){
   const cats=['All',...new Set(KB.map(a=>a.cat))];
@@ -1432,10 +1415,9 @@ async function addSpielRecording(spielId){
   const spiel = SPIELS.find(s=>s.id===spielId);
   if(!spiel)return;
   const url = prompt('Paste the Google Drive share link for this recording (MP3/MP4):', spiel.recordingUrl||'');
-  if(url===null)return; // cancelled
+  if(url===null)return;
   spiel.recordingUrl = url.trim();
   render();
-  // Persist to Firestore so every agent sees this without needing to be logged in
   const existing = await loadOneFromFirestore('spiel_recordings');
   existing[spielId] = spiel.recordingUrl;
   const saved = await saveToFirestore('spiel_recordings', existing);
@@ -1445,7 +1427,7 @@ async function addDiscoveryRecording(qId){
   const q = DISCOVERY_QUESTIONS.find(s=>s.id===qId);
   if(!q)return;
   const url = prompt('Paste the Google Drive share link for this recording (MP3/MP4):', q.recordingUrl||'');
-  if(url===null)return; // cancelled
+  if(url===null)return;
   q.recordingUrl = url.trim();
   render();
   const existing = await loadOneFromFirestore('discovery_recordings');
@@ -1528,7 +1510,6 @@ function renderSpiels(){
       </div>`;
   }
 
-  // Objection Handlers tab (default)
   const cats=['All',...new Set(SPIELS.map(s=>s.cat))];
   const filtered=SPIELS.filter(s=>
     (state.spielCat==='All'||s.cat===state.spielCat)&&
@@ -1663,7 +1644,6 @@ function renderCallScripts(){
     (s.title.toLowerCase().includes(search) || s.opening.toLowerCase().includes(search))
   );
 
-  // Group by category for section headers, preserving original order within each
   const grouped = {};
   filtered.forEach(s=>{ (grouped[s.cat] = grouped[s.cat]||[]).push(s); });
 
@@ -1782,7 +1762,6 @@ function renderCallListening(){
         </button>`:''
       }
 
-      <!-- Tracking Spreadsheet card -->
       <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
         <div style="width:48px;height:48px;border-radius:12px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📊</div>
         <div style="flex:1">
@@ -1807,7 +1786,6 @@ function renderCallListening(){
           </div>`;
       })()}
 
-      <!-- Recordings Drive Folder card -->
       <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
         <div style="width:48px;height:48px;border-radius:12px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🎙</div>
         <div style="flex:1">
@@ -1835,8 +1813,6 @@ async function saveCallListeningLinks(){
   });
   if(!saved) console.warn('Links saved locally but failed to sync to Firestore — other agents may not see them yet.');
 }
-
-
 
 function toCsvUrl(url){
   try{
@@ -1874,10 +1850,6 @@ async function syncSheet(silent){
   }
   if(!silent){state.syncStatus='loading';state.syncMsg='';render();}
 
-  // Try a list of CORS proxies in order — fall back if one is down.
-  // Note: corsproxy.io was removed after being flagged by multiple security
-  // vendors for suspicious activity (as of March 2026). Using CodeTabs and
-  // allorigins.win instead, both long-standing free proxy services.
   const proxies = [
     url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
     url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -1893,7 +1865,6 @@ async function syncSheet(silent){
       const res = await fetch(proxyUrl, { cache: 'no-store' });
       if (!res.ok) { lastError = `Proxy ${i+1} returned ${res.status}`; continue; }
       const raw = await res.text();
-      // allorigins /get wraps response in JSON {contents: "..."}; /raw and codetabs return plain text
       if (raw.trim().startsWith('{') && raw.includes('"contents"')) {
         try {
           const json = JSON.parse(raw);
@@ -1902,16 +1873,14 @@ async function syncSheet(silent){
       } else {
         text = raw;
       }
-      // Validate this actually looks like real CSV data, not an HTML error page,
-      // a JS redirect snippet, a literal "null", or an empty/whitespace-only response.
       const t = (text || '').trim();
       const looksLikeRealCsv = t.length > 10
         && !t.startsWith('<')
         && t.toLowerCase() !== 'null'
         && !t.toLowerCase().startsWith('window.location')
         && !t.toLowerCase().includes('accounts.google.com')
-        && t.includes(',');  // a CSV with at least one comma-separated row
-      if (looksLikeRealCsv) break; // genuinely usable, stop trying more proxies
+        && t.includes(',');
+      if (looksLikeRealCsv) break;
       lastError = `Proxy ${i+1} returned invalid content (not real CSV data)`;
       text = null;
     } catch(err) {
@@ -1925,7 +1894,6 @@ async function syncSheet(silent){
       state.syncMsg=`Could not reach the sheet right now (${lastError||'all proxy services failed'}). This is usually a temporary outage with the free proxy service, not a problem with your sheet. Try again in a minute, or use the manual entry tabs in the meantime.`;
       render();
     } else {
-      // Auto-sync failures stay quiet in the UI but we still record the attempt
       state.lastAutoSyncError = lastError || 'All proxies failed';
     }
     return;
@@ -1935,8 +1903,6 @@ async function syncSheet(silent){
     const lines=text.split('\n').filter(l=>l.trim());
     if(lines.length<1)throw new Error('Sheet appears empty.');
 
-    // Detect whether row 0 is a header row (contains "KPI" or "Score" as literal labels)
-    // or whether data starts immediately (your actual sheet format: KPI name in col A, score in col B, no header)
     const firstRowCols = lines[0].split(',').map(c=>c.trim().toLowerCase().replace(/"/g,''));
     const looksLikeHeader = firstRowCols.some(c=>c==='kpi'||c==='metric') && firstRowCols.some(c=>c==='score'||c==='actual'||c==='value');
 
@@ -1946,7 +1912,6 @@ async function syncSheet(silent){
       si = firstRowCols.findIndex(h=>h.includes('score')||h.includes('actual')||h.includes('value'));
       dataLines = lines.slice(1);
     } else {
-      // No header — assume column A = KPI name, column B = Score (your sheet's actual format)
       ki = 0;
       si = 1;
       dataLines = lines;
@@ -1957,7 +1922,7 @@ async function syncSheet(silent){
     dataLines.forEach(line=>{
       const cols=line.split(',').map(c=>c.trim().replace(/"/g,''));
       const n=(cols[ki]||'').toLowerCase();
-      if(!n)return; // skip blank rows
+      if(!n)return;
       const v=parseFloat((cols[si]||'').replace('%',''))||0;
       if(n.includes('call')&&n.includes('completion')){u.call_completion=v;matchedAny=true;}
       else if(n.includes('lead engagement')||n.includes('lead eng')){u.lead_engagement=v;matchedAny=true;}
@@ -1999,14 +1964,11 @@ function handleFenixUpload(input){
       const parsed=lines.slice(1).map(l=>{
         const c=l.split(',').map(x=>x.trim().replace(/"/g,''));
         const scoreRaw = c[si]||'';
-        // Handle percentage formats like "94.62%" or "0.9462"
         let score = parseFloat(scoreRaw.replace('%',''))||0;
-        // If score is between 0 and 1, it's a decimal percentage — convert to %
         if(score > 0 && score <= 1) score = Math.round(score * 1000) / 10;
         return{name:c[ni]||'',fenix:score};
       }).filter(a=>a.name && a.fenix > 0);
       state.agents=state.agents.map(a=>{const m=parsed.find(p=>p.name.toLowerCase()===a.name.toLowerCase());return m?{...a,fenix_scored_calls:m.fenix}:a;});
-      // Use the max value as the team average (catches summary/total rows from Fenix)
       const teamAvg = parsed.length > 0 ? Math.round(Math.max(...parsed.map(a=>a.fenix))*10)/10 : 0;
       state.teamScores.fenix_scored_calls = teamAvg;
       state.fenixMsg=`✓ ${parsed.length} agents loaded`;
@@ -2017,7 +1979,7 @@ function handleFenixUpload(input){
   reader.readAsText(file);
 }
 function renderPeriodControl(tab){
-  if(tab!=='mtd') return ''; // Month-End and Quarterly now use per-period labels in their own history list
+  if(tab!=='mtd') return '';
   const val = state.periodMTD;
   return`
     <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Month</div>
@@ -2161,7 +2123,6 @@ function finalizeChecklist(){
       render();
     });
   }else{
-    // Fallback for older browsers without the async Clipboard API
     const ta=document.createElement('textarea');
     ta.value=text; document.body.appendChild(ta); ta.select();
     try{ document.execCommand('copy'); done(); }
@@ -2227,7 +2188,6 @@ function renderChecklist(){
       </div>
     </div>`;
 }
-
 
 const PROPERTIES = [
   '29x','Beacon House','Centre Court','Copper Ridge','Enclave at Rigden Farm','Forum Fitzsimons','Heights on Huron',
@@ -2464,6 +2424,433 @@ function renderDenverPilot(){
     </div>`;
 }
 
+// ── COMMUNITIES MAP ──────────────────────────────────────────────
+// Coordinates are best-effort from public property listings (not precisely
+// geocoded). Verify against Google Maps geocoding before treating as exact.
+const cmMarketsData = {
+  denver: {
+    label: 'Colorado – Denver Metro',
+    communities: [
+      { id:'29x', name:'29X', address:'4900 W 29th Ave, Denver, CO 80212', county:'Denver County', landmark:'Near Sloan\'s Lake Park', school:'Denver Public Schools (Berkeley/West Highland attendance area)', mall:'Highland Square shops nearby', park:'Sloan\'s Lake Park', lat:39.7602, lng:-105.0281, url:'https://avantiresidential.com/property/29x/' },
+      { id:'beacon', name:'Beacon House', address:'10738 Huron St, Northglenn, CO 80234', county:'Adams County', landmark:'Near the Huron St. retail corridor', school:'Adams 12 Five Star Schools', mall:'Orchard Town Center (nearby)', park:'E.B. Rains Jr. Memorial Park (area)', lat:39.9004, lng:-105.0089, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'centrecourt', name:'Centre Court', address:'745 E South Boulder Rd, Louisville, CO 80027', county:'Boulder County', landmark:'Near Flatiron Marketplace & Boulder', school:'Coal Creek Elementary, Louisville Middle, Monarch High', mall:'Flatiron Marketplace', park:'Coal Creek Trail', lat:39.9789, lng:-105.1257, url:'https://avantiresidential.com/property/centre-court/' },
+      { id:'copperridge', name:'Copper Ridge', address:'240 S McCaslin Blvd, Louisville, CO 80027', county:'Boulder County', landmark:'Near Safeway & Whole Foods on McCaslin Blvd', school:'Coal Creek Elementary, Louisville Middle, Monarch High (Louisville schools)', mall:'McCaslin Blvd retail (Safeway, Whole Foods, Target)', park:'Coal Creek Trail', lat:39.9762, lng:-105.1310, url:'https://avantiresidential.com/property/copper-ridge/' },
+      { id:'forumfitz', name:'Forum Fitzsimons', address:'13650 E Colfax Ave, Aurora, CO 80011', county:'Arapahoe County', landmark:'Adjacent to the Fitzsimons bioscience/Anschutz Medical hub', school:'Aurora Public Schools', mall:'Town Center at Aurora', park:'Fitzsimons Golf Course / Sand Creek Greenway', lat:39.7391, lng:-104.7861, url:'https://avantiresidential.com/property/forum-fitzsimons/' },
+      { id:'sunsetpeak', name:'Sunset Peak', address:'475 Russell Blvd, Thornton, CO 80229', county:'Adams County', landmark:'Near Sunrise Village Shopping Center', school:'Adams 12 Five Star Schools', mall:'Sunrise Village Shopping Center', park:'Community park within the complex', lat:39.8811, lng:-104.9581, url:'https://avantiresidential.com/property/sunset-peak/' },
+      { id:'economist', name:'The Economist', address:'1578 Humboldt St, Denver, CO 80218', county:'Denver County', landmark:'Congress Park, near Cheesman Park', school:'Denver Public Schools (Congress Park attendance area)', mall:'9th & Colorado retail', park:'Cheesman Park', lat:39.7402, lng:-104.9647, url:'https://avantiresidential.com/property/the-economist/' },
+      { id:'heightshuron', name:'The Heights on Huron', address:'10648 Huron St, Northglenn, CO 80234', county:'Adams County', landmark:'Near the Huron St. retail corridor', school:'Adams 12 Five Star Schools', mall:'Orchard Town Center (nearby)', park:'E.B. Rains Jr. Memorial Park (area)', lat:39.8994, lng:-105.0089, url:'https://avantiresidential.com/property/the-heights-on-huron/' },
+      { id:'overland', name:'The Overland', address:'2065 S Cherokee St, Denver, CO 80223', county:'Denver County', landmark:'Overland neighborhood, near the South Platte River trail', school:'Asbury Elementary, Grant Beacon Middle, Denver South High', mall:'Broadway retail corridor', park:'Overland Park Golf Course / South Platte River Trail', lat:39.6797, lng:-104.9877, url:'https://avantiresidential.com/property/the-overland/' },
+    ]
+  },
+  springs: {
+    label: 'Colorado – Springs, Fort Collins & Mountain',
+    communities: [
+      { id:'532co', name:'532 CO', address:'532 W Colorado Ave, Colorado Springs, CO 80905', county:'El Paso County', landmark:'Westside, near Bear Creek Regional Park & Old Colorado City', school:'Colorado Springs School District 11', mall:'Colorado Place / The Shops at 8th Street', park:'Bear Creek Regional Park, Monument Valley Park', lat:38.8339, lng:-104.8397, url:'https://avantiresidential.com/property/532-co/' },
+      { id:'chapelheights', name:'Cottages at Chapel Heights', address:'830 Cana Grove, Colorado Springs, CO 80916', county:'El Paso County', landmark:'Gateway Park neighborhood — near Wildflower Park & Peterson Space Force Base', school:'Harrison School District No. 2', mall:'S. Academy Blvd retail corridor', park:'Wildflower Park', lat:38.8100, lng:-104.7200, url:'https://avantiresidential.com/property/cottages-at-chapel-heights/' },
+      { id:'jetwing', name:'Cottages at Jetwing', address:'991 Ibsen View, Colorado Springs, CO 80916', county:'El Paso County', landmark:'Gateway Park neighborhood — near S. Academy Blvd shopping', school:'Harrison School District No. 2', mall:'S. Academy Blvd retail corridor', park:'Wildflower Park', lat:38.8085, lng:-104.7175, url:'https://avantiresidential.com/property/cottages-at-jetwing/' },
+      { id:'mesaridge', name:'Cottages at Mesa Ridge', address:'7580 Segundo Grove, Fountain, CO 80817', county:'El Paso County', landmark:'Fountain, CO — Pikes Peak views', school:'Fountain-Fort Carson School District 8', mall:'Fountain shopping corridor', park:'Fountain Creek Regional Park (nearby)', lat:38.6820, lng:-104.6920, url:'https://avantiresidential.com/property/cottages-at-mesa-ridge/' },
+      { id:'northcarefree', name:'Cottages at North Carefree', address:'3432 Floris Pt, Colorado Springs, CO 80917', county:'El Paso County', landmark:'Near Palmer Park, minutes from downtown', school:'Colorado Springs School District 11 / D-49 area', mall:'Chapel Hills Mall (nearby)', park:'Palmer Park', lat:38.8800, lng:-104.7360, url:'https://avantiresidential.com/property/cottages-at-north-carefree/' },
+      { id:'pikeview', name:'Cottages at Pike View', address:'3850 Schafer Heights, Colorado Springs, CO 80907', county:'El Paso County', landmark:'Near I-25 & Garden of the Gods area', school:'Academy School District 20', mall:'Chapel Hills Mall (nearby)', park:'Garden of the Gods', lat:38.8895, lng:-104.8480, url:'https://avantiresidential.com/property/cottages-at-pikeview/' },
+      { id:'rampartpark', name:'Cottages at Rampart Park', address:'2887 Coreopsis Grove #101, Colorado Springs, CO 80920', county:'El Paso County', landmark:'Briargate, adjacent to Rampart Park', school:'Academy School District 20', mall:'The Promenade Shops at Briargate, Chapel Hills Mall', park:'Rampart Park (adjacent)', lat:38.9505, lng:-104.7650, url:'https://avantiresidential.com/property/cottages-at-rampart-park/' },
+      { id:'sandcreek', name:'Cottages at Sand Creek', address:'4046 Mallette Heights, Colorado Springs, CO 80916', county:'El Paso County', landmark:'Gateway Park neighborhood — near Wildflower Park & top-rated schools', school:'Harrison School District No. 2', mall:'S. Academy Blvd retail corridor', park:'Wildflower Park', lat:38.8210, lng:-104.7260, url:'https://avantiresidential.com/property/cottages-at-sand-creek/' },
+      { id:'southmurray', name:'Cottages at South Murray', address:'2023 Murray Creek Pointe, Colorado Springs, CO 80916', county:'El Paso County', landmark:'Gateway Park neighborhood — near Wildflower Park', school:'Harrison School District No. 2', mall:'S. Academy Blvd retail corridor', park:'Wildflower Park', lat:38.8170, lng:-104.7320, url:'https://avantiresidential.com/property/cottages-at-south-murray/' },
+      { id:'torinpoint', name:'Cottages at Torin Point', address:'4703 Goodwin Grv, Colorado Springs, CO 80916', county:'El Paso County', landmark:'Gateway Park neighborhood, near Hwy 24 & Wildflower Park', school:'Harrison School District No. 2', mall:'S. Academy Blvd retail corridor', park:'Palmer Park, Monument Valley Park (both within ~9 mi)', lat:38.8230, lng:-104.7170, url:'https://avantiresidential.com/property/cottages-at-torin-point/' },
+      { id:'woodmen', name:'The Cottages at Woodmen Heights', address:'7755 Adventure Way, Colorado Springs, CO 80923', county:'El Paso County', landmark:'Near the Sand Creek Trail', school:'Academy School District 20 / D-49 area', mall:'Powers Blvd retail corridor', park:'Sand Creek Trail', lat:38.9490, lng:-104.7020, url:'https://avantiresidential.com/property/the-cottages-at-woodmen-heights/' },
+      { id:'boulevard', name:'Cottages on the Boulevard', address:'3320 Sanchez Lane, Pueblo, CO 81008', county:'Pueblo County', landmark:'Near Pueblo Blvd & Hwy 50, Skyview Mesa', school:'Pueblo City Schools (District 60)', mall:'Pueblo Mall (nearby via Hwy 50)', park:'Skyview Mesa nature walks', lat:38.2085, lng:-104.5680, url:'https://avantiresidential.com/property/cottages-on-boulevard/' },
+      { id:'rigdenfarm', name:'Enclave Rigden Farm', address:'2758 Iowa Dr, Fort Collins, CO 80525', county:'Larimer County', landmark:'One block from grocery-anchored retail, near CSU', school:'Poudre School District, near Liberty Common High School', mall:'Front Range Village (grocery-anchored retail one block away)', park:'Spring Canyon Community Park', lat:40.5330, lng:-105.0295, url:'https://avantiresidential.com/property/enclave-rigden-farm/' },
+      { id:'aeropark', name:'Flats at Aero Park', address:'4960 Fountain Ford Vw, Colorado Springs, CO 80916', county:'El Paso County', landmark:'Gateway Park neighborhood, near Peterson Space Force Base', school:'Harrison School District No. 2', mall:'S. Academy Blvd retail corridor', park:'Wildflower Park', lat:38.8040, lng:-104.7040, url:'https://avantiresidential.com/property/flats-at-aero-park/' },
+      { id:'pinecliff', name:'Flats at Pinecliff', address:'4760 Rusina Rd, Colorado Springs, CO 80907', county:'El Paso County', landmark:'Near Garden of the Gods, Costco & Safeway', school:'Colorado Springs School District 11', mall:'Costco / Safeway retail nearby', park:'Garden of the Gods', lat:38.8920, lng:-104.8280, url:'https://avantiresidential.com/property/flats-at-pinecliff/' },
+      { id:'marqmonument', name:'Marq at Monument Ridge', address:'15329 Monument Ridge Court, Monument, CO 80921', county:'El Paso County', landmark:'Gleneagle, near Monument Rock trails', school:'Lewis-Palmer School District (public); Hope Montessori, St. Peter Catholic, Pikes Peak Christian (private, nearby)', mall:'Monument shopping corridor off I-25', park:'Monument Rock trails', lat:39.0920, lng:-104.8630, url:'https://avantiresidential.com/property/themarq/' },
+      { id:'mountainvillage', name:'Mountain Village', address:'1101 Mountain Village Cr, Steamboat Springs, CO 80487', county:'Routt County', landmark:'Steps from Steamboat Ski Resort & the Yampa River', school:'Steamboat Springs School District', mall:'Downtown Steamboat Springs shops', park:'Yampa River Core Trail', lat:40.4850, lng:-106.8320, url:'https://avantiresidential.com/property/mountain-village/' },
+      { id:'polarispeak', name:'Polaris Peak', address:'2115 Birmingham Loop, Colorado Springs, CO 80910', county:'El Paso County', landmark:'Central Colorado Springs', school:'Colorado Springs School District 11', mall:'Citadel Mall (nearby)', park:'Panorama Park (area)', lat:38.8175, lng:-104.7745, url:'https://avantiresidential.com/property/polaris-peak/' },
+      { id:'mesacreek', name:'The Preserve at Mesa Creek', address:'975 Petitt Lake Heights St, Colorado Springs, CO 80907', county:'El Paso County', landmark:'Near Monument Valley Park & shopping', school:'Colorado Springs School District 11', mall:'Shopping centers within ~3 mi', park:'Monument Valley Park, North Slope Recreation Area', lat:38.9215, lng:-104.8095, url:'https://avantiresidential.com/property/preserve-at-mesa-creek/' },
+      { id:'patriotpark', name:'The Retreat at Patriot Park', address:'5550 Cernan Heights, Colorado Springs, CO 80915', county:'El Paso County', landmark:'Rustic Hills neighborhood — near The Shops at Powers & Peterson Space Force Base', school:'Colorado Springs School District 11', mall:'The Shops at Powers', park:'Palmer Park, Monument Valley Park (within ~10 mi)', lat:38.8560, lng:-104.6960, url:'https://avantiresidential.com/property/retreat-at-patriot-park/' },
+      { id:'skybearcreek', name:'Sky at Bear Creek', address:'864 Oxford Ln, Colorado Springs, CO 80905', county:'El Paso County', landmark:'Broadmoor/Westside, near Garden of the Gods', school:'Cheyenne Mountain School District 12', mall:'Westside/Old Colorado City retail', park:'Garden of the Gods, Bear Creek Regional Park', lat:38.8020, lng:-104.8615, url:'https://avantiresidential.com/property/sky-at-bear-creek/' },
+    ]
+  },
+  utah: {
+    label: 'Utah',
+    communities: [
+      { id:'copper87', name:'Copper 87', address:'8771 S Jordan Valley Way, West Jordan, UT 84088', county:'Salt Lake County', landmark:'Jordan River Parkway Trail, near Salt Lake Community College', school:'Jordan School District', mall:'Jordan Landing mixed-use center', park:'Jordan River Parkway Trail', lat:40.6055, lng:-111.9740, url:'https://avantiresidential.com/property/copper-87/' },
+      { id:'sunsetpointut', name:'Overlook at Sunset Point', address:'2955 North 400 West, Layton, UT 84041', county:'Davis County', landmark:'Near I-15 & Layton Hills Mall area', school:'Davis School District', mall:'Layton Hills Mall', park:'Layton Commons Park (area)', lat:41.0950, lng:-111.9540, url:'https://avantiresidential.com/communities/utah/' },
+    ]
+  },
+  arizona: {
+    label: 'Arizona',
+    communities: [
+      { id:'auramidtown', name:'Aura at Midtown', address:'3623 N 5th Ave, Phoenix, AZ 85013', county:'Maricopa County', landmark:'Near Phoenix Mountains Preserve & the light rail', school:'Osborn Elementary District', mall:'Camelback Colonnade, Biltmore Fashion Park', park:'Phoenix Mountains Preserve', lat:33.4879, lng:-112.0763, url:'https://avantiresidential.com/property/aura-at-midtown/' },
+      { id:'latitude', name:'Latitude', address:'1944 W Thunderbird Rd, Phoenix, AZ 85023', county:'Maricopa County', landmark:'North Phoenix, on the Phoenix Bus Line #138', school:'Washington Elementary District', mall:'Metrocenter area retail', park:'Thunderbird Park (nearby)', lat:33.6079, lng:-112.0913, url:'https://avantiresidential.com/property/latitude/' },
+      { id:'mandarina', name:'Mandarina', address:'5402 E Washington St, Phoenix, AZ 85034', county:'Maricopa County', landmark:'Near Phoenix Zoo & Desert Botanical Garden', school:'St. Theresa Catholic School (private, nearby)', mall:'Tempe Marketplace (nearby)', park:'Papago Park, Desert Botanical Garden', lat:33.4478, lng:-111.9995, url:'https://avantiresidential.com/property/mandarina/' },
+      { id:'omniathomas', name:'Omnia on Thomas', address:'1645 E Thomas Rd, Phoenix, AZ 85016', county:'Maricopa County', landmark:'Adjacent to Phoenix Children\'s Hospital', school:'Phoenix Elementary District', mall:'Biltmore Fashion Park', park:'Steele Indian School Park', lat:33.4797, lng:-112.0616, url:'https://avantiresidential.com/property/omnia-on-thomas/' },
+      { id:'pavarrowhead', name:'Pavilions at Arrowhead', address:'7400 W Arrowhead Clubhouse Dr, Glendale, AZ 85308', county:'Maricopa County', landmark:'Arrowhead Ranch, near Arrowhead Country Club', school:'Deer Valley Unified District', mall:'Arrowhead Towne Center', park:'Arrowhead Country Club grounds', lat:33.6602, lng:-112.2109, url:'https://avantiresidential.com/property/pavilions-at-arrowhead/' },
+      { id:'altamesa', name:'Springs at Alta Mesa', address:'1865 N Higley Rd, Mesa, AZ 85205', county:'Maricopa County', landmark:'Near Tonto National Forest access', school:'Mesa Unified District', mall:'Superstition Springs Center (nearby)', park:'Tonto National Forest access', lat:33.4425, lng:-111.7024, url:'https://avantiresidential.com/property/springs-at-alta-mesa/' },
+      { id:'tempevista', name:'Tempe Vista', address:'2045 E Broadway Rd, Tempe, AZ 85282', county:'Maricopa County', landmark:'Near Arizona State University', school:'Tempe Elementary District', mall:'Arizona Mills', park:'Kiwanis Park (area)', lat:33.3987, lng:-111.9195, url:'https://avantiresidential.com/property/tempe-vista/' },
+      { id:'mvr', name:'The Villas at Mountain Vista Ranch', address:'16630 N Reems Rd, Surprise, AZ 85374', county:'Maricopa County', landmark:'Near Luke Air Force Base', school:'Dysart Unified District', mall:'Surprise Towne Center (nearby)', park:'White Tank Mountain Regional Park (area)', lat:33.6528, lng:-112.3567, url:'https://avantiresidential.com/property/villas-at-mountain-vista-ranch/' },
+    ]
+  },
+  florida: {
+    label: 'Florida',
+    communities: [
+      { id:'500ocean', name:'500 Ocean', address:'101 S Federal Hwy, Boynton Beach, FL 33435', county:'Palm Beach County', landmark:'Near Boynton Beach Oceanfront Park', school:'Palm Beach County School District', mall:'Renaissance Commons', park:'Boynton Beach Oceanfront Park', lat:26.5234, lng:-80.0611, url:'https://avantiresidential.com/property/500-ocean/' },
+      { id:'artegrandcentral', name:'Arte Grand Central Overtown', address:'218 NW 8th St, Miami, FL 33136', county:'Miami-Dade County', landmark:'Across from the Overtown Metrorail & Brightline station', school:'Miami-Dade County Public Schools', mall:'Downtown Miami / Brickell retail', park:'Historic Overtown / Gibson Park', lat:25.7788, lng:-80.1994, url:'https://avantiresidential.com/property/arte-grand-central-overtown/' },
+      { id:'sanctuarydoral', name:'Sanctuary Doral', address:'9400 NW 41st St, Doral, FL 33178', county:'Miami-Dade County', landmark:'Doral golf & business district', school:'Miami-Dade County Public Schools', mall:'Downtown Doral / CityPlace Doral', park:'Doral Central Park', lat:25.8146, lng:-80.3616, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'theaveryorl', name:'The Avery', address:'1000 Avery Village Loop, Orlando, FL 32825', county:'Orange County', landmark:'Near Valencia College East Campus', school:'Little River Elementary, Union Park Middle, Colonial High', mall:'Orlando Fashion Square (nearby)', park:'Blanchard Park (nearby)', lat:28.5479, lng:-81.2453, url:'https://avantiresidential.com/property/the-avery/' },
+      { id:'bellagrove', name:'The Point at Bella Grove', address:'8310 Bella Grove Cir, Sarasota, FL 34243', county:'Manatee County', landmark:'Near New College of Florida & Sarasota-Bradenton Airport', school:'Manatee County School District', mall:'The Shoppes at University Center', park:'Nathan Benderson Park (area)', lat:27.3897, lng:-82.5540, url:'https://avantiresidential.com/property/the-point-at-bella-grove/' },
+      { id:'artestpete', name:'Arte St. Pete', address:'1661 Central Ave, St. Petersburg, FL 33713', county:'Pinellas County', landmark:'Edge District, near Tropicana Field', school:'Pinellas County School District', mall:'Sundial St. Pete (downtown)', park:'Campbell Park (nearby)', lat:27.7719, lng:-82.6631, url:'https://avantiresidential.com/property/arte-st-pete/' },
+    ]
+  },
+  tennessee: {
+    label: 'Tennessee',
+    communities: [
+      { id:'crossingseast', name:'Crossings at East Nashville', address:'321 Walton Ln, Madison, TN 37115', county:'Davidson County', landmark:'Near Rivergate Mall & Opryland', school:'Amqui Elementary, Boy\'s Prep, Hunters Lane Comp High', mall:'RiverGate Mall', park:'Peeler Park (nearby)', lat:36.2609, lng:-86.7078, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'crossingsmadison', name:'Crossings at Madison', address:'110 Archwood Pl, Madison, TN 37115', county:'Davidson County', landmark:'Near Rivergate Mall & Opryland', school:'Amqui Elementary, Boy\'s Prep, Hunters Lane Comp High', mall:'RiverGate Mall', park:'Peeler Park (nearby)', lat:36.2650, lng:-86.7150, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'oldhickory', name:'The Residence at Old Hickory Lake', address:'2401 Lakeshore Dr, Old Hickory, TN 37138', county:'Davidson County', landmark:'On Old Hickory Lake, near Hermitage Golf Course', school:'Metro Nashville Public Schools', mall:'The Shoppes at RiverGate', park:'Old Hickory Lake Greenway / Rockland Recreation Area', lat:36.2620, lng:-86.6280, url:'https://avantiresidential.com/property/residence-at-old-hickory-lake/' },
+    ]
+  },
+  ksmo: {
+    label: 'Kansas & Missouri (KC Metro)',
+    communities: [
+      { id:'artekc', name:'Arte KC', address:'1918 Locust St, Kansas City, MO 64108', county:'Jackson County, MO', landmark:'Crossroads Art District, on the KC Streetcar line', school:'Kansas City 33 School District', mall:'Crown Center (nearby via streetcar)', park:'Case Park (area)', lat:39.0895, lng:-94.5836, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'highlandslodge', name:'Highlands Lodge', address:'5000 Indian Creek Pky, Overland Park, KS 66207', county:'Johnson County, KS', landmark:'Overland Park', school:'Shawnee Mission School District', mall:'Oak Park Mall (nearby)', park:'Indian Creek Trail', lat:38.9548, lng:-94.6335, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'kenilworth', name:'Kenilworth', address:'4120 W 94th Ter, Prairie Village, KS 66207', county:'Johnson County, KS', landmark:'Near Nelson-Atkins Museum of Art & KC Zoo', school:'Shawnee Mission School District', mall:'Prairie Village Shops', park:'One of Prairie Village\'s 12 neighborhood parks', lat:38.9720, lng:-94.6330, url:'https://avantiresidential.com/property/kenilworth/' },
+      { id:'prairieview', name:'Prairie View', address:'11200 Delaware Pky, Kansas City, KS 66109', county:'Wyandotte County, KS', landmark:'Near the Village West entertainment district', school:'Kansas City Kansas Public Schools', mall:'Legends Outlets Kansas City', park:'Wyandotte County Lake Park (area)', lat:39.1620, lng:-94.8420, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'summitsquare', name:'Summit Square', address:'789 NW Donovan Rd, Lee\'s Summit, MO 64086', county:'Jackson County, MO', landmark:'Downtown Lee\'s Summit, near Summit Fair Mall', school:'Lee\'s Summit North High, Westview Elementary', mall:'Summit Fair Mall', park:'Legacy Park (nearby)', lat:39.0730, lng:-94.4180, url:'https://avantiresidential.com/property/summit-square/' },
+      { id:'thelocale', name:'The Locale', address:'6201 Johnson Dr, Mission, KS 66202', county:'Johnson County, KS', landmark:'Mission, KS', school:'Shawnee Mission School District', mall:'Mission Gateway retail', park:'Streamway Park (nearby)', lat:39.0170, lng:-94.6580, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'missionfarms', name:'Village at Mission Farms', address:'4080 Indian Creek Pky, Overland Park, KS 66206', county:'Johnson County, KS', landmark:'Overland Park', school:'Shawnee Mission School District', mall:'Mission Farms shopping center', park:'Indian Creek Trail', lat:38.9530, lng:-94.6280, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'villagewest', name:'Village West', address:'11024 Delaware Pky, Kansas City, KS 66109', county:'Wyandotte County, KS', landmark:'In the Village West entertainment district, near Legends Outlets & Children\'s Mercy Park', school:'Kansas City Kansas Public Schools', mall:'Legends Outlets Kansas City', park:'Wyandotte County Lake Park (area)', lat:39.1200, lng:-94.8280, url:'https://avantiresidential.com/property-market/all-communities/' },
+    ]
+  }
+};
+
+// Persistent module-level state — survives incidental re-renders of the page
+// (e.g. Firestore hydration finishing while someone's browsing this tab)
+// without resetting their selected market or home community.
+let cmState = { currentMarket: null, homeId: null, driveCache: {} };
+let cmMapInstance = null;
+let cmMarkers = {};
+let cmLines = [];
+let cmSearchText = '';
+let cmMatrixShown = false;
+
+function cmHaversineMiles(a,b){
+  const R = 3958.8;
+  const toRad = d => d*Math.PI/180;
+  const dLat = toRad(b.lat-a.lat);
+  const dLng = toRad(b.lng-a.lng);
+  const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+}
+function cmPinIcon(color, big){
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:${big?26:18}px;height:${big?26:18}px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;"></div>`,
+    iconSize:[big?26:18,big?26:18],
+    iconAnchor:[big?13:9,big?26:18]
+  });
+}
+function cmCommunities(){ return cmMarketsData[cmState.currentMarket].communities; }
+function cmHomeCommunity(){
+  const list = cmCommunities();
+  return list.find(c=>c.id===cmState.homeId) || list[0];
+}
+function cmEstimateDrive(straightMiles){
+  const roadMiles = straightMiles * 1.25;
+  let mph;
+  if(roadMiles < 5) mph = 25;
+  else if(roadMiles < 15) mph = 35;
+  else if(roadMiles < 40) mph = 45;
+  else mph = 58;
+  return { miles: roadMiles, mins: (roadMiles / mph) * 60, estimated: true };
+}
+function cmFetchWithTimeout(url, ms){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), ms);
+  return fetch(url, { signal: controller.signal }).finally(()=>clearTimeout(timer));
+}
+let cmActiveFetches = 0;
+const CM_MAX_CONCURRENT = 3;
+const cmFetchQueue = [];
+function cmRunQueue(){
+  while(cmActiveFetches < CM_MAX_CONCURRENT && cmFetchQueue.length){
+    const job = cmFetchQueue.shift();
+    cmActiveFetches++;
+    job().finally(()=>{ cmActiveFetches--; cmRunQueue(); });
+  }
+}
+function cmEnqueue(fn){
+  return new Promise((resolve)=>{
+    cmFetchQueue.push(()=>fn().then(resolve).catch(()=>resolve(null)));
+    cmRunQueue();
+  });
+}
+async function cmFetchDrive(a,b, attempt){
+  attempt = attempt || 1;
+  const key = a.id+'->'+b.id;
+  if(cmState.driveCache[key]) return cmState.driveCache[key];
+  const straightMiles = cmHaversineMiles(a,b);
+  const result = await cmEnqueue(async ()=>{
+    try{
+      const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=false`;
+      const res = await cmFetchWithTimeout(url, 6000);
+      const data = await res.json();
+      if(data.routes && data.routes[0]){
+        const miles = data.routes[0].distance / 1609.34;
+        const mins = data.routes[0].duration / 60;
+        return { miles, mins, estimated:false };
+      }
+      throw new Error('no route');
+    }catch(e){
+      if(attempt < 2){
+        await new Promise(r=>setTimeout(r, 400));
+        return cmFetchDrive(a,b,attempt+1);
+      }
+      return cmEstimateDrive(straightMiles);
+    }
+  });
+  const final = result || cmEstimateDrive(straightMiles);
+  cmState.driveCache[key] = final;
+  return final;
+}
+function cmFmtMiles(m){ return m.toFixed(1)+' mi'; }
+function cmFmtMins(m){ return Math.round(m)+' min'; }
+function cmClearLines(){ cmLines.forEach(l=>cmMapInstance.removeLayer(l)); cmLines = []; }
+function cmDrawLines(){
+  cmClearLines();
+  const home = cmHomeCommunity();
+  cmCommunities().forEach(c=>{
+    if(c.id===home.id) return;
+    const line = L.polyline([[home.lat,home.lng],[c.lat,c.lng]], { color:'#3b82f6', weight:1.5, opacity:0.35, dashArray:'4,6' }).addTo(cmMapInstance);
+    cmLines.push(line);
+  });
+}
+function cmFitMapToMarkers(){
+  const list = cmCommunities();
+  if(list.length === 0) return;
+  const bounds = L.latLngBounds(list.map(c=>[c.lat,c.lng]));
+  cmMapInstance.fitBounds(bounds, { padding:[40,40] });
+}
+function cmRenderMarkers(){
+  Object.values(cmMarkers).forEach(m=>cmMapInstance.removeLayer(m));
+  cmMarkers = {};
+  const home = cmHomeCommunity();
+  cmCommunities().forEach(c=>{
+    const isHome = c.id===home.id;
+    const dist = cmHaversineMiles(home, c);
+    const marker = L.marker([c.lat,c.lng], { icon: cmPinIcon(isHome?'#d97706':'#3b82f6', isHome) }).addTo(cmMapInstance);
+    let popupHtml = `<div style="font-weight:700;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:2px">${c.name}</div>
+      <div style="color:#64748b;font-size:12px;margin-bottom:4px">${c.address}</div>
+      <div style="color:#64748b;font-size:11.5px;margin-bottom:6px">${c.county} · ${c.landmark}</div>
+      <div style="color:#64748b;font-size:11.5px">🏫 ${c.school}</div>
+      <div style="color:#64748b;font-size:11.5px">🛍️ ${c.mall}</div>
+      <div style="color:#64748b;font-size:11.5px">🌳 ${c.park}</div>`;
+    if(!isHome){
+      popupHtml += `<div style="font-size:12px;color:#1e40af;font-weight:600;margin-top:6px">${cmFmtMiles(dist)} straight-line from ${home.name}</div>
+        <div style="font-size:12px;color:#1e40af;font-weight:600" id="cmDrive-${c.id}">Calculating drive time…</div>`;
+    } else {
+      popupHtml += `<div style="font-size:12px;color:#d97706;font-weight:600;margin-top:6px">📍 Current home community</div>`;
+    }
+    popupHtml += `<a href="${c.url}" target="_blank" rel="noopener" style="font-size:12px;color:#1e40af;font-weight:600">View property page →</a>`;
+    marker.bindPopup(popupHtml);
+    marker.on('click', () => {
+      if(!isHome){
+        cmFetchDrive(home,c).then(d=>{
+          const el = document.getElementById('cmDrive-'+c.id);
+          if(el) el.textContent = `≈ ${cmFmtMiles(d.miles)} driving, ~${cmFmtMins(d.mins)}${d.estimated?' (estimated)':''}`;
+        });
+      }
+    });
+    cmMarkers[c.id] = marker;
+  });
+  cmDrawLines();
+}
+function cmRenderList(){
+  const home = cmHomeCommunity();
+  const listEl = document.getElementById('cmList');
+  if(!listEl) return;
+  let sorted = [...cmCommunities()].sort((a,b)=>{
+    if(a.id===home.id) return -1;
+    if(b.id===home.id) return 1;
+    return cmHaversineMiles(home,a) - cmHaversineMiles(home,b);
+  });
+  if(cmSearchText){
+    const f = cmSearchText.toLowerCase();
+    sorted = sorted.filter(c => c.name.toLowerCase().includes(f) || c.address.toLowerCase().includes(f) || c.county.toLowerCase().includes(f));
+  }
+  listEl.innerHTML = sorted.map(c=>{
+    const isHome = c.id===home.id;
+    const dist = isHome ? null : cmHaversineMiles(home,c);
+    return `
+      <div class="card${isHome?' open':''}" style="cursor:default;${isHome?'border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)':''}">
+        <div class="card-header" style="cursor:pointer" onclick="cmMapInstance.setView([${c.lat},${c.lng}],12,{animate:true});cmMarkers['${c.id}']&&cmMarkers['${c.id}'].openPopup()">
+          <div class="card-left"><span class="card-title">${c.name}</span></div>
+          ${isHome?'<span class="badge" style="background:#dbeafe;color:#1e40af">HOME</span>':''}
+        </div>
+        <div class="card-body" style="border-top:none;padding-top:0">
+          <p style="margin-top:2px">${c.address}</p>
+          <p style="margin-top:4px"><span class="badge" style="background:#f1f5f9;color:#475569">${c.county}</span></p>
+          <p>📍 ${c.landmark}</p>
+          <p>🏫 ${c.school}</p>
+          <p>🛍️ ${c.mall} &nbsp;·&nbsp; 🌳 ${c.park}</p>
+          ${isHome?'':`<p style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge" style="background:#dbeafe;color:#1e40af;font-weight:700">${cmFmtMiles(dist)}</span>
+            <span id="cmListDrive-${c.id}" style="color:#64748b;font-weight:600">driving time loading…</span>
+          </p>`}
+          <p style="margin-top:8px;display:flex;gap:14px;align-items:center">
+            <a href="${c.url}" target="_blank" rel="noopener" style="font-size:11.5px;color:#1e40af;font-weight:700;text-decoration:none">Property page →</a>
+            ${isHome?'':`<button onclick="event.stopPropagation();cmSetHome('${c.id}')" style="font-size:11px;color:#64748b;background:none;border:none;text-decoration:underline;cursor:pointer;padding:0">Set as home</button>`}
+          </p>
+        </div>
+      </div>`;
+  }).join('');
+  if(sorted.length===0){
+    listEl.innerHTML = '<div style="text-align:center;padding:20px 0;color:#64748b;font-size:13px">No communities match your search.</div>';
+  }
+  sorted.forEach(c=>{
+    if(c.id===home.id) return;
+    cmFetchDrive(home,c).then(d=>{
+      const el = document.getElementById('cmListDrive-'+c.id);
+      if(el) el.textContent = `≈ ${cmFmtMins(d.mins)} drive${d.estimated?' (est.)':''}`;
+    });
+  });
+}
+function cmRenderMatrix(){
+  const table = document.getElementById('cmMatrixTable');
+  if(!table) return;
+  const list = cmCommunities();
+  let html = '<tr><th style="border:1px solid #e2e8f0;padding:5px 6px;background:#f8fafc;font-size:10px;text-align:left">Community</th>' +
+    list.map(c=>`<th style="border:1px solid #e2e8f0;padding:5px 6px;background:#f8fafc;font-size:10px">${c.name}</th>`).join('') + '</tr>';
+  list.forEach(a=>{
+    html += `<tr><th style="border:1px solid #e2e8f0;padding:5px 6px;background:#f8fafc;font-size:10px;text-align:left">${a.name}</th>`;
+    list.forEach(b=>{
+      if(a.id===b.id){ html += '<td style="border:1px solid #e2e8f0;padding:5px 6px;text-align:center">—</td>'; }
+      else{
+        const cellId = 'cmCell-'+a.id+'-'+b.id;
+        html += `<td style="border:1px solid #e2e8f0;padding:5px 6px;text-align:center"><span>${cmFmtMiles(cmHaversineMiles(a,b))}</span><span style="color:#64748b;font-size:9.5px;display:block" id="${cellId}">···</span></td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  table.innerHTML = html;
+}
+function cmFillMatrixDriveTimes(){
+  const list = cmCommunities();
+  list.forEach(a=>{
+    list.forEach(b=>{
+      if(a.id===b.id) return;
+      cmFetchDrive(a,b).then(d=>{
+        const el = document.getElementById('cmCell-'+a.id+'-'+b.id);
+        if(el) el.textContent = cmFmtMins(d.mins) + ' drive' + (d.estimated ? '*' : '');
+      });
+    });
+  });
+}
+function cmRenderMarketFilters(){
+  const el = document.getElementById('cmMarketFilters');
+  if(!el) return;
+  el.innerHTML = Object.entries(cmMarketsData).map(([key,m])=>
+    `<button class="filter-btn${cmState.currentMarket===key?' active':''}" onclick="cmSwitchMarket('${key}')">${m.label.replace('Colorado – ','')} (${m.communities.length})</button>`
+  ).join('');
+}
+function cmRenderHomeNote(){
+  const el = document.getElementById('cmHomeNote');
+  if(!el) return;
+  const home = cmHomeCommunity();
+  el.innerHTML = `<b>${home.name}</b> is the home community — every distance and drive time below is measured from here. Click "Set as home" on any other card to change it.`;
+}
+function cmRenderFootnote(){
+  const el = document.getElementById('cmFootnote');
+  if(!el) return;
+  el.innerHTML = 'Every travel time shown is minutes <b>from the current home community</b> to that community. Drive times load live from an open routing service; where that service can\'t respond in time, we show a calculated estimate instead (marked "estimated" or *) so a number always appears. Coordinates are approximate — sourced from public listings, not precise geocoding — verify before using anything client-facing.';
+}
+function cmRenderAll(){
+  cmRenderMarketFilters();
+  cmRenderHomeNote();
+  cmRenderMarkers();
+  cmRenderList();
+  cmRenderMatrix();
+  cmRenderFootnote();
+  const countEl = document.getElementById('cmMarketCount');
+  if(countEl) countEl.textContent = cmCommunities().length + ' communities';
+  if(cmMatrixShown) cmFillMatrixDriveTimes();
+}
+function cmSwitchMarket(key){
+  cmState.currentMarket = key;
+  cmState.homeId = cmMarketsData[key].communities[0].id;
+  cmSearchText = '';
+  const box = document.getElementById('cmSearchBox');
+  if(box) box.value = '';
+  cmFitMapToMarkers();
+  cmRenderAll();
+}
+function cmSetHome(id){
+  cmState.homeId = id;
+  cmRenderAll();
+}
+function cmHandleSearch(val){
+  cmSearchText = val;
+  cmRenderList();
+}
+function cmToggleMatrix(){
+  cmMatrixShown = !cmMatrixShown;
+  const table = document.getElementById('cmMatrixTable');
+  const btn = document.getElementById('cmToggleMatrixBtn');
+  if(table) table.style.display = cmMatrixShown ? 'table' : 'none';
+  if(btn) btn.textContent = cmMatrixShown ? 'Hide table' : 'Show table';
+  if(cmMatrixShown) cmFillMatrixDriveTimes();
+}
+
+// Called from renderPage() every time state.page === 'communities'.
+// Destroys any prior map instance first so incidental re-renders (e.g.
+// Firestore hydration finishing in the background) don't leak Leaflet
+// instances or reset the user's selected market/home community.
+function initCmMap(){
+  if(cmMapInstance){ cmMapInstance.remove(); cmMapInstance = null; }
+  if(!cmState.currentMarket){
+    cmState.currentMarket = 'denver';
+    cmState.homeId = cmMarketsData.denver.communities[0].id;
+  }
+  const mapEl = document.getElementById('cmMap');
+  if(!mapEl) return;
+  cmMapInstance = L.map('cmMap', { scrollWheelZoom:true });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(cmMapInstance);
+  cmFitMapToMarkers();
+  cmRenderAll();
+}
+function destroyCmMap(){
+  if(cmMapInstance){ cmMapInstance.remove(); cmMapInstance = null; }
+  cmMarkers = {};
+  cmLines = [];
+}
+
+function renderCommunitiesMap(){
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,#1d4ed8 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">🗺️</span><h1>Communities Map</h1></div>
+      <p>Distance and drive time between every Avanti community, market by market</p>
+    </div>
+    <div class="content">
+      <div class="filters" id="cmMarketFilters" style="margin-bottom:14px"></div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#15803d;line-height:1.6" id="cmHomeNote"></div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="cmSearchBox" placeholder="Filter this market by name or city..." oninput="cmHandleSearch(this.value)"/>
+      </div>
+      <div id="cmList" style="margin-bottom:16px"></div>
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
+        <div id="cmMap" style="height:380px;width:100%"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="section-label" style="margin:0">Full distance &amp; drive-time matrix <span id="cmMarketCount" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8"></span></div>
+        <button class="btn btn-primary" style="font-size:11px" id="cmToggleMatrixBtn" onclick="cmToggleMatrix()">Show table</button>
+      </div>
+      <div style="overflow-x:auto"><table id="cmMatrixTable" style="width:100%;border-collapse:collapse;font-size:11px;display:none"></table></div>
+      <div style="font-size:11px;color:#64748b;line-height:1.6;margin-top:10px" id="cmFootnote"></div>
+    </div>`;
+}
+
 function renderScorecard(){
   const tabColor=state.scTab==='mtd'?'#3b82f6':state.scTab==='monthend'?'#0d9488':'#7c3aed';
   return`
@@ -2589,7 +2976,7 @@ function renderAgentTable(kpiId,goal,unit){
 function renderPeriodHistory(tab,tabColor){
   const isManager = !!state.manager;
   const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
-  const sorted = [...history].sort((a,b)=>b.id-a.id); // newest first
+  const sorted = [...history].sort((a,b)=>b.id-a.id);
   const labelType = tab==='monthend' ? 'Month' : 'Quarter';
   const examplePlaceholder = tab==='monthend' ? 'e.g. June 2026' : 'e.g. Q3 2026';
 
@@ -2681,7 +3068,7 @@ async function addNewPeriod(tab){
   });
   state.newPeriodLabel='';
   state.showAddPeriodForm=false;
-  state.expandedPeriod=newId; // auto-expand the new one so they can fill it in right away
+  state.expandedPeriod=newId;
   render();
   await savePeriodHistory();
 }
@@ -2782,7 +3169,6 @@ function renderEOD(){
         <div style="font-size:13px;color:#64748b;margin-bottom:4px">${today}</div>
       </div>
 
-      <!-- Main submit button -->
       <a href="${EOD_FORM_URL}" target="_blank" style="display:block;text-decoration:none">
         <div style="background:linear-gradient(135deg,#0f1e3d,#1a2f55);border-radius:16px;padding:28px 24px;text-align:center;cursor:pointer;transition:opacity .15s"
           onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
@@ -2795,7 +3181,6 @@ function renderEOD(){
         </div>
       </a>
 
-      <!-- What to include reminder -->
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-top:16px">
         <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:10px">📌 What to include in your EOD report:</div>
         ${[
@@ -2810,14 +3195,12 @@ function renderEOD(){
           </div>`).join('')}
       </div>
 
-      <!-- Manager view button -->
       <div style="text-align:center;margin-top:16px">
         <button onclick="doLogin('manager')" style="font-size:11px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:6px 14px;cursor:pointer">
           🔒 Manager View
         </button>
       </div>
 
-      <!-- Logout reminder -->
       <div class="eod-logout-banner" style="margin-top:16px">
         <span style="font-size:24px">⚠️</span>
         <div>
@@ -2965,7 +3348,6 @@ function renderCoaching(){
     <div class="content">
 
       ${showForm ? `
-        <!-- NEW LOG FORM -->
         <div style="background:#fff;border:1.5px solid #7c3aed;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 0 0 3px rgba(124,58,237,.08)">
           <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f1f5f9">
             ✏️ New Coaching Log
@@ -3018,7 +3400,6 @@ function renderCoaching(){
         </button>
       `}
 
-      <!-- SEARCH + FILTER -->
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input value="${state.coachingSearch||''}" oninput="state.coachingSearch=this.value;renderPage()" placeholder="Search by agent, category, or notes..."/>
@@ -3029,7 +3410,6 @@ function renderCoaching(){
         `).join('')}
       </div>
 
-      <!-- STATS ROW -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px">
         ${COACHING_CATS.slice(0,3).map(c=>{
           const cc=CAT_BADGE[c];
@@ -3041,7 +3421,6 @@ function renderCoaching(){
         }).join('')}
       </div>
 
-      <!-- LOG LIST -->
       ${filtered.length===0?`<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No coaching logs found.</div>`:''}
       ${filtered.map(l=>{
         const cc=CAT_BADGE[l.category]||{bg:'#f1f5f9',c:'#475569'};
@@ -3135,12 +3514,17 @@ function renderPage(){
     case 'priorities': html=renderPriorities();break;
     case 'checklist': html=renderChecklist();break;
     case 'applicants': html=renderApplicantStatus();break;
+    case 'communities': html=renderCommunitiesMap();break;
     case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
     default:          html=renderHome();
   }
   document.getElementById('pageContent').innerHTML=html;
+  // Manage the live Leaflet map's lifecycle on every render, not just nav
+  // clicks — this covers incidental re-renders too (e.g. Firestore hydration
+  // finishing in the background while someone's browsing the map tab).
+  if(state.page==='communities'){ initCmMap(); } else { destroyCmMap(); }
 }
 function flagSyncIssue(message){
   state.syncError = message;
