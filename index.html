@@ -800,6 +800,9 @@ let state = {
   expandedKb:null, expandedSpiel:null, expandedCoaching:null,
   showCoachingForm:false, coachingSearch:'', coachingCatFilter:'All',
   clCoachee:'', clDate:'', clCategory:'', clNotes:'', clFileName:'', clDriveUrl:'',
+  olApplicantName:'', olMethod:'phone', olContactName:'', olCompanyName:'', olDate:'',
+  olConfirmedStart:false, olConfirmedPosition:false, olConfirmedComp:false, olConfirmedHours:false,
+  olNotes:'', olCopyMsg:'',
   kbSearch:'', kbCat:'All', spielSearch:'', spielCat:'All', spielTab:'objections', discoveryCat:'All',
   notesSearch:'', notesCat:'All',
   scriptsSearch:'', scriptsCat:'All', expandedScript:null,
@@ -3528,11 +3531,64 @@ function copyTextBlock(id, btnEl){
     document.body.removeChild(ta);
   }
 }
+function setOfferLetterMethod(method){
+  state.olMethod = method;
+  render();
+}
+function toggleOfferConfirmed(field){
+  state[field] = !state[field];
+  render();
+}
+function resetOfferLetterNote(){
+  state.olApplicantName=''; state.olMethod='phone'; state.olContactName=''; state.olCompanyName='';
+  state.olDate=''; state.olConfirmedStart=false; state.olConfirmedPosition=false;
+  state.olConfirmedComp=false; state.olConfirmedHours=false; state.olNotes=''; state.olCopyMsg='';
+  render();
+}
+function copyOfferLetterNote(){
+  if(!state.olApplicantName.trim()){
+    state.olCopyMsg='Add the applicant\'s name first.';
+    render();
+    return;
+  }
+  const confirmedItems = [];
+  if(state.olConfirmedStart) confirmedItems.push('Start date');
+  if(state.olConfirmedPosition) confirmedItems.push('Position/title');
+  if(state.olConfirmedComp) confirmedItems.push('Compensation (salary/hourly rate)');
+  if(state.olConfirmedHours) confirmedItems.push('Expected hours (if hourly)');
+
+  const lines = [];
+  lines.push(`Offer Letter Verification — ${state.olApplicantName.trim()}`);
+  lines.push(`Verified via: ${state.olMethod==='phone'?'Phone call':'Email'}`);
+  if(state.olContactName.trim()) lines.push(`Spoken with: ${state.olContactName.trim()}${state.olCompanyName.trim()?` (${state.olCompanyName.trim()})`:''}`);
+  else if(state.olCompanyName.trim()) lines.push(`Employer: ${state.olCompanyName.trim()}`);
+  if(state.olDate) lines.push(`Date verified: ${new Date(state.olDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`);
+  lines.push(`Confirmed: ${confirmedItems.length?confirmedItems.join(', '):'None selected'}`);
+  if(state.olNotes.trim()) lines.push(`Notes: ${state.olNotes.trim()}`);
+
+  const text = lines.join('\n');
+  const done = ()=>{
+    state.olCopyMsg='✓ Copied — paste this into the application guestcard.';
+    render();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>{
+      state.olCopyMsg='Could not copy automatically — please copy manually.';
+      render();
+    });
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }
+    catch(e){ state.olCopyMsg='Could not copy automatically — please copy manually.'; render(); }
+    document.body.removeChild(ta);
+  }
+}
 function renderOfferLetter(){
   const STEPS = [
     'Offer letter must come from the applicant, and must be verified with their employer directly — never take the letter at face value.',
     'Offer letter must contain: official company letterhead, the applicant\'s name, start date, rate/salary, and be signed and dated by both parties. It must also be dated within the last 30 days.',
-    'Search the employer on Google and try any means possible to speak with their HR department to confirm the details above.',
+    'Search the employer on Google and try any means possible to speak with their HR department to confirm the details above. If they don\'t have a website, try the phone number listed on their Google Business listing, or check Yelp for a business number.',
     'If verified via email, print the entire conversation and upload it in Manage Income (Plaid).',
     'If verified via call, make a note in the application guestcard documenting the verification.',
   ];
@@ -3569,6 +3625,28 @@ function renderOfferLetter(){
             <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#831843">
               <span style="flex-shrink:0;color:#db2777;font-weight:800">✓</span>${r}
             </div>`).join('')}
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#9d174d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Useful Tools</div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">
+          <span style="font-size:16px;flex-shrink:0">🔍</span>
+          <div style="font-size:12.5px;color:#334155;line-height:1.6">
+            <strong>No employer website?</strong> Try the phone number listed on their Google Business listing, or check their Yelp page for a business number to call.
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:10px;padding:12px 14px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <span style="font-size:16px">🧮</span>
+            <div>
+              <div style="font-size:12.5px;font-weight:700;color:#0f172a">Hourly to Annual Salary Calculator</div>
+              <div style="font-size:11px;color:#64748b">Use for manual income verification in Funnel</div>
+            </div>
+          </div>
+          <a href="https://www.talent.com/convert" target="_blank" rel="noopener" style="flex-shrink:0;font-size:11.5px;font-weight:700;color:#fff;background:#db2777;border-radius:8px;padding:8px 14px;text-decoration:none;white-space:nowrap">Open ↗</a>
         </div>
       </div>
 
@@ -3610,6 +3688,64 @@ Can you please verify the details of (Name)'s offered employment including the f
 (Name)'s application is pending this information, so your response is appreciated.
 
 Thank you,</div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #db2777;border-radius:14px;padding:16px;margin-top:16px;box-shadow:0 0 0 3px rgba(219,39,119,.08)">
+        <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:3px">📝 Verification Note</div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:14px">Fill this in as you verify, then copy the note into the application guestcard.</div>
+
+        <div class="eod-grid">
+          <div>
+            <label class="eod-label">Applicant Name *</label>
+            <input type="text" class="eod-input" style="margin-bottom:0" placeholder="e.g. Nicole Green" value="${state.olApplicantName}" oninput="state.olApplicantName=this.value"/>
+          </div>
+          <div>
+            <label class="eod-label">Date Verified</label>
+            <input type="date" class="eod-input" style="margin-bottom:0" value="${state.olDate}" onchange="state.olDate=this.value"/>
+          </div>
+        </div>
+
+        <label class="eod-label" style="margin-top:14px">Verified Via</label>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button onclick="setOfferLetterMethod('phone')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${state.olMethod==='phone'?'#db2777':'#db277755'};background:${state.olMethod==='phone'?'#db2777':'#fff'};color:${state.olMethod==='phone'?'#fff':'#db2777'}">📞 Phone</button>
+          <button onclick="setOfferLetterMethod('email')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${state.olMethod==='email'?'#db2777':'#db277755'};background:${state.olMethod==='email'?'#db2777':'#fff'};color:${state.olMethod==='email'?'#fff':'#db2777'}">✉️ Email</button>
+        </div>
+
+        <div class="eod-grid">
+          <div>
+            <label class="eod-label">Who You Spoke With</label>
+            <input type="text" class="eod-input" style="margin-bottom:0" placeholder="e.g. Maria Santos, HR Coordinator" value="${state.olContactName}" oninput="state.olContactName=this.value"/>
+          </div>
+          <div>
+            <label class="eod-label">Employer / Company</label>
+            <input type="text" class="eod-input" style="margin-bottom:0" placeholder="e.g. Acme Corp" value="${state.olCompanyName}" oninput="state.olCompanyName=this.value"/>
+          </div>
+        </div>
+
+        <label class="eod-label" style="margin-top:14px">Confirmed</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#334155;cursor:pointer">
+            <input type="checkbox" ${state.olConfirmedStart?'checked':''} onchange="toggleOfferConfirmed('olConfirmedStart')" style="accent-color:#db2777;cursor:pointer"/>Start date
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#334155;cursor:pointer">
+            <input type="checkbox" ${state.olConfirmedPosition?'checked':''} onchange="toggleOfferConfirmed('olConfirmedPosition')" style="accent-color:#db2777;cursor:pointer"/>Position/title
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#334155;cursor:pointer">
+            <input type="checkbox" ${state.olConfirmedComp?'checked':''} onchange="toggleOfferConfirmed('olConfirmedComp')" style="accent-color:#db2777;cursor:pointer"/>Compensation (rate)
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#334155;cursor:pointer">
+            <input type="checkbox" ${state.olConfirmedHours?'checked':''} onchange="toggleOfferConfirmed('olConfirmedHours')" style="accent-color:#db2777;cursor:pointer"/>Expected hours (if hourly)
+          </label>
+        </div>
+
+        <label class="eod-label">Additional Notes (optional)</label>
+        <textarea class="eod-textarea" placeholder="Anything else worth noting..." oninput="state.olNotes=this.value">${state.olNotes}</textarea>
+
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="copyOfferLetterNote()" style="flex:1;padding:11px;background:#db2777;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">📋 Copy Note for Guestcard</button>
+          <button onclick="resetOfferLetterNote()" style="padding:11px 18px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;cursor:pointer">Clear</button>
+        </div>
+        ${state.olCopyMsg?`<div style="margin-top:10px;font-size:12px;font-weight:700;color:${state.olCopyMsg.startsWith('✓')?'#15803d':'#b45309'}">${state.olCopyMsg}</div>`:''}
       </div>
 
     </div>`;
