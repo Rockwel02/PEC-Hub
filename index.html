@@ -854,6 +854,7 @@ const NAV = [
   {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
+  {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
 ];
 
 function escapeHtml(text){
@@ -960,6 +961,7 @@ function renderHome(){
           {id:'denver',icon:'🏔️',label:'Denver Pilot',desc:'Pilot program tracking',color:'#0891b2'},
           {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
           {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
+          {id:'offerletter',icon:'🔒',label:'Offer Letter Process',desc:'Manager access only',color:'#be185d'},
         ].map(c=>`
           <button class="quick-card" onclick="showPage('${c.id}')"
             onmouseover="this.style.borderColor='${c.color}';this.style.boxShadow='0 0 0 3px ${c.color}22'"
@@ -3507,6 +3509,112 @@ async function deleteCoachingLog(id){
   await saveCoachingLogs();
 }
 
+// ── OFFER LETTER PROCESS (Manager only) ─────────────────────────────
+function copyTextBlock(id, btnEl){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const text = el.innerText;
+  const done = ()=>{
+    const original = btnEl.textContent;
+    btnEl.textContent = '✓ Copied';
+    setTimeout(()=>{ btnEl.textContent = original; }, 1800);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>alert('Could not copy automatically — please select and copy manually.'));
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); } catch(e){ alert('Could not copy automatically — please select and copy manually.'); }
+    document.body.removeChild(ta);
+  }
+}
+function renderOfferLetter(){
+  const STEPS = [
+    'Offer letter must come from the applicant, and must be verified with their employer directly — never take the letter at face value.',
+    'Offer letter must contain: official company letterhead, the applicant\'s name, start date, rate/salary, and be signed and dated by both parties. It must also be dated within the last 30 days.',
+    'Search the employer on Google and try any means possible to speak with their HR department to confirm the details above.',
+    'If verified via email, print the entire conversation and upload it in Manage Income (Plaid).',
+    'If verified via call, make a note in the application guestcard documenting the verification.',
+  ];
+  const REQUIREMENTS = [
+    'Official company letterhead',
+    'Applicant\'s name',
+    'Start date',
+    'Rate / salary',
+    'Signed and dated by both parties',
+    'Dated within the last 30 days',
+  ];
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#831843 0%,#db2777 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">🔒</span><h1>Offer Letter Process</h1></div>
+      <p>Manager only — income verification via offer letter</p>
+    </div>
+    <div class="content" style="padding:20px 24px">
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:16px">
+        <div style="padding:10px 16px;background:#fce7f3">
+          <div style="font-size:12.5px;font-weight:800;color:#9d174d;text-transform:uppercase;letter-spacing:.04em">Process</div>
+        </div>
+        ${STEPS.map((s,i)=>`
+          <div style="display:flex;gap:12px;padding:12px 16px;${i<STEPS.length-1?'border-bottom:1px solid #f1f5f9':''};align-items:flex-start">
+            <div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#fce7f3;color:#9d174d;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px">${i+1}</div>
+            <div style="font-size:12.5px;color:#334155;line-height:1.6">${s}</div>
+          </div>`).join('')}
+      </div>
+
+      <div style="background:#fdf2f8;border:1.5px solid #fbcfe8;border-radius:14px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#9d174d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Offer Letter Must Contain</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${REQUIREMENTS.map(r=>`
+            <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#831843">
+              <span style="flex-shrink:0;color:#db2777;font-weight:800">✓</span>${r}
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12.5px;font-weight:800;color:#0f172a">📞 Phone Script</div>
+          <button onclick="copyTextBlock('offerPhoneScript', this)" style="font-size:11px;font-weight:700;color:#db2777;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:8px;padding:5px 12px;cursor:pointer">Copy</button>
+        </div>
+        <div id="offerPhoneScript" style="font-size:12.5px;color:#334155;line-height:1.7;white-space:pre-line">Hello, my name is [your name], and I'm calling from Avanti Residential. May I please speak with someone in the HR or hiring department regarding an offer letter verification?
+
+Once connected:
+
+I'm reaching out regarding [employee name], who provided an offer letter from [company name] as proof of income for their rental application. I'm hoping you can help me verify a few details.
+
+Specifically, can you please confirm:
+- The start date
+- The position/title
+- The compensation (salary or hourly rate)
+- And, if hourly, the expected hours per week
+
+Thank you for your assistance. This information will be used solely to complete their rental application.</div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12.5px;font-weight:800;color:#0f172a">✉️ Email Template</div>
+          <button onclick="copyTextBlock('offerEmailTemplate', this)" style="font-size:11px;font-weight:700;color:#db2777;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:8px;padding:5px 12px;cursor:pointer">Copy</button>
+        </div>
+        <div id="offerEmailTemplate" style="font-size:12.5px;color:#334155;line-height:1.7;white-space:pre-line">Hello,
+
+(Name) has applied for residency with an Avanti Residential community and has provided an offer letter from (Company Name) for verification of income.
+
+Can you please verify the details of (Name)'s offered employment including the following information?
+- Employment start date
+- Title
+- Salary/Hourly position (expected hours if employed hourly)
+- Rate of pay
+
+(Name)'s application is pending this information, so your response is appreciated.
+
+Thank you,</div>
+      </div>
+
+    </div>`;
+}
+
 // ── RENDER ────────────────────────────────────────────────────────
 function renderPage(){
   let html='';
@@ -3526,6 +3634,7 @@ function renderPage(){
     case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
+    case 'offerletter': html=state.manager?renderOfferLetter():renderLogin();break;
     default:          html=renderHome();
   }
   document.getElementById('pageContent').innerHTML=html;
