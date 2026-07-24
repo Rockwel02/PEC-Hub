@@ -2778,6 +2778,8 @@ function cmRenderAll(){
   cmRenderList();
   cmRenderMatrix();
   cmRenderFootnote();
+  cmRenderNearbyLabel();
+  if(cmNearbyActive) cmRenderNearbyResult();
   const countEl = document.getElementById('cmMarketCount');
   if(countEl) countEl.textContent = cmCommunities().length + ' communities';
   if(cmMatrixShown) cmFillMatrixDriveTimes();
@@ -2798,6 +2800,36 @@ function cmSetHome(id){
 function cmHandleSearch(val){
   cmSearchText = val;
   cmRenderList();
+}
+let cmNearbyQuery = '';
+let cmNearbyActive = false;
+function cmRenderNearbyLabel(){
+  const el = document.getElementById('cmNearbyHomeLabel');
+  if(!el) return;
+  el.textContent = cmHomeCommunity().name;
+}
+function cmSearchNearby(){
+  const input = document.getElementById('cmNearbyInput');
+  const val = input ? input.value.trim() : '';
+  if(!val) return;
+  cmNearbyQuery = val;
+  cmNearbyActive = true;
+  cmRenderNearbyResult();
+}
+function cmClearNearby(){
+  cmNearbyQuery = '';
+  cmNearbyActive = false;
+  const input = document.getElementById('cmNearbyInput');
+  if(input) input.value = '';
+  cmRenderNearbyResult();
+}
+function cmRenderNearbyResult(){
+  const el = document.getElementById('cmNearbyResult');
+  if(!el) return;
+  if(!cmNearbyActive || !cmNearbyQuery){ el.innerHTML=''; return; }
+  const home = cmHomeCommunity();
+  const q = encodeURIComponent(`${cmNearbyQuery} near ${home.address}`);
+  el.innerHTML = `<iframe src="https://www.google.com/maps?q=${q}&output=embed" style="width:100%;height:420px;border:0;border-radius:10px;display:block" loading="lazy" allowfullscreen title="Search results near ${home.name}"></iframe>`;
 }
 function cmToggleMatrix(){
   cmMatrixShown = !cmMatrixShown;
@@ -2854,6 +2886,17 @@ function renderCommunitiesMap(){
         <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;min-width:0">
           <div id="cmMap" style="height:520px;width:100%"></div>
         </div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:3px">🔍 Search Nearby</div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:12px">Find restaurants, grocery stores, pharmacies, etc. near <b id="cmNearbyHomeLabel"></b> — right here, no need to open Google Maps separately. Change the home community above to search near a different property.</div>
+        <div style="display:flex;gap:8px;margin-bottom:2px">
+          <input id="cmNearbyInput" type="text" class="eod-input" style="margin-bottom:0;flex:1" placeholder="e.g. coffee shop, grocery store, urgent care..." onkeydown="if(event.key==='Enter')cmSearchNearby()"/>
+          <button onclick="cmSearchNearby()" style="flex-shrink:0;padding:0 18px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Search</button>
+          <button onclick="cmClearNearby()" style="flex-shrink:0;padding:0 14px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer">Clear</button>
+        </div>
+        <div id="cmNearbyResult" style="margin-top:12px"></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div class="section-label" style="margin:0">Full distance &amp; drive-time matrix <span id="cmMarketCount" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8"></span></div>
