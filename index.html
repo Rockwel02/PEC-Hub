@@ -437,6 +437,12 @@ async function hydrateFromFirestore(){
   if(remote.coaching_logs && Array.isArray(remote.coaching_logs.items) && remote.coaching_logs.items.length){
     coachingLogs = remote.coaching_logs.items;
   }
+  if(remote.kpi_dashboard && remote.kpi_dashboard.teamScores){
+    state.teamScores = {...state.teamScores, ...remote.kpi_dashboard.teamScores};
+    if(remote.kpi_dashboard.lastSynced) state.lastSynced = remote.kpi_dashboard.lastSynced;
+    state.lastAutoSyncError = null;
+    state.kpiSyncSource = 'firestore';
+  }
   if(remote.applicant_tracker && Array.isArray(remote.applicant_tracker.items)){
     state.applicantEntries = remote.applicant_tracker.items;
   }
@@ -809,6 +815,7 @@ let state = {
   showCallListeningForm:false, clwSheetUrl:'', clwFolderUrl:'',
   scTab:'mtd', expandedKpi:null,
   sheetUrl:'', sheetUrlDraft:'', syncStatus:'idle', syncMsg:'', lastSynced:null, lastAutoSyncError:null,
+  kpiSyncSource:'',
   fenixMsg:'', 
   periodMTD:'June 2026',
   teamScores:{call_completion:0,lead_engagement:0,task_management:0,lead_to_scheduled:0,lead_to_tour:0,fenix_scored_calls:0},
@@ -2940,11 +2947,16 @@ function renderMTD(){
       <div class="sync-row">
         <span style="font-size:18px">🔗</span>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#0f172a">Google Sheets — Auto Sync</div>
-          <div style="font-size:11px;color:#64748b">${state.sheetUrl?(state.lastSynced?`🟢 Auto-syncing every 3 min · Last updated ${state.lastSynced}`:'Connected · Waiting for first sync...'):'Connect your master Google Sheet to pull scores automatically'}</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">${state.kpiSyncSource==='firestore'?'KPI Dashboard — Auto Synced':'Google Sheets — Auto Sync'}</div>
+          <div style="font-size:11px;color:#64748b">${
+            state.kpiSyncSource==='firestore'
+              ? `🟢 Synced automatically once daily by your LMS Score Sync script${state.lastSynced?` · Last updated ${state.lastSynced}`:''}`
+              : (state.sheetUrl?(state.lastSynced?`🟢 Auto-syncing every 3 min · Last updated ${state.lastSynced}`:'Connected · Waiting for first sync...'):'Connect your master Google Sheet to pull scores automatically')
+          }</div>
         </div>
         ${state.sheetUrl?`<button class="edit-btn" onclick="clearScorecardSheetLink()">Change</button>`:''}
       </div>
+      ${state.kpiSyncSource==='firestore'?`<div style="font-size:11px;color:#94a3b8;margin-bottom:10px">No action needed here — these numbers come straight from your daily KPI sync script. The manual sheet-link sync below is only a backup if you ever need it.</div>`:''}
       ${!state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
         <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="state.sheetUrlDraft=this.value"/>
         <button class="sync-btn" onclick="saveScorecardSheetLink()">Save Link</button>
