@@ -443,6 +443,20 @@ async function hydrateFromFirestore(){
     state.lastAutoSyncError = null;
     state.kpiSyncSource = 'firestore';
   }
+  if(remote.kpi_dashboard && Array.isArray(remote.kpi_dashboard.agents) && remote.kpi_dashboard.agents.length){
+    // Merge by name so a previously-uploaded Fenix score for this agent
+    // isn't wiped out just because this sync only carries Lead
+    // Engagement / Task Management.
+    state.agents = remote.kpi_dashboard.agents.map(newA=>{
+      const existing = state.agents.find(a=>a.name.toLowerCase()===newA.name.toLowerCase());
+      return {
+        name: newA.name,
+        lead_engagement: newA.lead_engagement||0,
+        task_management: newA.task_management||0,
+        fenix_scored_calls: existing ? existing.fenix_scored_calls : 0,
+      };
+    });
+  }
   if(remote.applicant_tracker && Array.isArray(remote.applicant_tracker.items)){
     state.applicantEntries = remote.applicant_tracker.items;
   }
