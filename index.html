@@ -774,6 +774,11 @@ const CALL_SCRIPTS = [
   {id:74, cat:'Former Resident', title:'Former Resident - Refund (Billing - Routes to Antonette, Shannon backup)', opening:'Former resident called asking about a deposit refund following their move-out. I confirmed this is a former resident billing matter and routes directly to Antonette, with Shannon as backup. I attempted a live transfer; if unavailable, a task was created for Antonette (Shannon as backup) to follow up.', yesBranch:'former resident is open to a callback once the refund is reviewed, within 24-48 hours. Will follow up to confirm the task was completed on time', noBranch:'former resident will wait to hear back directly. Former resident declined further contact - No further action required', dnr:'Deposit Refund'},
 ];
 
+// Lookup so a plain-tag topic (from CALL_NOTES) can find its matching
+// full sentence script (from CALL_SCRIPTS) by title, when one exists.
+const CALL_SCRIPTS_BY_TITLE = {};
+CALL_SCRIPTS.forEach(s=>{ CALL_SCRIPTS_BY_TITLE[s.title] = s; });
+
 const KPI_CONFIG = [
   {id:'call_completion',   label:'Call Completion Rate',   goal:90,unit:'%', agentTable:false},
   {id:'lead_engagement',   label:'Lead Engagement Score',  goal:9, unit:'',  agentTable:true},
@@ -824,8 +829,7 @@ let state = {
   olConfirmedStart:false, olConfirmedPosition:false, olConfirmedComp:false, olConfirmedHours:false,
   olNotes:'', olCopyMsg:'',
   kbSearch:'', kbCat:'All', spielSearch:'', spielCat:'All', spielTab:'objections', discoveryCat:'All',
-  notesSearch:'', notesCat:'All',
-  scriptsSearch:'', scriptsCat:'All', expandedScript:null,
+  notesSearch:'', notesCat:null, notesTopic:null,
   showCallListeningForm:false, clwSheetUrl:'', clwFolderUrl:'',
   scTab:'mtd', expandedKpi:null,
   sheetUrl:'', sheetUrlDraft:'', syncStatus:'idle', syncMsg:'', lastSynced:null, lastAutoSyncError:null,
@@ -846,7 +850,6 @@ let state = {
   ],
   expandedPeriod:null, showAddPeriodForm:false, newPeriodLabel:'',
   editingPeriodMetric:null,
-  denverNotes:'',
   checklistChecked:{}, checklistCopyMsg:'', checklistRevision:'',
   applicantEntries:[],
   syncError:null,
@@ -868,14 +871,12 @@ const NAV = [
   {id:'kb',       label:'SOPs and Policies',icon:'📚'},
   {id:'spiels',   label:'Spiels',        icon:'💬'},
   {id:'notes',    label:'Call Notes',     icon:'🗒️'},
-  {id:'scripts',  label:'Call Notes V2', icon:'📋'},
   {id:'listening', label:'Call Listening', icon:'🎧'},
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
   {id:'checklist', label:'Application Checklist', icon:'✅'},
   {id:'applicants', label:'Applicant Status', icon:'🗂️'},
   {id:'communities', label:'Communities Map', icon:'🗺️'},
-  {id:'denver',   label:'Denver Pilot',  icon:'🏔️'},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
   {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
@@ -928,6 +929,7 @@ function renderNav(){
 }
 function showPage(p){
   state.page=p;state.expandedKb=null;state.expandedSpiel=null;state.expandedKpi=null;state.eodSubmitted=false;
+  state.notesCat=null;state.notesTopic=null;state.notesSearch='';
   manageScorecardAutoSync(p);
   render();window.scrollTo(0,0);
 }
@@ -977,12 +979,10 @@ function renderHome(){
           {id:'announcements',icon:'📣',label:'Announcements',desc:'Team updates and Grace Hill trainings',color:'#dc2626'},
           {id:'kb',icon:'📚',label:'SOPs and Policies',desc:'SOPs and process guides',color:'#3b82f6'},
           {id:'spiels',icon:'💬',label:'Spiels Library',desc:'Scripts and talking points',color:'#0d9488'},
-          {id:'notes',icon:'🗒️',label:'Call Notes',desc:'Disposition tags and note library',color:'#d97706'},
-          {id:'scripts',icon:'📋',label:'Call Notes V2',desc:'Full sentences with Yes/No follow-ups',color:'#0d9488'},
+          {id:'notes',icon:'🗒️',label:'Call Notes',desc:'Prospect, Applicant & Resident notes',color:'#d97706'},
           {id:'listening',icon:'🎧',label:'Call Listening',desc:'Weekly call recordings for review',color:'#9333ea'},
           {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, quarterly',color:'#16a34a'},
           {id:'communities',icon:'🗺️',label:'Communities Map',desc:'Distance & drive time by market',color:'#1d4ed8'},
-          {id:'denver',icon:'🏔️',label:'Denver Pilot',desc:'Pilot program tracking',color:'#0891b2'},
           {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
           {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
           {id:'offerletter',icon:'🔒',label:'Offer Letter Process',desc:'Manager access only',color:'#be185d'},
@@ -1602,145 +1602,129 @@ const NOTE_CAT_COLORS = {
   'Timeline / Attempt Notes':  {bg:'#f0f9ff',c:'#0369a1'},
 };
 function renderCallNotes(){
-  const allCats = Object.keys(CALL_NOTES);
-  const filtered = state.notesCat === 'All'
-    ? Object.entries(CALL_NOTES)
-    : [[state.notesCat, CALL_NOTES[state.notesCat]]];
   const search = state.notesSearch.toLowerCase();
-  return`
-    <div class="page-header">
-      <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Notes</h1></div>
-      <p>Disposition tags and note library — copy the right tag for every call</p>
-    </div>
-    <div class="content">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input value="${state.notesSearch}" oninput="state.notesSearch=this.value;renderPage()" placeholder="Search tags..."/>
+
+  // ── SEARCH MODE: flat results across every category/topic ──
+  if(search && !state.notesCat){
+    const results = [];
+    Object.entries(CALL_NOTES).forEach(([cat, topics])=>{
+      topics.forEach(topic=>{
+        if(topic.toLowerCase().includes(search)) results.push({cat, topic});
+      });
+    });
+    return`
+      <div class="page-header">
+        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Notes</h1></div>
+        <p>Prospect, Applicant &amp; Resident notes — pick a category to narrow down, or search directly</p>
       </div>
-      <div class="filters" style="margin-bottom:18px">
-        <button class="filter-btn${state.notesCat==='All'?' active':''}" onclick="state.notesCat='All';renderPage()">All</button>
-        ${allCats.map(c=>`<button class="filter-btn${state.notesCat===c?' active':''}" onclick="state.notesCat='${c.replace(/'/g,"\\'")}';renderPage()">${c}</button>`).join('')}
-      </div>
-      ${filtered.map(([cat, tags])=>{
-        const matchedTags = search ? tags.filter(t=>t.toLowerCase().includes(search)) : tags;
-        if(matchedTags.length === 0) return '';
-        const cc = NOTE_CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
-        return`
-          <div style="margin-bottom:20px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-              <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c}">${cat}</span>
-              <span style="font-size:11px;color:#94a3b8">${matchedTags.length} tag${matchedTags.length!==1?'s':''}</span>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">
-              ${matchedTags.map(tag=>`
-                <button onclick="navigator.clipboard.writeText('${tag.replace(/'/g,"\\'")}').then(()=>{
-                  this.style.background='#0f1e3d';this.style.color='#fff';this.textContent='✓ Copied';
-                  setTimeout(()=>{this.style.background='${cc.bg}';this.style.color='${cc.c}';this.textContent='${tag.replace(/'/g,"\\'").replace(/"/g,'&quot;')}';},1500)
-                })" style="
-                  background:${cc.bg};color:${cc.c};
-                  border:1px solid ${cc.c}22;border-radius:20px;
-                  padding:5px 12px;font-size:12px;font-weight:600;
-                  cursor:pointer;transition:all .15s;text-align:left;
-                  font-family:'DM Sans',sans-serif;
-                ">${tag}</button>
-              `).join('')}
-            </div>
-          </div>`;
-      }).join('')}
-      ${search && filtered.every(([,tags])=>tags.filter(t=>t.toLowerCase().includes(search)).length===0)
-        ? '<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No tags match your search.</div>'
-        : ''}
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:10px">
-        <span style="font-size:18px">💡</span>
-        <div style="font-size:12px;color:#64748b;line-height:1.6"><strong style="color:#0f172a">How to use:</strong> Click any tag to copy it instantly. Paste directly into Funnel Leasing as your call note or disposition tag.</div>
-      </div>
-    </div>`;
-}
-
-// ── CALL SCRIPTS (NEW — full sentence notes with Yes/No follow-up) ──
-const SCRIPT_CAT_COLORS = {
-  'Prospect Related':  {bg:'#dbeafe',c:'#1e40af'},
-  'Applicant Related':  {bg:'#d1fae5',c:'#065f46'},
-  'Resident Related':   {bg:'#fef3c7',c:'#92400e'},
-  'Renewal Related':    {bg:'#ede9fe',c:'#5b21b6'},
-  'Former Resident':    {bg:'#fce7f3',c:'#9d174d'},
-};
-
-function renderCallScripts(){
-  const cats = ['All', ...new Set(CALL_SCRIPTS.map(s=>s.cat))];
-  const search = (state.scriptsSearch||'').toLowerCase();
-  const filtered = CALL_SCRIPTS.filter(s=>
-    (state.scriptsCat==='All'||s.cat===state.scriptsCat) &&
-    (s.title.toLowerCase().includes(search) || s.opening.toLowerCase().includes(search))
-  );
-
-  const grouped = {};
-  filtered.forEach(s=>{ (grouped[s.cat] = grouped[s.cat]||[]).push(s); });
-
-  return`
-    <div class="page-header" style="background:linear-gradient(135deg,#0d9488 0%,#0f766e 100%)">
-      <div class="page-header-inner"><span style="font-size:22px">📋</span><h1>Call Notes V2</h1></div>
-      <p>Full sentence call notes with Yes/No follow-up guidance — new format, pilot</p>
-    </div>
-    <div class="content">
-
-      <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:#0f766e;line-height:1.7">
-        💡 <strong>This is a new format we're piloting</strong> alongside the original Call Notes tags. Click a card to see the full note, then how to follow up depending on whether the customer said Yes or No. Let your manager know which version works better for you!
-      </div>
-
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input value="${state.scriptsSearch||''}" oninput="state.scriptsSearch=this.value;renderPage()" placeholder="Search scripts..."/>
-      </div>
-      <div class="filters" style="margin-bottom:18px">
-        ${cats.map(c=>`<button class="filter-btn${state.scriptsCat===c?' active':''}" onclick="state.scriptsCat='${c.replace(/'/g,"\\'")}';renderPage()">${c}</button>`).join('')}
-      </div>
-
-      ${Object.entries(grouped).map(([cat, scripts])=>{
-        const cc = SCRIPT_CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
-        return`
-          <div style="margin-bottom:22px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-              <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c}">${cat}</span>
-              <span style="font-size:11px;color:#94a3b8">${scripts.length} script${scripts.length!==1?'s':''}</span>
-            </div>
-            ${scripts.map(s=>{
-              const isOpen = state.expandedScript===s.id;
-              return`
-                <div class="card${isOpen?' open':''}" style="${isOpen?`border-color:${cc.c};box-shadow:0 0 0 3px ${cc.c}1a`:''};margin-bottom:8px">
-                  <div class="card-header" onclick="state.expandedScript=state.expandedScript===${s.id}?null:${s.id};renderPage()">
-                    <div class="card-left"><span class="card-title">${s.title}</span></div>
-                    <span class="chevron${isOpen?' open':''}">▾</span>
-                  </div>
-                  ${isOpen?`
-                    <div class="card-body">
-                      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;font-size:13px;color:#0f172a;line-height:1.75;margin:12px 0">
-                        ${s.opening}
-                      </div>
-                      ${s.yesBranch?`
-                        <div style="display:flex;gap:10px;margin-bottom:8px">
-                          <div style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap">YES</div>
-                          <div style="font-size:13px;color:#166534;line-height:1.7;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;flex:1">${s.yesBranch}.</div>
-                        </div>`:''
-                      }
-                      ${s.noBranch?`
-                        <div style="display:flex;gap:10px;margin-bottom:12px">
-                          <div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap">NO</div>
-                          <div style="font-size:13px;color:#7f1d1d;line-height:1.7;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;flex:1">${s.noBranch}.</div>
-                        </div>`:''
-                      }
-                      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
-                        <span style="font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:20px">DNR - ${s.dnr}</span>
-                        <button class="btn btn-teal" style="font-size:11px" onclick="event.stopPropagation();copyFullScript(${s.id}, this)">Copy Full Note</button>
-                      </div>
-                    </div>`:''
-                  }
-                </div>`;
+      <div class="content">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input value="${state.notesSearch}" oninput="state.notesSearch=this.value;renderPage()" placeholder="Search all topics..."/>
+        </div>
+        ${results.length===0?'<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No topics match your search.</div>':`
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+            ${results.map(r=>{
+              const cc = NOTE_CAT_COLORS[r.cat]||{bg:'#f1f5f9',c:'#475569'};
+              return`<button onclick="state.notesCat='${r.cat.replace(/'/g,"\\'")}';state.notesTopic='${r.topic.replace(/'/g,"\\'")}';state.notesSearch='';renderPage()" style="background:${cc.bg};color:${cc.c};border:1px solid ${cc.c}22;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${r.topic} <span style="opacity:.6">· ${r.cat}</span></button>`;
             }).join('')}
-          </div>`;
-      }).join('')}
+          </div>`
+        }
+      </div>`;
+  }
 
-      ${filtered.length===0?'<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No scripts match your search.</div>':''}
+  // ── LEVEL 1: category grid ──
+  if(!state.notesCat){
+    const cats = Object.keys(CALL_NOTES);
+    return`
+      <div class="page-header">
+        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Notes</h1></div>
+        <p>Prospect, Applicant &amp; Resident notes — pick a category to narrow down, or search directly</p>
+      </div>
+      <div class="content">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input value="${state.notesSearch}" oninput="state.notesSearch=this.value;renderPage()" placeholder="Search all topics..."/>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px">
+          ${cats.map(cat=>{
+            const cc = NOTE_CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
+            const count = CALL_NOTES[cat].length;
+            return`
+            <button onclick="state.notesCat='${cat.replace(/'/g,"\\'")}';renderPage()" style="text-align:left;background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <div style="display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c};margin-bottom:8px">${cat}</div>
+              <div style="font-size:12px;color:#94a3b8">${count} topic${count!==1?'s':''}</div>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ── LEVEL 2: topic list within selected category ──
+  if(state.notesCat && !state.notesTopic){
+    const cc = NOTE_CAT_COLORS[state.notesCat]||{bg:'#f1f5f9',c:'#475569'};
+    const topics = CALL_NOTES[state.notesCat]||[];
+    return`
+      <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,${cc.c} 250%)">
+        <div class="page-header-inner">
+          <button onclick="state.notesCat=null;renderPage()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;margin-right:4px">← Categories</button>
+          <h1>${state.notesCat}</h1>
+        </div>
+        <p>${topics.length} topic${topics.length!==1?'s':''} — select one to see the full note</p>
+      </div>
+      <div class="content">
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${topics.map(topic=>`
+            <button onclick="state.notesTopic='${topic.replace(/'/g,"\\'")}';renderPage()" style="background:${cc.bg};color:${cc.c};border:1px solid ${cc.c}22;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${topic}${CALL_SCRIPTS_BY_TITLE[topic]?' 📄':''}</button>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ── LEVEL 3: full note detail for the selected topic ──
+  const cc = NOTE_CAT_COLORS[state.notesCat]||{bg:'#f1f5f9',c:'#475569'};
+  const script = CALL_SCRIPTS_BY_TITLE[state.notesTopic];
+  return`
+    <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,${cc.c} 250%)">
+      <div class="page-header-inner">
+        <button onclick="state.notesTopic=null;renderPage()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;margin-right:4px">← ${state.notesCat}</button>
+        <h1>${state.notesTopic}</h1>
+      </div>
+      <p>${script?'Full note with Yes/No follow-up guidance':'Quick disposition tag'}</p>
+    </div>
+    <div class="content">
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c}">${state.notesCat}</span>
+          <button onclick="navigator.clipboard.writeText('${state.notesTopic.replace(/'/g,"\\'")}').then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Tag Only',1500)})" style="font-size:11px;font-weight:700;color:${cc.c};background:${cc.bg};border:1px solid ${cc.c}33;border-radius:8px;padding:5px 12px;cursor:pointer">Copy Tag Only</button>
+        </div>
+
+        ${script?`
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;font-size:13px;color:#0f172a;line-height:1.75;margin-bottom:14px">
+            ${script.opening}
+          </div>
+          ${script.yesBranch?`
+            <div style="display:flex;gap:10px;margin-bottom:8px">
+              <div style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap">YES</div>
+              <div style="font-size:13px;color:#166534;line-height:1.7;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;flex:1">${script.yesBranch}.</div>
+            </div>`:''
+          }
+          ${script.noBranch?`
+            <div style="display:flex;gap:10px;margin-bottom:14px">
+              <div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap">NO</div>
+              <div style="font-size:13px;color:#7f1d1d;line-height:1.7;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;flex:1">${script.noBranch}.</div>
+            </div>`:''
+          }
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:20px">DNR - ${script.dnr}</span>
+            <button class="btn btn-teal" style="font-size:11px" onclick="copyFullScript(${script.id}, this)">Copy Full Note</button>
+          </div>
+        `:`
+          <div style="text-align:center;padding:20px 0;color:#64748b;font-size:12.5px;line-height:1.7">
+            No expanded script written for this topic yet — use the tag above as your disposition note in Funnel.
+          </div>
+        `}
+      </div>
     </div>`;
 }
 
@@ -2424,36 +2408,6 @@ function renderApplicantStatus(){
     </div>`;
 }
 
-function renderDenverPilot(){
-  const isManager = !!state.manager;
-  return`
-    <div class="page-header" style="background:linear-gradient(135deg,#0c4a6e 0%,#0891b2 100%)">
-      <div class="page-header-inner"><span style="font-size:22px">🏔️</span><h1>Denver Pilot</h1></div>
-      <p>Pilot program tracking — metrics coming soon</p>
-    </div>
-    <div class="content">
-      <div style="text-align:center;padding:50px 24px;background:#fff;border:1.5px dashed #cbd5e1;border-radius:16px;margin-bottom:16px">
-        <div style="font-size:40px;margin-bottom:14px">🏗️</div>
-        <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:8px">Page reserved for the Denver Pilot</div>
-        <div style="font-size:13px;color:#64748b;max-width:380px;margin:0 auto;line-height:1.7">
-          This page is set up and ready. Metrics, KPIs, and structure for this pilot will be added once defined.
-        </div>
-      </div>
-
-      ${isManager?`
-        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:18px">
-          <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">📝 Notes (manager only, visible to team)</div>
-          <textarea class="eod-textarea" placeholder="Add any early notes, links, or context about the Denver Pilot here..." oninput="state.denverNotes=this.value" style="min-height:100px">${state.denverNotes||''}</textarea>
-        </div>`:
-        state.denverNotes?`
-        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px 18px">
-          <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Notes</div>
-          <div style="font-size:13px;color:#334155;line-height:1.7;white-space:pre-line">${state.denverNotes}</div>
-        </div>`:''
-      }
-    </div>`;
-}
-
 // ── COMMUNITIES MAP ──────────────────────────────────────────────
 // Coordinates are best-effort from public property listings (not precisely
 // geocoded). Verify against Google Maps geocoding before treating as exact.
@@ -2956,6 +2910,7 @@ function renderScorecard(){
     </div>`;
 }
 function renderMTD(){
+  const isManager = !!state.manager;
   return`
     <div class="sync-panel">
       <div class="sync-row">
@@ -2968,21 +2923,21 @@ function renderMTD(){
               : (state.sheetUrl?(state.lastSynced?`🟢 Auto-syncing every 3 min · Last updated ${state.lastSynced}`:'Connected · Waiting for first sync...'):'Connect your master Google Sheet to pull scores automatically')
           }</div>
         </div>
-        ${state.sheetUrl?`<button class="edit-btn" onclick="clearScorecardSheetLink()">Change</button>`:''}
+        ${isManager && state.sheetUrl?`<button class="edit-btn" onclick="clearScorecardSheetLink()">Change</button>`:''}
       </div>
-      ${state.kpiSyncSource==='firestore'?`<div style="font-size:11px;color:#94a3b8;margin-bottom:10px">No action needed here — these numbers come straight from your daily KPI sync script. The manual sheet-link sync below is only a backup if you ever need it.</div>`:''}
-      ${!state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
+      ${isManager && state.kpiSyncSource==='firestore'?`<div style="font-size:11px;color:#94a3b8;margin-bottom:10px">No action needed here — these numbers come straight from your daily KPI sync script. The manual sheet-link sync below is only a backup if you ever need it.</div>`:''}
+      ${isManager && !state.sheetUrl?`<div style="display:flex;gap:8px;margin-bottom:10px">
         <input class="sync-input" id="sheetInput" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="state.sheetUrlDraft=this.value"/>
         <button class="sync-btn" onclick="saveScorecardSheetLink()">Save Link</button>
       </div>`:''}
       ${state.lastAutoSyncError?`<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px">⚠ Last auto-sync attempt failed quietly — likely a brief outage with the free sync service. Showing the most recent successful data below.</div>`:''}
-      <div style="display:flex;align-items:center;gap:10px">
+      ${isManager?`<div style="display:flex;align-items:center;gap:10px">
         <button class="sync-btn${state.syncStatus==='loading'?' disabled':''}" onclick="syncSheet()" ${state.syncStatus==='loading'?'disabled':''}>
           ${state.syncStatus==='loading'?'⏳ Syncing...':'↻ Sync Now'}
         </button>
         ${state.syncMsg?`<span style="font-size:12px;font-weight:600;color:${state.syncStatus==='success'?'#15803d':'#dc2626'}">${state.syncStatus==='success'?'✓ ':'⚠ '}${state.syncMsg}</span>`:''}
         ${state.sheetUrl?`<a href="${state.sheetUrl}" target="_blank" style="font-size:11px;color:#94a3b8;text-decoration:none;margin-left:auto">View raw sheet →</a>`:''}
-      </div>
+      </div>`:''}
     </div>
 
     <div class="section-label">Team Averages</div>
@@ -3835,14 +3790,12 @@ function renderPage(){
     case 'kb':        html=renderKB();break;
     case 'spiels':    html=renderSpiels();break;
     case 'notes':     html=renderCallNotes();break;
-    case 'scripts':   html=renderCallScripts();break;
     case 'listening': html=renderCallListening();break;
     case 'scorecard': html=renderScorecard();break;
     case 'priorities': html=renderPriorities();break;
     case 'checklist': html=renderChecklist();break;
     case 'applicants': html=renderApplicantStatus();break;
     case 'communities': html=renderCommunitiesMap();break;
-    case 'denver':    html=renderDenverPilot();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
     case 'offerletter': html=state.manager?renderOfferLetter():renderLogin();break;
