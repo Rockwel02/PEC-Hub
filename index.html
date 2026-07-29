@@ -257,8 +257,8 @@ function startPresenceSystem(){
 }
 
 function promptForVisitorName(){
-  // Build a friendly name picker using the real team roster
-  const names = TEAM.map(t=>t.name);
+  // Build a friendly name picker using the full visitor roster (team + leadership)
+  const names = VISITOR_ROSTER;
   const overlay = document.createElement('div');
   overlay.id = 'visitorNameOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,30,61,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -266,18 +266,27 @@ function promptForVisitorName(){
     <div style="background:#fff;border-radius:16px;padding:28px;max-width:360px;width:100%;text-align:center">
       <div style="font-size:36px;margin-bottom:10px">👋</div>
       <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:6px">Welcome to PEC Hub!</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.6">Pick your name so your teammates can see you're online. We'll remember it next time.</div>
-      <select id="visitorNameSelect" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:14px">
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.6">Pick your name and enter your password so your teammates can see you're online. We'll remember it next time.</div>
+      <select id="visitorNameSelect" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:10px">
         <option value="">Select your name...</option>
         ${names.map(n=>`<option value="${n}">${n}</option>`).join('')}
       </select>
+      <input id="visitorPasswordInput" type="password" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:6px;box-sizing:border-box"/>
+      <div id="visitorPasswordError" style="display:none;color:#dc2626;font-size:11.5px;margin-bottom:8px;text-align:left"></div>
       <button id="visitorNameSubmit" style="width:100%;padding:11px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Continue →</button>
     </div>
   `;
   document.body.appendChild(overlay);
   document.getElementById('visitorNameSubmit').onclick = ()=>{
     const sel = document.getElementById('visitorNameSelect').value;
+    const pw = document.getElementById('visitorPasswordInput').value;
+    const errEl = document.getElementById('visitorPasswordError');
     if(!sel){ alert('Please select your name first.'); return; }
+    if(VISITOR_PASSWORDS[sel] && pw !== VISITOR_PASSWORDS[sel]){
+      errEl.textContent = 'Incorrect password for ' + sel + ' — check with your manager if you\'re not sure.';
+      errEl.style.display = 'block';
+      return;
+    }
     setVisitorName(sel);
     document.body.removeChild(overlay);
     startPresenceSystem();
@@ -492,7 +501,32 @@ const TEAM = [
   {id:13,name:'Kenneth Geronimo',role:'Prospect Experience Coordinator',emoji:'🦋',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Kenneth%20Geronimo.png',funFact:'',quote:'The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. — Brian Herbert'},
 ];
 
-// Fixed animal avatar per person — same animal every time they visit, for that
+// Visitor sign-in roster: the PEC team plus leadership who may check in
+// on the Hub. Kept separate from TEAM so Olga/Ian don't show up in
+// coaching dropdowns or the home page team grid, which are PEC-only.
+const VISITOR_ROSTER = [...TEAM.map(t=>t.name), 'Olga Borges', 'Ian Andrews'];
+
+// Lightweight deterrent against casual name mix-ups in the presence bar —
+// NOT real security, since this is a static file anyone can view-source.
+// Good enough to stop someone accidentally picking a coworker's name.
+const VISITOR_PASSWORDS = {
+  'Rowel De La Trinidad': 'Lumen81',
+  'Beverlyn Domingo':     'Ember35',
+  'Dianne Mercado':       'Grove93',
+  'Quigly Arias':         'Summit99',
+  'Russel Espaldon':      'Beacon79',
+  'Mary Panimbagon':      'Frost63',
+  'Jeffrey Bolo':         'Haven38',
+  'Juliet Elaco':         'Karma67',
+  'Elhora Paule':         'Willow85',
+  'Charles Calidguid':    'Echo45',
+  'Carizza Estanislao':   'Juniper10',
+  'Jo-Ann Atadero':       'Cedar30',
+  'Kenneth Geronimo':     'Comet99',
+  'Olga Borges':          'Delta64',
+  'Ian Andrews':          'Maple53',
+};
+// Fixed animal avatar per person — same animal every time they visit, for a
 // little bit of personality and recognizability in the "who's online" bar.
 const ANIMAL_AVATARS = {
   'Rowel De La Trinidad': '🦁',
@@ -508,6 +542,8 @@ const ANIMAL_AVATARS = {
   'Carizza Estanislao': '🦉',
   'Jo-Ann Atadero': '🐢',
   'Kenneth Geronimo': '🦅',
+  'Olga Borges': '🦢',
+  'Ian Andrews': '🦈',
 };
 
 const KB = [
