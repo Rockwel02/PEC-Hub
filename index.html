@@ -3909,6 +3909,28 @@ function csDefaultMsg(){
 }
 function csMsg(){ return csState.msg === null ? csDefaultMsg() : csState.msg; }
 
+// Typing in a text field used to call render(), which rebuilt the entire page
+// (nav, form, and a full-resolution card) on every keystroke — noticeably laggy.
+// These redraw only the card preview, debounced, so typing stays smooth.
+let csPreviewTimer = null;
+function csPreview(){
+  const bodyEl = document.getElementById('csBody');
+  if(bodyEl){
+    bodyEl.innerHTML = csCardHtml(true);   // text layers only, images untouched
+  } else {
+    const el = document.getElementById('csScale');
+    if(el) el.innerHTML = csCardHtml();
+  }
+  // Keep the message box in sync with the auto-generated default, but never
+  // fight the cursor if that's the box currently being typed in.
+  const ta = document.getElementById('csMsgBox');
+  if(ta && csState.msg === null && document.activeElement !== ta) ta.value = csDefaultMsg();
+}
+function csTouch(){
+  clearTimeout(csPreviewTimer);
+  csPreviewTimer = setTimeout(csPreview, 140);
+}
+
 function csLogo(fs){
   return '<div style="display:flex;align-items:center;gap:'+(fs*0.55)+'px;color:#fff">'
     + '<svg viewBox="0 0 64 64" style="height:'+fs+'px;width:auto;flex:none">'
@@ -3924,7 +3946,7 @@ function csLogo(fs){
 
 // Card is built at true output resolution. The preview is CSS-scaled down;
 // csDownload() temporarily removes that scale so html2canvas captures full size.
-function csCardHtml(){
+function csCardHtml(bodyOnly){
   const sz = CS_SIZES[csState.size], W = sz[0], H = sz[1];
   const S = W/1080;
   const px = function(v){ return Math.round(v*S)+'px'; };
@@ -4003,8 +4025,12 @@ function csCardHtml(){
       + '</div>';
   }
 
+  // Text-only edits reuse the existing <img> elements instead of recreating
+  // them, so changing a name or message never re-requests the community photo
+  // or the headshot from GitHub.
+  if(bodyOnly) return body;
   return '<div id="csCard" style="position:relative;overflow:hidden;width:'+W+'px;height:'+H+'px;background:#0d3b42;color:#fff;font-family:\'DM Sans\',sans-serif">'
-    + bg + scrim + me + body + '</div>';
+    + bg + scrim + me + '<div id="csBody">' + body + '</div></div>';
 }
 
 function csSet(k,v){
@@ -4116,13 +4142,13 @@ function renderCardStudio(){
 
     + '<div class="eod-grid" style="margin-top:10px">'
     + '<div><label class="eod-label">Prospect first name (optional)</label>'
-    + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Jordan" value="'+csAttr(csState.prospect)+'" oninput="csState.prospect=this.value;csState.msg=null;render()"/></div>'
+    + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Jordan" value="'+csAttr(csState.prospect)+'" oninput="csState.prospect=this.value;csState.msg=null;csTouch()"/></div>'
     + '<div><label class="eod-label">Tour date and time</label>'
-    + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Thursday, Aug 7 at 2:00 PM" value="'+csAttr(csState.when)+'" oninput="csState.when=this.value;render()"/></div>'
+    + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Thursday, Aug 7 at 2:00 PM" value="'+csAttr(csState.when)+'" oninput="csState.when=this.value;csTouch()"/></div>'
     + '</div>'
 
     + '<label class="eod-label" style="margin-top:14px">Message</label>'
-    + '<textarea class="eod-textarea" style="margin-bottom:6px" oninput="csState.msg=this.value;render()">'+csEsc(csMsg())+'</textarea>'
+    + '<textarea id="csMsgBox" class="eod-textarea" style="margin-bottom:6px" oninput="csState.msg=this.value;csTouch()">'+csEsc(csMsg())+'</textarea>'
     + '<button onclick="csState.msg=null;render()" style="font-size:11px;color:#64748b;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline">Reset to the default wording</button>'
     + '</div>'
 
