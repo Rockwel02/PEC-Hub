@@ -3883,7 +3883,7 @@ const CS_PREVIEW_W = 700;
 let csPhotos = {};   // slug -> [url, ...] — hydrated from Firestore on load
 let csState = {
   community:'The Economist', tpl:'welcome', size:'sq', side:'right',
-  photo:'', prospect:'', when:'', msg:null, busy:false, note:'',
+  photo:'', prospect:'', when:'', msg:null, busy:false, note:'', forcePlain:false,
 };
 
 function csEsc(s){ return (s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
@@ -3897,6 +3897,16 @@ function csCity(name){
   return '';
 }
 function csList(){ return csPhotos[csSlug(csState.community)] || []; }
+
+// Switching community should land on that community's own photo, not drop
+// back to the plain teal fallback and make you click a thumbnail every time.
+// The plain background is still available, it just has to be chosen on purpose
+// (forcePlain), so this auto-pick never overrides a deliberate choice.
+function csAutoPhoto(){
+  const list = csList();
+  if(csState.forcePlain){ csState.photo=''; return; }
+  if(list.indexOf(csState.photo) === -1) csState.photo = list.length ? list[0] : '';
+}
 
 function csDefaultMsg(){
   const p = csState.prospect.trim();
@@ -4036,12 +4046,12 @@ function csCardHtml(bodyOnly){
 function csSet(k,v){
   csState[k]=v;
   if(k==='tpl'||k==='community'){ csState.msg=null; }
-  if(k==='community'){ csState.photo=''; }
+  if(k==='community'){ csState.forcePlain=false; csAutoPhoto(); }
   csState.note='';
   render();
 }
-function csPickSaved(i){ csState.photo = csList()[i] || ''; render(); }
-function csClearPhoto(){ csState.photo=''; render(); }
+function csPickSaved(i){ csState.forcePlain=false; csState.photo = csList()[i] || ''; render(); }
+function csClearPhoto(){ csState.forcePlain=true; csState.photo=''; render(); }
 
 function csUploadLocal(input){
   const f = input.files[0]; if(!f) return;
@@ -4061,6 +4071,7 @@ async function csAddPhoto(){
   if(!csPhotos[slug]) csPhotos[slug] = [];
   csPhotos[slug].push(url.trim());
   csState.photo = url.trim();
+  csState.forcePlain = false;
   csState.note = '';
   render();
   const saved = await saveToFirestore('card_photos', {map: csPhotos});
@@ -4108,6 +4119,7 @@ async function csDownload(){
 }
 
 function renderCardStudio(){
+  csAutoPhoto();   // settles the photo on first load and after Firestore hydration
   const sz = CS_SIZES[csState.size], W = sz[0], H = sz[1];
   const k = CS_PREVIEW_W / W;
   const saved = csList();
