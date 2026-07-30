@@ -3883,7 +3883,7 @@ const CS_PREVIEW_W = 700;
 let csPhotos = {};   // slug -> [url, ...] — hydrated from Firestore on load
 let csState = {
   community:'The Economist', tpl:'welcome', size:'sq', side:'right',
-  photo:'', prospect:'', when:'', msg:null, busy:false, note:'', forcePlain:false,
+  photo:'', prospect:'', when:'', msg:null, busy:false, note:'',
 };
 
 function csEsc(s){ return (s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
@@ -3898,13 +3898,13 @@ function csCity(name){
 }
 function csList(){ return csPhotos[csSlug(csState.community)] || []; }
 
-// Switching community should land on that community's own photo, not drop
-// back to the plain teal fallback and make you click a thumbnail every time.
-// The plain background is still available, it just has to be chosen on purpose
-// (forcePlain), so this auto-pick never overrides a deliberate choice.
+// A card always uses a real community photo — either one saved for this
+// community or one uploaded on the spot. There is no generic fallback
+// background, so switching community lands on that community's own photo.
+// A locally uploaded file (data: URL) is kept as-is and never overridden.
 function csAutoPhoto(){
+  if(csState.photo && csState.photo.indexOf('data:') === 0) return;
   const list = csList();
-  if(csState.forcePlain){ csState.photo=''; return; }
   if(list.indexOf(csState.photo) === -1) csState.photo = list.length ? list[0] : '';
 }
 
@@ -3967,9 +3967,7 @@ function csCardHtml(bodyOnly){
   const align = right ? 'left' : 'right';
   const tw = wide ? W*0.50 : W*0.62;
 
-  const bg = csState.photo
-    ? '<img src="'+csAttr(csState.photo)+'" crossorigin="anonymous" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>'
-    : '<div style="position:absolute;inset:0;background:linear-gradient(140deg,#0b4f57 0%,#0d6b6b 45%,#2a8f7c 100%)"></div>';
+  const bg = '<img src="'+csAttr(csState.photo)+'" crossorigin="anonymous" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>';
 
   const meH = csState.tpl==='confirmed'
     ? (story ? H*0.42 : H*0.80)
@@ -4046,12 +4044,16 @@ function csCardHtml(bodyOnly){
 function csSet(k,v){
   csState[k]=v;
   if(k==='tpl'||k==='community'){ csState.msg=null; }
-  if(k==='community'){ csState.forcePlain=false; csAutoPhoto(); }
+  if(k==='community'){
+    // A locally uploaded file belongs to the community it was added under,
+    // so drop it when moving to a different one rather than carrying it over.
+    if(csState.photo && csState.photo.indexOf('data:') === 0) csState.photo = '';
+    csAutoPhoto();
+  }
   csState.note='';
   render();
 }
-function csPickSaved(i){ csState.forcePlain=false; csState.photo = csList()[i] || ''; render(); }
-function csClearPhoto(){ csState.forcePlain=true; csState.photo=''; render(); }
+function csPickSaved(i){ csState.photo = csList()[i] || ''; render(); }
 
 function csUploadLocal(input){
   const f = input.files[0]; if(!f) return;
@@ -4071,7 +4073,6 @@ async function csAddPhoto(){
   if(!csPhotos[slug]) csPhotos[slug] = [];
   csPhotos[slug].push(url.trim());
   csState.photo = url.trim();
-  csState.forcePlain = false;
   csState.note = '';
   render();
   const saved = await saveToFirestore('card_photos', {map: csPhotos});
@@ -4179,18 +4180,23 @@ function renderCardStudio(){
         : '<div style="font-size:12px;color:#64748b;line-height:1.6">No photos saved for this community yet. Upload one to <code>community-photos/'+csSlug(csState.community)+'/</code> in your PEC-Hub GitHub repo, copy its Raw link, then click Add photo URL.</div>')
     + '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
     + '<label style="font-size:11px;font-weight:700;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;cursor:pointer">Try a local file<input type="file" accept="image/*" style="display:none" onchange="csUploadLocal(this)"/></label>'
-    + (csState.photo ? '<button onclick="csClearPhoto()" style="font-size:11px;color:#64748b;background:none;border:none;cursor:pointer;text-decoration:underline">Use the plain teal background</button>' : '')
     + '</div></div>'
 
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
     + '<div class="section-label" style="margin:0">Preview <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8">'+W+' × '+H+' px</span></div>'
-    + '<button onclick="csDownload()"'+(csState.busy?' disabled':'')+' style="padding:8px 18px;background:'+(csState.busy?'#94a3b8':'#0d9488')+';color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:'+(csState.busy?'wait':'pointer')+'">'+(csState.busy?'Rendering…':'Download PNG')+'</button>'
+    + '<button onclick="csDownload()"'+((csState.busy||!csState.photo)?' disabled':'')+' style="padding:8px 18px;background:'+((csState.busy||!csState.photo)?'#94a3b8':'#0d9488')+';color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:'+(csState.busy?'wait':(csState.photo?'pointer':'not-allowed'))+'">'+(csState.busy?'Rendering…':'Download PNG')+'</button>'
     + '</div>'
     + (csState.note ? '<div style="font-size:11.5px;color:#0f766e;background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 12px;margin-bottom:10px">'+csEsc(csState.note)+'</div>' : '')
 
-    + '<div style="width:'+Math.round(W*k)+'px;height:'+Math.round(H*k)+'px;max-width:100%;overflow:hidden;border-radius:12px;box-shadow:0 12px 34px -14px rgba(0,0,0,.45)">'
-    + '<div id="csScale" style="transform-origin:top left;transform:scale('+k+')">'+csCardHtml()+'</div>'
-    + '</div>'
+    + (csState.photo
+        ? '<div style="width:'+Math.round(W*k)+'px;height:'+Math.round(H*k)+'px;max-width:100%;overflow:hidden;border-radius:12px;box-shadow:0 12px 34px -14px rgba(0,0,0,.45)">'
+          + '<div id="csScale" style="transform-origin:top left;transform:scale('+k+')">'+csCardHtml()+'</div>'
+          + '</div>'
+        : '<div style="width:'+Math.round(W*k)+'px;height:'+Math.round(H*k)+'px;max-width:100%;border:2px dashed #cbd5e1;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;background:#f8fafc">'
+          + '<div><div style="font-size:28px;margin-bottom:8px">🖼️</div>'
+          + '<div style="font-size:13px;font-weight:700;color:#475569;margin-bottom:4px">Pick a photo to build the card</div>'
+          + '<div style="font-size:11.5px;color:#94a3b8;line-height:1.6;max-width:320px">Choose one of the saved photos above, add a new URL, or use Try a local file. Every card uses a real community photo.</div>'
+          + '</div></div>')
 
     + '<div style="margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;font-size:11.5px;color:#64748b;line-height:1.7">'
     + '<strong style="color:#0f172a">Why GitHub and not Firebase Storage:</strong> exporting a PNG requires the photo\'s host to allow cross-origin reads. GitHub raw does this by default, Firebase Storage does not without extra bucket setup. Same repo the team headshots already live in, so nothing new to manage.'
