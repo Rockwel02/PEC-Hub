@@ -3837,6 +3837,7 @@ Thank you,</div>
 // to which community.
 const CS_REPO = 'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/';
 const CS_ME   = CS_REPO + 'card-assets/rowel-cutout.png';
+const CS_BUILD = '2026-07-30-d';   // shown at the bottom of the tab, so we can confirm which version is live
 const CS_NAME = 'Rowel De La Trinidad';
 const CS_ROLE = 'Prospect Experience Manager';
 
@@ -3922,6 +3923,7 @@ function csMsg(){ return csState.msg === null ? csDefaultMsg() : csState.msg; }
 // Typing in a text field used to call render(), which rebuilt the entire page
 // (nav, form, and a full-resolution card) on every keystroke — noticeably laggy.
 // These redraw only the card preview, debounced, so typing stays smooth.
+console.log('Welcome Card Studio build', CS_BUILD);
 let csPreviewTimer = null;
 function csPreview(){
   const bodyEl = document.getElementById('csBody');
@@ -4199,7 +4201,7 @@ function renderCardStudio(){
           + '</div></div>')
 
     + '<div style="margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;font-size:11.5px;color:#64748b;line-height:1.7">'
-    + '<strong style="color:#0f172a">Why GitHub and not Firebase Storage:</strong> exporting a PNG requires the photo\'s host to allow cross-origin reads. GitHub raw does this by default, Firebase Storage does not without extra bucket setup. Same repo the team headshots already live in, so nothing new to manage.'
+    + '<strong style="color:#0f172a">Build ' + CS_BUILD + '</strong> · every card uses a real community photo. Photos are served from the PEC-Hub GitHub repo because raw.githubusercontent.com allows the cross-origin read that PNG export needs.'
     + '</div>'
 
     + '</div>';
