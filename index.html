@@ -871,7 +871,7 @@ let state = {
   olNotes:'', olCopyMsg:'',
   kbSearch:'', kbCat:'All', spielSearch:'', spielCat:'All', spielTab:'objections', discoveryCat:'All',
   notesSearch:'', notesCat:null, notesTopic:null,
-  showCallListeningForm:false, clwSheetUrl:'', clwFolderUrl:'',
+  showCallListeningForm:false, clwSheetUrl:'', clwFolderUrl:'https://capitalrealestateco.sharepoint.com/:f:/s/LSMRSM/IgAUJqV2DXlITbnR2mRGrPI_ARk_UKleng5WDvMYR3pUrAo?e=UwRz9R',
   scTab:'mtd', expandedKpi:null,
   sheetUrl:'', sheetUrlDraft:'', syncStatus:'idle', syncMsg:'', lastSynced:null, lastAutoSyncError:null,
   kpiSyncSource:'',
@@ -911,7 +911,7 @@ const NAV = [
   {id:'announcements', label:'Announcements', icon:'📣'},
   {id:'kb',       label:'SOPs and Policies',icon:'📚'},
   {id:'spiels',   label:'Spiels',        icon:'💬'},
-  {id:'notes',    label:'Call Notes',     icon:'🗒️'},
+  {id:'notes',    label:'Call Guide and Notes', icon:'🗒️'},
   {id:'listening', label:'Call Listening', icon:'🎧'},
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
@@ -1025,7 +1025,7 @@ function renderHome(){
           {id:'announcements',icon:'📣',label:'Announcements',desc:'Team updates and Grace Hill trainings',color:'#dc2626'},
           {id:'kb',icon:'📚',label:'SOPs and Policies',desc:'SOPs and process guides',color:'#3b82f6'},
           {id:'spiels',icon:'💬',label:'Spiels Library',desc:'Scripts and talking points',color:'#0d9488'},
-          {id:'notes',icon:'🗒️',label:'Call Notes',desc:'Prospect, Applicant & Resident notes',color:'#d97706'},
+          {id:'notes',icon:'🗒️',label:'Call Guide and Notes',desc:'Prospect, Applicant & Resident notes',color:'#d97706'},
           {id:'listening',icon:'🎧',label:'Call Listening',desc:'Weekly call recordings for review',color:'#9333ea'},
           {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, quarterly',color:'#16a34a'},
           {id:'communities',icon:'🗺️',label:'Communities Map',desc:'Distance & drive time by market',color:'#1d4ed8'},
@@ -1660,7 +1660,7 @@ function renderCallNotes(){
     });
     return`
       <div class="page-header">
-        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Notes</h1></div>
+        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Guide and Notes</h1></div>
         <p>Prospect, Applicant &amp; Resident notes — pick a category to narrow down, or search directly</p>
       </div>
       <div class="content">
@@ -1684,7 +1684,7 @@ function renderCallNotes(){
     const cats = Object.keys(CALL_NOTES);
     return`
       <div class="page-header">
-        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Notes</h1></div>
+        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Guide and Notes</h1></div>
         <p>Prospect, Applicant &amp; Resident notes — pick a category to narrow down, or search directly</p>
       </div>
       <div class="content">
@@ -1809,7 +1809,7 @@ function renderCallListening(){
           <input type="url" class="eod-input" placeholder="Paste the Google Sheets link..." value="${state.clwSheetUrl||''}" oninput="state.clwSheetUrl=this.value"/>
 
           <label class="eod-label">Recordings Drive Folder Link</label>
-          <input type="url" class="eod-input" placeholder="Paste the Google Drive folder link..." value="${state.clwFolderUrl||''}" oninput="state.clwFolderUrl=this.value"/>
+          <input type="url" class="eod-input" placeholder="Paste the recordings folder link..." value="${state.clwFolderUrl||''}" oninput="state.clwFolderUrl=this.value"/>
 
           <button onclick="saveCallListeningLinks()" style="padding:10px 20px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Links</button>
         </div>`:''
@@ -1853,13 +1853,13 @@ function renderCallListening(){
           <div style="font-size:12px;color:#64748b">All weekly call recordings, named AgentName_Date</div>
         </div>
         ${state.clwFolderUrl?
-          `<a href="${state.clwFolderUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">Open Folder →</a>`:
+          `<a href="${state.clwFolderUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">RECORDINGS →</a>`:
           `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
         }
       </div>
 
       <div style="margin-top:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;font-size:11px;color:#64748b;line-height:1.7">
-        💡 <strong style="color:#0f172a">How this works:</strong> the tracking spreadsheet holds the weekly call schedule, scores, and coaching notes. The Drive folder holds the actual recordings. Both update independently — this page just keeps one-click access to each, fully sustainable since the hub never stores the files themselves.
+        💡 <strong style="color:#0f172a">How this works:</strong> the tracking spreadsheet holds the weekly call schedule, scores, and coaching notes. The recordings folder holds the actual recordings. Both update independently — this page just keeps one-click access to each, fully sustainable since the hub never stores the files themselves.
       </div>
     </div>`;
 }
