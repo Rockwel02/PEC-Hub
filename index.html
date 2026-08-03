@@ -172,6 +172,95 @@
       #cmLayout{grid-template-columns:1fr}
       #cmMap{height:320px !important}
     }
+
+  /* ══════════════ CALL GUIDE & NOTES (scoped under #cgRoot equivalent) ══════════════ */
+  #cgRoot * {box-sizing:border-box;margin:0;padding:0}
+  #cgRoot {font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a;line-height:1.5}
+  #cgRoot {max-width:820px;margin:0 auto;background:#f8fafc;min-height:100vh}
+  #cgRoot .breadcrumb {background:#0f1e3d;padding:14px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+  #cgRoot .breadcrumb span.sep {color:rgba(255,255,255,.4);font-size:12px}
+  #cgRoot .breadcrumb b {color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+  #cgRoot .breadcrumb b.current {color:rgba(255,255,255,.6);cursor:default}
+  #cgRoot .sample-tag {background:#fbbf24;color:#78350f;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em;margin-left:auto}
+  #cgRoot .reset-btn {margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif}
+  #cgRoot .reset-btn:hover {background:rgba(255,255,255,.2)}
+  #cgRoot .page-header {background:linear-gradient(135deg,#0f1e3d 0%,#1e40af 100%);padding:24px 24px 20px;color:#fff}
+  #cgRoot .page-header h1 {font-size:20px;font-weight:800}
+  #cgRoot .page-header p {font-size:12.5px;color:rgba(255,255,255,.7);margin-top:4px}
+  #cgRoot .content {padding:20px 24px 40px}
+  #cgRoot .section {background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  #cgRoot .section-title {font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+  #cgRoot .spiel-box {background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:13px 15px;font-size:13px;color:#1e3a8a;line-height:1.75;font-weight:600}
+  #cgRoot .direction-grid {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #cgRoot .direction-btn {background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:26px 16px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif}
+  #cgRoot .direction-btn:hover {border-color:#1e40af;background:#eff6ff}
+  #cgRoot .direction-btn .emoji {font-size:32px;display:block;margin-bottom:10px}
+  #cgRoot .direction-btn .label {font-size:15px;font-weight:800;color:#0f172a;margin-bottom:4px}
+  #cgRoot .direction-btn .desc {font-size:11.5px;color:#94a3b8}
+  #cgRoot .caller-grid {display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  #cgRoot .caller-btn {background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif}
+  #cgRoot .caller-btn:hover {border-color:#1e40af;background:#eff6ff}
+  #cgRoot .caller-btn .emoji {font-size:26px;display:block;margin-bottom:6px}
+  #cgRoot .caller-btn .label {font-size:13px;font-weight:700;color:#0f172a}
+  #cgRoot .branch-grid {display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #cgRoot .branch-btn {background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px 16px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif}
+  #cgRoot .branch-btn:hover {border-color:#1e40af;background:#eff6ff}
+  #cgRoot .branch-btn .emoji {font-size:28px;display:block;margin-bottom:8px}
+  #cgRoot .branch-btn .label {font-size:14px;font-weight:800;color:#0f172a;margin-bottom:3px}
+  #cgRoot .branch-btn .desc {font-size:11px;color:#94a3b8}
+  #cgRoot .topic-list {display:flex;flex-direction:column;gap:8px}
+  #cgRoot .topic-row {display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer}
+  #cgRoot .topic-row:hover {border-color:#1e40af;background:#eff6ff}
+  #cgRoot .topic-row .label {font-size:13px;font-weight:700;color:#0f172a}
+  #cgRoot .topic-row .arrow {color:#94a3b8;font-size:14px}
+  #cgRoot .topic-row.stub {opacity:.55}
+  #cgRoot .topic-row.stub .badge {background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase}
+  #cgRoot .discovery-item {display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+  #cgRoot .discovery-item:last-child {border-bottom:none}
+  #cgRoot .discovery-item.action-item {border-top:1.5px dashed #e2e8f0;margin-top:2px;padding-top:12px}
+  #cgRoot .pseudo-check {width:16px;height:16px;flex-shrink:0;border:1.5px solid #cbd5e1;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:800;margin-top:1px}
+  #cgRoot .pseudo-check.on {background:#1e40af;border-color:#1e40af}
+  #cgRoot .discovery-item.action-item .pseudo-check.on, #cgRoot .outcome-chip .pseudo-check.on {background:#10b981;border-color:#10b981}
+  #cgRoot .discovery-item span:not(.pseudo-check) {font-size:12.5px;color:#334155}
+  #cgRoot .discovery-item.checked span:not(.pseudo-check) {color:#94a3b8;text-decoration:line-through}
+  #cgRoot .guide-only-tag {font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+  #cgRoot .amenity-grid {display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px}
+  #cgRoot .amenity-chip, #cgRoot .outcome-chip {display:flex;align-items:center;gap:7px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 10px;cursor:pointer;font-size:12px;color:#334155}
+  #cgRoot .amenity-chip.active, #cgRoot .outcome-chip.active {background:#ecfdf5;border-color:#10b981;color:#065f46;font-weight:600}
+  #cgRoot .other-input {width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12.5px;font-family:'DM Sans',sans-serif;margin-top:4px}
+  #cgRoot .other-input:focus {outline:none;border-color:#1e40af}
+  #cgRoot .tone-tabs {display:flex;gap:6px;margin-bottom:12px}
+  #cgRoot .tone-tab {flex:1;padding:8px 6px;border-radius:9px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:700;color:#64748b;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif}
+  #cgRoot .tone-tab.active {background:#fbbf24;border-color:#f59e0b;color:#78350f}
+  #cgRoot .pitch-box {background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fbbf24;border-radius:10px;padding:14px 16px;font-size:12.5px;color:#78350f;line-height:1.7;font-style:italic}
+  #cgRoot .pitch-empty {color:#b45309;font-style:normal;font-size:12px}
+  #cgRoot .note-panel {position:sticky;bottom:0;background:#0f1e3d;border-radius:16px 16px 0 0;padding:16px 20px;margin:0 -24px;box-shadow:0 -8px 24px rgba(0,0,0,.15)}
+  #cgRoot .note-panel-title {color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+  #cgRoot .note-preview {background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:12px 14px;font-size:12px;color:#e2e8f0;line-height:1.7;white-space:pre-line;max-height:140px;overflow-y:auto;margin-bottom:10px;font-family:ui-monospace,monospace}
+  #cgRoot .note-preview:empty::before {content:'Nothing to copy yet — check something off or add details.';color:#64748b;font-style:italic;font-family:'DM Sans',sans-serif}
+  #cgRoot .copy-btn {width:100%;padding:12px;background:#fff;color:#0f1e3d;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif}
+  #cgRoot .copy-btn.copied {background:#10b981;color:#fff}
+  #cgRoot textarea.details {width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12.5px;font-family:'DM Sans',sans-serif;min-height:60px;resize:vertical}
+  #cgRoot textarea.details:focus {outline:none;border-color:#1e40af}
+  #cgRoot .stub-note {background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:12px;color:#92400e;line-height:1.6}
+  #cgRoot .attempt-tabs {display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+  #cgRoot .attempt-tab {flex:1;min-width:70px;padding:9px 6px;border-radius:9px;border:1.5px solid #e2e8f0;background:#fff;font-size:11.5px;font-weight:700;color:#64748b;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif}
+  #cgRoot .attempt-tab.active {background:#1e40af;border-color:#1e40af;color:#fff}
+  #cgRoot .aaa-scenario {border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:8px;overflow:hidden}
+  #cgRoot .aaa-scenario-header {padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:#fff}
+  #cgRoot .aaa-scenario-header:hover {background:#f8fafc}
+  #cgRoot .aaa-scenario-header .title {font-size:13px;font-weight:700;color:#0f172a}
+  #cgRoot .aaa-scenario-header .chev {color:#94a3b8;transition:transform .15s}
+  #cgRoot .aaa-scenario-header .chev.open {transform:rotate(180deg)}
+  #cgRoot .aaa-scenario-body {padding:0 14px 14px;background:#fff}
+  #cgRoot .aaa-line {display:flex;gap:10px;margin-bottom:8px}
+  #cgRoot .aaa-tag {flex-shrink:0;align-self:flex-start;font-size:10px;font-weight:800;padding:4px 9px;border-radius:8px;white-space:nowrap;margin-top:1px}
+  #cgRoot .aaa-tag.ack {background:#e0e7ff;color:#3730a3}
+  #cgRoot .aaa-tag.ans {background:#dbeafe;color:#1e40af}
+  #cgRoot .aaa-tag.ask {background:#dcfce7;color:#15803d}
+  #cgRoot .aaa-text {font-size:12.5px;color:#334155;line-height:1.6;flex:1}
+  #cgRoot .use-scenario-btn {width:100%;margin-top:6px;padding:9px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+  #cgRoot .goal-reminder {background:#ecfdf5;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:12px;color:#065f46;line-height:1.6;margin-top:4px}
   </style>
 </head>
 <body>
@@ -1648,147 +1737,1413 @@ const NOTE_CAT_COLORS = {
   'Timeline / Attempt Notes':  {bg:'#f0f9ff',c:'#0369a1'},
 };
 function renderCallNotes(){
-  const search = state.notesSearch.toLowerCase();
+  return `<div id="cgRoot"><div class="breadcrumb" id="breadcrumb"></div><div id="cgPageContent"></div></div>`;
+}
+function initCallGuide(){
+  renderCallGuideView();
+}
 
-  // ── SEARCH MODE: flat results across every category/topic ──
-  if(search && !state.notesCat){
-    const results = [];
-    Object.entries(CALL_NOTES).forEach(([cat, topics])=>{
-      topics.forEach(topic=>{
-        if(topic.toLowerCase().includes(search)) results.push({cat, topic});
-      });
-    });
-    return`
-      <div class="page-header">
-        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Guide and Notes</h1></div>
-        <p>Prospect, Applicant &amp; Resident notes — pick a category to narrow down, or search directly</p>
-      </div>
-      <div class="content">
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input value="${state.notesSearch}" oninput="state.notesSearch=this.value;renderPage()" placeholder="Search all topics..."/>
-        </div>
-        ${results.length===0?'<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No topics match your search.</div>':`
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-            ${results.map(r=>{
-              const cc = NOTE_CAT_COLORS[r.cat]||{bg:'#f1f5f9',c:'#475569'};
-              return`<button onclick="state.notesCat='${r.cat.replace(/'/g,"\\'")}';state.notesTopic='${r.topic.replace(/'/g,"\\'")}';state.notesSearch='';renderPage()" style="background:${cc.bg};color:${cc.c};border:1px solid ${cc.c}22;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${r.topic} <span style="opacity:.6">· ${r.cat}</span></button>`;
-            }).join('')}
-          </div>`
-        }
-      </div>`;
+// ══════════════════ CALL GUIDE & NOTES (embedded) ══════════════════
+
+// ── DATA ──────────────────────────────────────────────────────────
+const CALLER_TYPES = [
+  {id:'prospect', emoji:'🏠', label:'Prospect'},
+  {id:'applicant', emoji:'📋', label:'Applicant'},
+  {id:'resident', emoji:'🔑', label:'Resident'},
+  {id:'renewal', emoji:'🔄', label:'Renewal'},
+  {id:'former', emoji:'📦', label:'Former Resident'},
+  {id:'vendor', emoji:'🛠️', label:'Vendor / Other'},
+];
+
+// First-pass topic tags — pulled directly from the existing Call Notes /
+// Call Notes V2 library for each caller type. Full call guides (discovery,
+// spiels, etc.) can be built out the same way Prospect was, once real
+// process details are available for each of these.
+// Each tag now carries a "handling" type that determines which guide
+// screen it gets:
+//   transfer-res     → 3 A's + warm transfer to Resident Experience Team (or Onsite Team if physical help needed)
+//   transfer-bm      → real SOP: one live-transfer attempt to BM, then Experience Chat + task if no answer
+//   transfer-renewal → 3 A's + warm transfer to the Renewal Team
+//   transfer-former  → 3 A's + warm transfer to Antonette (Shannon backup), per the real Billing SOP
+//   transfer-onsite  → 3 A's + warm transfer to the Onsite Team
+//   special          → fully custom screen (denied application, refund inquiry, different phone number, application update)
+const SIMPLE_CALLER_TAGS = {
+  applicant: [
+    {tag:'Applicant - Asking for Application Update', handling:'special', specialId:'appUpdate'},
+    {tag:'Applicant - Denied Application Inquiry', handling:'special', specialId:'appDenied'},
+    {tag:'Applicant - Deposit Refund Inquiry', handling:'special', specialId:'appRefund'},
+  ],
+  resident: [
+    {tag:'Resident - Maintenance Request', handling:'transfer-res'},
+    {tag:'Resident - Work Order Follow Up', handling:'transfer-res'},
+    {tag:'Resident - Lease Clarification', handling:'transfer-res'},
+    {tag:'Resident - Parking Concern', handling:'transfer-res'},
+    {tag:'Resident - Amenity Concern', handling:'transfer-res'},
+    {tag:'Resident - Neighbor Complaint', handling:'transfer-res'},
+    {tag:'Resident - General Inquiry', handling:'transfer-res'},
+    {tag:'Resident - Pick Up the Key', handling:'transfer-res'},
+    {tag:'Resident - Rent Payment Question', handling:'transfer-bm'},
+    {tag:'Resident - Late Fee Question', handling:'transfer-bm'},
+    {tag:'Resident - Utility Billing', handling:'transfer-bm'},
+    {tag:'Resident - Account Balance Question', handling:'transfer-bm'},
+    {tag:'Resident - Using a Different Phone Number', handling:'special', specialId:'differentPhone'},
+  ],
+  renewal: [
+    {tag:'Renewal - Rate Question', handling:'transfer-renewal'},
+    {tag:'Renewal - Lease Term Options', handling:'transfer-renewal'},
+    {tag:'Renewal - Notice to Vacate', handling:'transfer-renewal'},
+    {tag:'Renewal - Transfer Request', handling:'transfer-renewal'},
+    {tag:'Renewal - Renewal Negotiation', handling:'transfer-renewal'},
+    {tag:'Renewal - Early Termination Inquiry', handling:'transfer-renewal'},
+    {tag:'Renewal - General Inquiry', handling:'transfer-renewal'},
+  ],
+  former: [
+    {tag:'Former Resident - Balance Inquiry', handling:'transfer-former'},
+    {tag:'Former Resident - Collections Question', handling:'transfer-former'},
+    {tag:'Former Resident - Deposit Dispute', handling:'transfer-former'},
+    {tag:'Former Resident - Rental Verification', handling:'transfer-former'},
+    {tag:'Former Resident - General Inquiry', handling:'transfer-former'},
+    {tag:'Former Resident - Refund', handling:'transfer-former'},
+  ],
+  vendor: [
+    {tag:'Vendor - Maintenance Partner', handling:'transfer-onsite'},
+    {tag:'Vendor - Utility Partner', handling:'transfer-onsite'},
+    {tag:'Vendor - Marketing', handling:'transfer-onsite'},
+    {tag:'Corporate Inquiry', handling:'transfer-onsite'},
+    {tag:'Legal Inquiry', handling:'transfer-onsite'},
+    {tag:'Fair Housing Concern', handling:'transfer-onsite'},
+    {tag:'Media Inquiry', handling:'transfer-onsite'},
+    {tag:'Ownership Inquiry', handling:'transfer-onsite'},
+    {tag:'Past Due Invoice', handling:'transfer-onsite'},
+    {tag:'Delivery Service (UPS/FedEx)', handling:'transfer-onsite'},
+    {tag:'Rental Verification', handling:'transfer-onsite'},
+    {tag:'Market Survey', handling:'transfer-onsite'},
+  ],
+};
+
+// Config for the 3 generic warm-transfer handling types
+const TRANSFER_CONFIGS = {
+  'transfer-res': {
+    primaryTeam: 'Resident Experience Team',
+    exceptionTeam: 'Onsite Team',
+    hasException: true,
+    ackSpiel: "I completely understand — I'm sorry for the hassle, and I want to make sure this gets to the right person to help you.",
+  },
+  'transfer-renewal': {
+    primaryTeam: 'Renewal Team',
+    hasException: false,
+    ackSpiel: "Thanks so much for reaching out about your renewal — let's get you connected with the team who can help.",
+  },
+  'transfer-former': {
+    primaryTeam: 'Antonette (Shannon as backup)',
+    hasException: false,
+    ackSpiel: "I appreciate you following up on this — let's make sure this reaches the right person.",
+  },
+  'transfer-onsite': {
+    primaryTeam: 'Onsite Team',
+    hasException: false,
+    ackSpiel: "Thanks for reaching out — let me connect you with our onsite team who can help directly.",
+  },
+};
+
+const PROSPECT_BRANCHES = [
+  {id:'tour', emoji:'📅', label:'Tour', desc:'Request, confirm, reschedule, or cancel'},
+  {id:'inquiry', emoji:'💬', label:'Inquiry', desc:'Questions about the community'},
+];
+
+const TOUR_TOPICS = [
+  {id:'tour_request', label:'Tour Request'},
+  {id:'tour_confirm', label:'Confirmation'},
+  {id:'tour_reschedule', label:'Rescheduling'},
+  {id:'tour_cancel', label:'Cancel Tour'},
+];
+
+const INQUIRY_TOPICS = [
+  {id:'availability', label:'Availability', ready:true},
+  {id:'qualification', label:'Rental Criteria & Qualification', ready:true},
+];
+
+const INBOUND_SPIEL = "Thank you for calling [Community Name]! This is [Your Name] speaking — to whom do I have the pleasure of speaking with?";
+const OUTBOUND_SPIEL = "Hi, this is [Your Name] calling from [Community Name] — I'm following up on your recent interest in one of our available homes. Do you have a quick minute to chat?";
+
+const OUTBOUND_ATTEMPTS = ['1st Attempt','2nd Attempt','3rd Attempt','4th Attempt','5th Attempt — DNR: No Response'];
+const OUTBOUND_TAGS = [
+  {label:'No Answer', phrase:'No answer.'},
+  {label:'Left Voicemail', phrase:'Left a voicemail.'},
+  {label:'Unable to leave VM - VM is Full', phrase:'Unable to leave a voicemail — mailbox is full.'},
+  {label:'Unable to leave VM - VM is Not Yet Set Up', phrase:'Unable to leave a voicemail — mailbox not set up yet.'},
+  {label:'Unable to leave VM - Long Hold Music', phrase:'Call connected to long hold music, never reached a person.'},
+  {label:'Sent Email', phrase:'Sent a follow-up email.'},
+  {label:'Sent SMS/Text', phrase:'Sent a follow-up text.'},
+  {label:'Spoke With Prospect', phrase:'Spoke with the prospect directly.'},
+  {label:'Wrong Number', phrase:'Number appears incorrect or disconnected.'},
+  {label:'Requested Callback', phrase:'Prospect requested a callback.'},
+];
+
+// Real content pulled from the Spiels Library — Pricing & Budget category
+const PRICING_SCENARIOS = [
+  {id:'expensive', title:"That's Too Expensive", aaa:{
+    acknowledge:"I hear you — price is a big factor in a decision like this.",
+    answer:"Just so I understand where you're coming from, this gives me a better sense of what you're comparing it to.",
+    ask:"When you say expensive, compared to what you've seen so far?"
+  }},
+  {id:'cheaper', title:'I Found Something Cheaper', aaa:{
+    acknowledge:"That makes sense — there are definitely lower-priced options out there.",
+    answer:"I'd love to understand what specifically caught your attention so I can see if there's something comparable here that fits just as well.",
+    ask:'Out of curiosity, what stood out to you about that one?'
+  }},
+  {id:'budget', title:"It's Out of My Budget", aaa:{
+    acknowledge:'Thanks for sharing that — budget is one of the most important pieces of this decision.',
+    answer:"If we found a place that actually solved what matters most to you — whether that's location, safety, or amenities — it might be worth exploring options that make the numbers work.",
+    ask:'Would you be open to exploring those options together?'
+  }},
+  {id:'upfront', title:'Can I Pay Upfront for My Lease?', aaa:{
+    acknowledge:'I get it — some people prefer to handle things all at once rather than monthly.',
+    answer:"Our communities make it easy to stay on track with rent payments. While we don't accept the full rent upfront, you can take advantage of our convenient auto-debit feature through the payment portal.",
+    ask:'Would setting up auto-debit work for your situation?'
+  }},
+];
+
+// Real content — Spiels Library, "Qualification & Applications" category
+const QUALIFICATION_SCENARIOS = [
+  {id:'rentalquals', title:'Rental Qualifications', aaa:{
+    acknowledge:"Great question — it's smart to know what we look for before you apply.",
+    answer:'Our rental qualifications include meeting the income requirement of xx times the rent, along with credit, rental, and background screening conducted through TransUnion.',
+    ask:'Would you like me to send over our full rental criteria so you have all the details handy?'
+  }},
+  {id:'willigetapproved', title:'Will I Get Approved?', aaa:{
+    acknowledge:'I completely understand wanting some certainty before applying.',
+    answer:"We welcome all individuals who apply and meet the qualifying requirements. Approval isn't guaranteed and is based on several factors in our rental criteria.",
+    ask:'Would you like me to walk you through that criteria now, or email it over so you can review it on your own time?'
+  }},
+  {id:'lowcredit', title:'Credit Is Low — Should I Still Apply?', aaa:{
+    acknowledge:"Thanks for being upfront about that — it shows you're thinking this through carefully.",
+    answer:"Credit, eviction, and criminal history are all reviewed as part of TransUnion's screening process, and the result of that screening is what determines whether you'll be approved, conditionally approved, or denied.",
+    ask:'Would it help if I sent over our rental criteria so you can see exactly how that\'s weighed before deciding whether to apply?'
+  }},
+  {id:'cosigner', title:'Can I Add a Cosigner?', aaa:{
+    acknowledge:"That's a fair thing to ask about, especially if you want extra support on the income side.",
+    answer:"We don't offer co-signers, but you can add a guarantor for income purposes — they'd need to qualify at 4 times the rent for their income to qualify.",
+    ask:'Do you have someone in mind who might be able to qualify as a guarantor?'
+  }},
+  {id:'eviction', title:'Eviction History', aaa:{
+    acknowledge:'I appreciate you bringing that up directly — that helps me give you the clearest answer.',
+    answer:'We welcome anyone who applies and meets our qualifications. Rental history, including evictions, is part of the screening process.',
+    ask:'Would you like me to share our rental criteria so you can see exactly how that factors in before you apply?'
+  }},
+];
+
+// DRAFT — placeholder content pending your real Pet Policy process
+const PET_POLICY_SCENARIOS = [
+  {id:'petpolicy_general', title:'General Pet Policy Question', aaa:{
+    acknowledge:"Great question — I know pets are a big part of the family!",
+    answer:"We are a pet-friendly community! [DRAFT — confirm exact breed/weight restrictions, pet fees, and pet rent for this specific community before using live.]",
+    ask:"Do you have a pet you're looking to bring along, and if so, what type?"
+  }},
+];
+
+// DRAFT — placeholder content pending your real Fees & Deposit process
+const FEES_SCENARIOS = [
+  {id:'fees_general', title:'General Fees & Deposit Question', aaa:{
+    acknowledge:"Happy to walk you through that!",
+    answer:"[DRAFT — our fees typically include an application fee, administrative fee, and a security deposit, which can vary by community and qualifying criteria. Confirm exact numbers before using live.]",
+    ask:'Would you like me to send over the exact breakdown for this community so you have it in writing?'
+  }},
+];
+
+// Grouped for the "If They Ask About..." quick-answer section on the main Inquiry guide
+// Real content — Handling Realtor-Initiated Inquiries SOP
+const REALTOR_SCENARIOS = [
+  {id:'realtor_represented', title:'Realtor Calling on Behalf of a Client', aaa:{
+    acknowledge:"Thanks so much for reaching out on behalf of your client!",
+    answer:"I'd love to set up a guest profile to help make the tour experience as smooth as possible for them. If for any reason you're not able to share their info, that's completely fine — we can still move forward, and I'll make sure all follow-ups go through you.",
+    ask:"Could I get your client's name, so I can get that profile started?"
+  }},
+];
+
+const QUICK_ANSWER_TOPICS = [
+  {id:'pricing', label:'Pricing & Specials', scenarios: PRICING_SCENARIOS, draft:false},
+  {id:'qualification', label:'Rental Criteria & Qualification', scenarios: QUALIFICATION_SCENARIOS, draft:false},
+  {id:'pets', label:'Pet Policy', scenarios: PET_POLICY_SCENARIOS, draft:true},
+  {id:'fees', label:'Fees & Deposit', scenarios: FEES_SCENARIOS, draft:true},
+  {id:'realtor', label:'Realtor Calling on Behalf of a Client', scenarios: REALTOR_SCENARIOS, draft:false},
+];
+
+
+// ── STATE ─────────────────────────────────────────────────────────
+let cgState = {
+  screen: 'direction',
+  callDirection: null,
+  callerType: null,
+  branch: null,
+  topic: null,
+  discoveryChecked: [],
+  actionChecked: false,
+  amenitiesChecked: [],
+  otherAmenities: '',
+  activeTone: 'warm',
+  details: '',
+  attemptIdx: 0,
+  outboundTagsChecked: [],
+  outboundDetails: '',
+  openScenario: null,
+  usedScenarios: [],
+  pricingDetails: '',
+  tourDetails: '',
+  quickAnswerOpenTopic: null,
+  quickAnswerOpenScenario: null,
+  quickAnswersUsed: [], // {topicLabel, scenarioTitle} — shared across the whole call
+  qualOpenScenario: null,
+  qualUsedScenarios: [],
+  qualDetails: '',
+  pricingPermission: null, // null | 'yes' | 'no'
+  simpleTag: null,
+  simpleTagDetails: '',
+  simpleTagHandling: null,
+  simpleTagSpecialId: null,
+  transferOutcome: null,
+  transferOnsiteException: false,
+  bmAnswered: null,
+  bmResidentName: '', bmFunnelProfile: '', bmCommunity: '', bmConcern: '',
+  phoneOnLease: null, phoneType: null,
+  deniedReason: null, deniedWithin30: null,
+  refundStatus: null,
+  realtorClientProvided: null, // null | 'yes' | 'no'
+  realtorClientName: '',
+};
+
+// ── BREADCRUMB ────────────────────────────────────────────────────
+function renderBreadcrumb(){
+  const trail = [{label:'Call Guide', screen:'direction'}];
+  if(cgState.callDirection==='outbound'){
+    trail.push({label:'Outbound', screen:'outboundGuide'});
+  } else if(cgState.callDirection==='inbound'){
+    trail.push({label:'Inbound', screen:'greeting'});
+    if(cgState.callerType){
+      const ct = CALLER_TYPES.find(c=>c.id===cgState.callerType);
+      trail.push({label:ct.label, screen: cgState.callerType==='prospect' ? 'branch' : 'simpleTagList'});
+    }
+    if(cgState.callerType && cgState.callerType!=='prospect' && cgState.simpleTag){
+      trail.push({label:cgState.simpleTag, screen: screenForTag(cgState.simpleTagHandling, cgState.simpleTagSpecialId)});
+    }
+    if(cgState.branch){
+      const b = PROSPECT_BRANCHES.find(b=>b.id===cgState.branch);
+      trail.push({label:b.label, screen:'topicList'});
+    }
+    if(cgState.topic){
+      const list = cgState.branch==='tour' ? TOUR_TOPICS : INQUIRY_TOPICS;
+      const t = list.find(t=>t.id===cgState.topic);
+      const guideScreen = cgState.branch==='tour' ? 'tourGuide' : (cgState.topic==='qualification' ? 'qualificationGuide' : 'topicGuide');
+      trail.push({label:t.label, screen: guideScreen});
+    }
   }
+  const html = trail.map((t,i)=>{
+    const isLast = i===trail.length-1;
+    return `<b class="${isLast?'current':''}" onclick="${isLast?'':`goTo('${t.screen}')`}">${t.label}</b>`;
+  }).join('<span class="sep">›</span>');
+  document.getElementById('breadcrumb').innerHTML = html + '<button class="reset-btn" onclick="resetAll()">🔄 New Call</button>';
+}
 
-  // ── LEVEL 1: category grid ──
-  if(!state.notesCat){
-    const cats = Object.keys(CALL_NOTES);
-    return`
-      <div class="page-header">
-        <div class="page-header-inner"><span style="font-size:22px">🗒️</span><h1>Call Guide and Notes</h1></div>
-        <p>Prospect, Applicant &amp; Resident notes — pick a category to narrow down, or search directly</p>
-      </div>
-      <div class="content">
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input value="${state.notesSearch}" oninput="state.notesSearch=this.value;renderPage()" placeholder="Search all topics..."/>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px">
-          ${cats.map(cat=>{
-            const cc = NOTE_CAT_COLORS[cat]||{bg:'#f1f5f9',c:'#475569'};
-            const count = CALL_NOTES[cat].length;
-            return`
-            <button onclick="state.notesCat='${cat.replace(/'/g,"\\'")}';renderPage()" style="text-align:left;background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;cursor:pointer;font-family:'DM Sans',sans-serif">
-              <div style="display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c};margin-bottom:8px">${cat}</div>
-              <div style="font-size:12px;color:#94a3b8">${count} topic${count!==1?'s':''}</div>
-            </button>`;
-          }).join('')}
-        </div>
-      </div>`;
-  }
+function resetAll(){
+  cgState = {
+    screen: 'direction', callDirection: null, callerType: null, branch: null, topic: null,
+    discoveryChecked: [], actionChecked: false, amenitiesChecked: [], otherAmenities: '',
+    activeTone: 'warm', details: '', attemptIdx: 0, outboundTagsChecked: [], outboundDetails: '',
+    openScenario: null, usedScenarios: [], pricingDetails: '', tourDetails: '',
+    quickAnswerOpenTopic: null, quickAnswerOpenScenario: null, quickAnswersUsed: [],
+    qualOpenScenario: null, qualUsedScenarios: [], qualDetails: '', pricingPermission: null,
+    simpleTag: null, simpleTagDetails: '', simpleTagHandling: null, simpleTagSpecialId: null,
+    transferOutcome: null, transferOnsiteException: false, bmAnswered: null,
+    bmResidentName: '', bmFunnelProfile: '', bmCommunity: '', bmConcern: '',
+    phoneOnLease: null, phoneType: null, deniedReason: null, deniedWithin30: null, refundStatus: null,
+    realtorClientProvided: null, realtorClientName: '',
+  };
+  renderCallGuideView();
+}
 
-  // ── LEVEL 2: topic list within selected category ──
-  if(state.notesCat && !state.notesTopic){
-    const cc = NOTE_CAT_COLORS[state.notesCat]||{bg:'#f1f5f9',c:'#475569'};
-    const topics = CALL_NOTES[state.notesCat]||[];
-    return`
-      <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,${cc.c} 250%)">
-        <div class="page-header-inner">
-          <button onclick="state.notesCat=null;renderPage()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;margin-right:4px">← Categories</button>
-          <h1>${state.notesCat}</h1>
-        </div>
-        <p>${topics.length} topic${topics.length!==1?'s':''} — select one to see the full note</p>
-      </div>
-      <div class="content">
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${topics.map(topic=>`
-            <button onclick="state.notesTopic='${topic.replace(/'/g,"\\'")}';renderPage()" style="background:${cc.bg};color:${cc.c};border:1px solid ${cc.c}22;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${topic}${CALL_SCRIPTS_BY_TITLE[topic]?' 📄':''}</button>
-          `).join('')}
-        </div>
-      </div>`;
-  }
+function goTo(screen){
+  if(screen==='direction'){ cgState.callDirection=null; cgState.callerType=null; cgState.branch=null; cgState.topic=null; cgState.simpleTag=null; }
+  if(screen==='greeting'){ cgState.callerType=null; cgState.branch=null; cgState.topic=null; cgState.simpleTag=null; }
+  if(screen==='simpleTagList'){ cgState.simpleTag=null; }
+  if(screen==='branch'){ cgState.branch=null; cgState.topic=null; }
+  if(screen==='topicList'){ cgState.topic=null; }
+  cgState.screen = screen;
+  renderCallGuideView();
+}
 
-  // ── LEVEL 3: full note detail for the selected topic ──
-  const cc = NOTE_CAT_COLORS[state.notesCat]||{bg:'#f1f5f9',c:'#475569'};
-  const script = CALL_SCRIPTS_BY_TITLE[state.notesTopic];
-  return`
-    <div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,${cc.c} 250%)">
-      <div class="page-header-inner">
-        <button onclick="state.notesTopic=null;renderPage()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;margin-right:4px">← ${state.notesCat}</button>
-        <h1>${state.notesTopic}</h1>
-      </div>
-      <p>${script?'Full note with Yes/No follow-up guidance':'Quick disposition tag'}</p>
+// ── SCREEN: DIRECTION (very first choice) ───────────────────────
+function renderDirectionScreen(){
+  return `
+    <div class="page-header">
+      <h1>📞 Call Guide &amp; Notes</h1>
+      <p>First things first — is this call coming in, or are you making it?</p>
     </div>
     <div class="content">
-      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cc.bg};color:${cc.c}">${state.notesCat}</span>
-          <button onclick="navigator.clipboard.writeText('${state.notesTopic.replace(/'/g,"\\'")}').then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Tag Only',1500)})" style="font-size:11px;font-weight:700;color:${cc.c};background:${cc.bg};border:1px solid ${cc.c}33;border-radius:8px;padding:5px 12px;cursor:pointer">Copy Tag Only</button>
+      <div class="direction-grid">
+        <div class="direction-btn" onclick="selectDirection('inbound')">
+          <span class="emoji">📥</span>
+          <div class="label">Inbound</div>
+          <div class="desc">They called us</div>
         </div>
-
-        ${script?`
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px 15px;font-size:13px;color:#0f172a;line-height:1.75;margin-bottom:14px">
-            ${script.opening}
-          </div>
-          ${script.yesBranch?`
-            <div style="display:flex;gap:10px;margin-bottom:8px">
-              <div style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap">YES</div>
-              <div style="font-size:13px;color:#166534;line-height:1.7;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;flex:1">${script.yesBranch}.</div>
-            </div>`:''
-          }
-          ${script.noBranch?`
-            <div style="display:flex;gap:10px;margin-bottom:14px">
-              <div style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;flex-shrink:0;align-self:flex-start;white-space:nowrap">NO</div>
-              <div style="font-size:13px;color:#7f1d1d;line-height:1.7;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;flex:1">${script.noBranch}.</div>
-            </div>`:''
-          }
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:20px">DNR - ${script.dnr}</span>
-            <button class="btn btn-teal" style="font-size:11px" onclick="copyFullScript(${script.id}, this)">Copy Full Note</button>
-          </div>
-        `:`
-          <div style="text-align:center;padding:20px 0;color:#64748b;font-size:12.5px;line-height:1.7">
-            No expanded script written for this topic yet — use the tag above as your disposition note in Funnel.
-          </div>
-        `}
+        <div class="direction-btn" onclick="selectDirection('outbound')">
+          <span class="emoji">📤</span>
+          <div class="label">Outbound</div>
+          <div class="desc">We're calling them</div>
+        </div>
       </div>
     </div>`;
 }
+function selectDirection(dir){
+  cgState.callDirection = dir;
+  cgState.screen = dir==='inbound' ? 'greeting' : 'outboundGuide';
+  renderCallGuideView();
+}
 
-function copyFullScript(scriptId, btn){
-  const s = CALL_SCRIPTS.find(x=>x.id===scriptId);
-  if(!s)return;
-  let fullText = s.opening;
-  if(s.yesBranch) fullText += ' Customer said Yes, ' + s.yesBranch + '.';
-  if(s.noBranch) fullText += ' Customer said No, ' + s.noBranch + '.';
-  fullText += ' DNR - ' + s.dnr;
-  navigator.clipboard.writeText(fullText).then(()=>{
-    if(btn){
-      const original = btn.textContent;
-      btn.textContent = '✓ Copied!';
-      setTimeout(()=>{btn.textContent = original;}, 1500);
+// ── SCREEN: GREETING + CALLER TYPE (Inbound) ────────────────────
+function renderGreetingScreen(){
+  return `
+    <div class="page-header">
+      <h1>📥 Inbound Call</h1>
+      <p>Say this first, then tell us who's calling</p>
+    </div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">👋 Opening — Say This First</div>
+        <div class="spiel-box">${INBOUND_SPIEL}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Who's Calling?</div>
+        <div class="caller-grid">
+          ${CALLER_TYPES.map(c=>`
+            <div class="caller-btn" onclick="selectCallerType('${c.id}')">
+              <span class="emoji">${c.emoji}</span>
+              <span class="label">${c.label}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+function selectCallerType(id){
+  cgState.callerType = id;
+  cgState.screen = id==='prospect' ? 'branch' : 'simpleTagList';
+  renderCallGuideView();
+}
+
+// ── SCREENS: SIMPLE CALLER-TYPE TAG LIST + GUIDE (Applicant, Resident, Renewal, Former Resident, Vendor) ──
+function renderSimpleTagListScreen(){
+  const ct = CALLER_TYPES.find(c=>c.id===cgState.callerType);
+  const tags = SIMPLE_CALLER_TAGS[cgState.callerType] || [];
+  return `
+    <div class="page-header"><h1>${ct.emoji} ${ct.label}</h1><p>Select what this call is about</p></div>
+    <div class="content">
+      ${cgState.callerType==='vendor'?`<div class="stub-note" style="margin-bottom:14px">📌 <strong>Realtor calls are not a Vendor status.</strong> Per SOP, keep the lead active as a Prospect (use DNR if needed, not Vendor), gather the client's name if possible, and note the lead as "realtor-represented." Tours can still be booked under the realtor's name if the client's info isn't available.</div>`:''}
+      <div class="topic-list">
+        ${tags.map(t=>`
+          <div class="topic-row" onclick='selectSimpleTag(${JSON.stringify(t)})'>
+            <span class="label">${t.tag}</span><span class="arrow">›</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+function screenForTag(handling, specialId){
+  if(handling && handling.startsWith('transfer-') && handling!=='transfer-bm') return 'transferGuide';
+  if(handling==='transfer-bm') return 'bmBillingGuide';
+  if(specialId==='differentPhone') return 'differentPhoneGuide';
+  if(specialId==='appUpdate') return 'appUpdateGuide';
+  if(specialId==='appDenied') return 'appDeniedGuide';
+  if(specialId==='appRefund') return 'appRefundGuide';
+  return 'simpleTagList';
+}
+function selectSimpleTag(tagObj){
+  cgState.simpleTag = tagObj.tag;
+  cgState.simpleTagHandling = tagObj.handling;
+  cgState.simpleTagSpecialId = tagObj.specialId || null;
+  cgState.simpleTagDetails = '';
+  cgState.transferOutcome = null;
+  cgState.transferOnsiteException = false;
+  cgState.bmAnswered = null;
+  cgState.bmResidentName = ''; cgState.bmFunnelProfile = ''; cgState.bmCommunity = ''; cgState.bmConcern = '';
+  cgState.phoneOnLease = null; cgState.phoneType = null;
+  cgState.deniedReason = null; cgState.deniedWithin30 = null;
+  cgState.refundStatus = null;
+  cgState.screen = screenForTag(tagObj.handling, tagObj.specialId);
+  renderCallGuideView();
+}
+
+// ── GENERIC WARM-TRANSFER SCREEN (Resident/Renewal/Former Resident/Vendor) ──
+function renderTransferScreen(){
+  const cfg = TRANSFER_CONFIGS[cgState.simpleTagHandling];
+  const team = (cfg.hasException && cgState.transferOnsiteException) ? cfg.exceptionTeam : cfg.primaryTeam;
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>3 A's, then warm transfer to the right team</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response</div>
+        <div class="spiel-box">${cfg.ackSpiel}</div>
+      </div>
+      ${cfg.hasException?`
+      <div class="section">
+        <div class="section-title">🛠️ Does This Need Physical/Onsite Help?</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${!cgState.transferOnsiteException?' active':''}" onclick="setOnsiteException(false)">No — ${cfg.primaryTeam}</div>
+          <div class="tone-tab${cgState.transferOnsiteException?' active':''}" onclick="setOnsiteException(true)">Yes — ${cfg.exceptionTeam}</div>
+        </div>
+      </div>`:''}
+      <div class="section">
+        <div class="section-title">☎️ Ask Permission to Place on Hold</div>
+        <div class="spiel-box">Would it be alright if I place you on a brief hold so I can warm-transfer you to our ${team}?</div>
+      </div>
+      <div class="section">
+        <div class="section-title">📞 Transfer Result</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${cgState.transferOutcome==='live'?' active':''}" onclick="setTransferOutcome('live')">✅ Connected Live</div>
+          <div class="tone-tab${cgState.transferOutcome==='noanswer'?' active':''}" onclick="setTransferOutcome('noanswer')">📧 No Answer</div>
+        </div>
+        ${cgState.transferOutcome==='noanswer'?`<div class="spiel-box" style="margin-top:10px">I've sent a message to our ${team} and created a task for them — you can expect a callback within the day, or within 24 hours.</div>`:''}
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="What did they need, and how did it go?">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function setOnsiteException(val){ cgState.transferOnsiteException = val; renderCallGuideView(); }
+function setTransferOutcome(val){ cgState.transferOutcome = cgState.transferOutcome===val?null:val; renderCallGuideView(); }
+function updateTransferNote(){
+  const ct = CALLER_TYPES.find(c=>c.id===cgState.callerType);
+  const cfg = TRANSFER_CONFIGS[cgState.simpleTagHandling];
+  const team = (cfg.hasException && cgState.transferOnsiteException) ? cfg.exceptionTeam : cfg.primaryTeam;
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+
+  let story = `${ct.label} called in regarding ${cgState.simpleTag}.`;
+  if(cgState.transferOutcome==='live') story += ` Warm-transferred to the ${team} — connected live.`;
+  else if(cgState.transferOutcome==='noanswer') story += ` Attempted warm transfer to the ${team} — no answer. Sent a message and created a task; resident advised to expect a callback within 24 hours.`;
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.transferOutcome?1:0) + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── RESIDENT BILLING → BM TEAM (real SOP) ────────────────────────
+function renderBmBillingScreen(){
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>Routes to the Business Manager (BM) Team — one live-transfer attempt only</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response</div>
+        <div class="spiel-box">I completely understand — let me connect you with our Business Manager team who handles that directly.</div>
+      </div>
+      <div class="section">
+        <div class="section-title">☎️ Step 1 — Attempt ONE Live Transfer to BM</div>
+        <div class="guide-only-tag">Locate the BM assigned to this resident's POD and attempt a live transfer — one time only.</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${cgState.bmAnswered==='yes'?' active':''}" onclick="setBmAnswered('yes')">✅ BM Answered</div>
+          <div class="tone-tab${cgState.bmAnswered==='no'?' active':''}" onclick="setBmAnswered('no')">📧 No Answer</div>
+        </div>
+      </div>
+      ${cgState.bmAnswered==='no'?`
+      <div class="section">
+        <div class="section-title">💬 Step 2 — Send Message in Experience Chat</div>
+        <div class="guide-only-tag">Template: Resident's Name / Funnel Profile / Community / Concern</div>
+        <input class="other-input" id="bmResidentName" placeholder="Resident's Name" value="${cgState.bmResidentName}" style="margin-bottom:6px"/>
+        <input class="other-input" id="bmFunnelProfile" placeholder="Funnel Profile" value="${cgState.bmFunnelProfile}" style="margin-bottom:6px"/>
+        <input class="other-input" id="bmCommunity" placeholder="Community" value="${cgState.bmCommunity}" style="margin-bottom:6px"/>
+        <input class="other-input" id="bmConcern" placeholder="Concern" value="${cgState.bmConcern}"/>
+      </div>
+      <div class="section">
+        <div class="section-title">✅ Step 3 — Create a Task</div>
+        <div class="guide-only-tag">Task the BM assigned to that POD — or Gabby (floating BM) if they're out of office. If this involves a former resident, task Antonette instead (Shannon as backup).</div>
+      </div>
+      <div class="goal-reminder">⏱️ <strong>Timeline:</strong> 24 hours for urgent/accounting-sensitive items, 48 hours for standard items. If the deadline is missed, follow up with Shannon in chat.</div>
+      `:''}
+      <div class="stub-note">📌 RET team can help only with general portal (Nestio), BILT access, or rent-due-date questions — they are not the primary owner for billing, charges, notices, or payment plans.</div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="What did they need, and how did it go?">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function setBmAnswered(val){ cgState.bmAnswered = cgState.bmAnswered===val?null:val; renderCallGuideView(); }
+function updateBmBillingNote(){
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+  if(cgState.bmAnswered==='no'){
+    cgState.bmResidentName = document.getElementById('bmResidentName')?.value || cgState.bmResidentName;
+    cgState.bmFunnelProfile = document.getElementById('bmFunnelProfile')?.value || cgState.bmFunnelProfile;
+    cgState.bmCommunity = document.getElementById('bmCommunity')?.value || cgState.bmCommunity;
+    cgState.bmConcern = document.getElementById('bmConcern')?.value || cgState.bmConcern;
+  }
+  let story = `Resident called in regarding ${cgState.simpleTag}.`;
+  if(cgState.bmAnswered==='yes') story += ' Warm-transferred to BM — connected live.';
+  else if(cgState.bmAnswered==='no'){
+    story += ' BM did not answer on the one live-transfer attempt.';
+    const parts = [];
+    if(cgState.bmResidentName.trim()) parts.push(`Resident: ${cgState.bmResidentName.trim()}`);
+    if(cgState.bmFunnelProfile.trim()) parts.push(`Funnel Profile: ${cgState.bmFunnelProfile.trim()}`);
+    if(cgState.bmCommunity.trim()) parts.push(`Community: ${cgState.bmCommunity.trim()}`);
+    if(cgState.bmConcern.trim()) parts.push(`Concern: ${cgState.bmConcern.trim()}`);
+    if(parts.length) story += ` Sent message to Experience Chat (${parts.join(' | ')}) and created a task for the BM.`;
+  }
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.bmAnswered?1:0) + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── RESIDENT USING A DIFFERENT PHONE NUMBER (real SOP) ──────────
+function renderDifferentPhoneScreen(){
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>Verification workflow — not a transfer</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">✅ Step 1 — Verify Residency</div>
+        <div class="guide-only-tag">Always confirm in Yardi that the caller is on the lease, including the roommate section.</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${cgState.phoneOnLease==='yes'?' active':''}" onclick="setPhoneOnLease('yes')">✅ On the Lease</div>
+          <div class="tone-tab${cgState.phoneOnLease==='no'?' active':''}" onclick="setPhoneOnLease('no')">❌ Not on the Lease</div>
+        </div>
+      </div>
+      ${cgState.phoneOnLease==='no'?`
+        <div class="stub-note">Do not merge guest cards. Loop in the RES team for review.</div>
+      `:''}
+      ${cgState.phoneOnLease==='yes'?`
+      <div class="section">
+        <div class="section-title">📱 Step 2 — What Kind of Number Is This?</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${cgState.phoneType==='new'?' active':''}" onclick="setPhoneType('new')">Their New/Alternate Number</div>
+          <div class="tone-tab${cgState.phoneType==='other'?' active':''}" onclick="setPhoneType('other')">Using Someone Else's Phone</div>
+        </div>
+        ${cgState.phoneType==='new'?`<div class="spiel-box" style="margin-top:10px">Confirm this is a number they regularly use, then update it in Yardi and Funnel. You may merge the guest cards once residency is confirmed.</div>`:''}
+        ${cgState.phoneType==='other'?`<div class="spiel-box" style="margin-top:10px">Do not merge guest cards. Keep the existing records separate and avoid updating the number.</div>`:''}
+      </div>`:''}
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="Anything else worth noting...">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function setPhoneOnLease(val){ cgState.phoneOnLease = cgState.phoneOnLease===val?null:val; cgState.phoneType=null; renderCallGuideView(); }
+function setPhoneType(val){ cgState.phoneType = cgState.phoneType===val?null:val; renderCallGuideView(); }
+function updateDifferentPhoneNote(){
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+  let story = 'Resident called in from a different phone number.';
+  if(cgState.phoneOnLease==='no') story += ' Caller is not on the lease — did not merge guest cards, looped in RES team for review.';
+  else if(cgState.phoneOnLease==='yes'){
+    story += ' Confirmed caller is on the lease.';
+    if(cgState.phoneType==='new') story += ' This is their new/alternate number — updated in Yardi and Funnel, guest cards merged.';
+    else if(cgState.phoneType==='other') story += " Caller is using someone else's phone — guest cards kept separate, number not updated.";
+  }
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.phoneOnLease?1:0) + (cgState.phoneType?1:0) + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── SCREEN: OUTBOUND GUIDE ───────────────────────────────────────
+function renderOutboundScreen(){
+  return `
+    <div class="page-header">
+      <h1>📤 Outbound Call</h1>
+      <p>Log the attempt, then continue on if it turns into a real conversation</p>
+    </div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">👋 Opening — Say This First</div>
+        <div class="spiel-box">${OUTBOUND_SPIEL}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📞 Which Attempt Is This?</div>
+        <div class="attempt-tabs" id="attemptTabs"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🏷️ What Happened?</div>
+        <div class="amenity-grid" id="outcomeGrid"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📝 Additional Details</div>
+        <textarea class="details" id="outboundDetailsBox" placeholder="Anything else worth noting...">${cgState.outboundDetails}</textarea>
+      </div>
+
+      <button class="use-scenario-btn" style="margin-bottom:14px" onclick="continueFromOutbound()">✅ Call Connected — Continue to Topic Guide</button>
+    </div>
+
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function continueFromOutbound(){
+  cgState.screen = 'greeting';
+  renderCallGuideView();
+}
+function renderAttemptTabs(){
+  document.getElementById('attemptTabs').innerHTML = OUTBOUND_ATTEMPTS.map((a,i)=>`
+    <div class="attempt-tab${cgState.attemptIdx===i?' active':''}" onclick="setAttempt(${i})">${a}</div>`).join('');
+}
+function setAttempt(i){ cgState.attemptIdx=i; renderAttemptTabs(); updateOutboundNote(); }
+function renderOutcomeGrid(){
+  document.getElementById('outcomeGrid').innerHTML = OUTBOUND_TAGS.map((t,i)=>`
+    <div class="outcome-chip${cgState.outboundTagsChecked[i]?' active':''}" onclick="toggleOutcome(${i})">
+      <span class="pseudo-check${cgState.outboundTagsChecked[i]?' on':''}">${cgState.outboundTagsChecked[i]?'✓':''}</span>${t.label}
+    </div>`).join('');
+}
+function toggleOutcome(i){ cgState.outboundTagsChecked[i]=!cgState.outboundTagsChecked[i]; renderOutcomeGrid(); updateOutboundNote(); }
+function updateOutboundNote(){
+  cgState.outboundDetails = document.getElementById('outboundDetailsBox')?.value || cgState.outboundDetails;
+  const tags = OUTBOUND_TAGS.filter((t,i)=>cgState.outboundTagsChecked[i]);
+  const lines = [];
+  lines.push(`This is the ${OUTBOUND_ATTEMPTS[cgState.attemptIdx]}.`);
+  if(tags.length) lines.push(tags.map(t=>t.phrase).join(' '));
+  if(cgState.outboundDetails.trim()) lines.push('Notes: '+cgState.outboundDetails.trim());
+  const text = lines.join(' ');
+  document.getElementById('notePreview').textContent = text;
+  const itemCount = tags.length + (cgState.outboundDetails.trim()?1:0) + 1;
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── SCREEN: STUB (non-Prospect caller types) ────────────────────
+function renderStubScreen(){
+  const ct = CALLER_TYPES.find(c=>c.id===cgState.callerType);
+  return `
+    <div class="page-header"><h1>${ct.emoji} ${ct.label}</h1><p>This section isn't built out yet in the prototype</p></div>
+    <div class="content">
+      <div class="stub-note">🚧 We're starting with the Prospect flow to lock the format first. Once that's approved, ${ct.label} gets the same treatment.</div>
+    </div>`;
+}
+
+// ── SCREEN: PROSPECT BRANCH ──────────────────────────────────────
+function renderBranchScreen(){
+  return `
+    <div class="page-header"><h1>🏠 Prospect</h1><p>What's this call about?</p></div>
+    <div class="content">
+      <div class="branch-grid">
+        ${PROSPECT_BRANCHES.map(b=>`
+          <div class="branch-btn" onclick="selectBranch('${b.id}')">
+            <span class="emoji">${b.emoji}</span><div class="label">${b.label}</div><div class="desc">${b.desc}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+function selectBranch(id){ cgState.branch=id; cgState.screen='topicList'; renderCallGuideView(); }
+
+// ── SCREEN: TOPIC LIST ───────────────────────────────────────────
+function renderTopicListScreen(){
+  const isTour = cgState.branch==='tour';
+  const list = isTour ? TOUR_TOPICS : INQUIRY_TOPICS;
+  return `
+    <div class="page-header"><h1>${isTour?'📅 Tour':'💬 Inquiry'}</h1><p>Select the topic that matches the call</p></div>
+    <div class="content">
+      <div class="topic-list">
+        ${list.map(t=>`
+          <div class="topic-row${t.ready===false?' stub':''}" onclick="selectTopic('${t.id}')">
+            <span class="label">${t.label}</span>
+            ${t.ready===false?'<span class="badge">Coming Soon</span>':'<span class="arrow">›</span>'}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+function selectTopic(id){
+  cgState.topic = id;
+  const list = cgState.branch==='tour' ? TOUR_TOPICS : INQUIRY_TOPICS;
+  const t = list.find(t=>t.id===id);
+  if(cgState.branch==='tour'){ cgState.screen='tourGuide'; }
+  else if(t.ready===false){ cgState.screen='topicStub'; }
+  else {
+    // Discovery checklist is shared across every Inquiry topic within
+    // this same call — only initialize it if this is the first inquiry
+    // topic visited, so answers already given don't get wiped out.
+    if(!cgState.discoveryChecked.length) cgState.discoveryChecked = new Array(DISCOVERY.length).fill(false);
+    if(id==='availability'){ resetAvailabilityState(); cgState.screen='topicGuide'; }
+    else if(id==='qualification'){ resetQualificationState(); cgState.screen='qualificationGuide'; }
+  }
+  renderCallGuideView();
+}
+function resetAvailabilityState(){
+  cgState.amenitiesChecked = new Array(AMENITIES.length).fill(false);
+  cgState.otherAmenities = ''; cgState.details = ''; cgState.activeTone = 'warm';
+  cgState.pricingPermission = null;
+}
+function resetPricingState(){
+  cgState.openScenario = null; cgState.usedScenarios = []; cgState.pricingDetails = '';
+}
+function resetQualificationState(){
+  cgState.qualOpenScenario = null; cgState.qualUsedScenarios = []; cgState.qualDetails = '';
+}
+
+function renderTopicStubScreen(){
+  const t = INQUIRY_TOPICS.find(t=>t.id===cgState.topic);
+  return `
+    <div class="page-header"><h1>💬 ${t.label}</h1><p>Not built out yet</p></div>
+    <div class="content"><div class="stub-note">🚧 Availability and Pricing & Specials are built so far. ${t.label} gets the same treatment next.</div></div>`;
+}
+
+// ── SCREEN: TOUR GUIDE (now with note panel) ────────────────────
+const TOUR_SPIELS = {
+  tour_request: "I'd be happy to get you scheduled! What day and time works best for you, and would you prefer an in-person or virtual tour?",
+  tour_confirm: "Just confirming — you're all set for your tour on [date/time]. We'll see you then! Do you have the address and parking info?",
+  tour_reschedule: "No problem at all — let's find a better time. What days generally work best for you this week?",
+  tour_cancel: "Thanks for letting us know. I've gone ahead and canceled that tour. Would you like to reschedule for another time, or should I just follow up with you later?",
+};
+function renderTourGuideScreen(){
+  const t = TOUR_TOPICS.find(t=>t.id===cgState.topic);
+  return `
+    <div class="page-header"><h1>📅 ${t.label}</h1><p>Quick status tag — no discovery needed here</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">💬 Recommended Spiel</div>
+        <div class="spiel-box">${TOUR_SPIELS[cgState.topic]}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">📝 Additional Details</div>
+        <textarea class="details" id="tourDetailsBox" placeholder="Date/time discussed, anything else worth noting...">${cgState.tourDetails}</textarea>
+      </div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+const TOUR_STORY_INTROS = {
+  tour_request: "Prospect requested a tour.",
+  tour_confirm: "Confirmed the prospect's upcoming tour.",
+  tour_reschedule: "Prospect asked to reschedule their tour.",
+  tour_cancel: "Prospect canceled their tour.",
+};
+function updateTourNote(){
+  cgState.tourDetails = document.getElementById('tourDetailsBox')?.value || cgState.tourDetails;
+  let story = TOUR_STORY_INTROS[cgState.topic];
+  if(cgState.tourDetails.trim()) story += ` ${cgState.tourDetails.trim()}`;
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.tourDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── SCREEN: AVAILABILITY (Inquiry topic — unchanged content) ────
+const OPENING_LINE = "Hey, thanks so much for reaching out! I'd love to help you find your perfect fit — in order to do that, mind if I ask you a few quick questions first?";
+const DISCOVERY = [
+  {label:'Reason for Move', question:"I'm curious — what's bringing you into the market for a new place right now?", tip:null},
+  {label:'Move-in Date', question:"What's your ideal move-in date?", tip:"Is this something you're looking to do right away, or are you planning a bit further out?"},
+  {label:'Number of People', question:"Are you moving in solo, with family, with a roommate, or with friends?", tip:"Will you be moving in solo, or with roommates or family?"},
+  {label:'Pets', question:"Any furry friends or caged animals coming along with you?", tip:null},
+  {label:'Budget', question:"Do you have a budget in mind you'd want to spend on your monthly rent?", tip:null},
+  {label:'Lease Term', question:"How long are you planning to stay with us?", tip:"Do you have a lease length in mind, or are you open to what works best?"},
+  {label:'Unit Size', question:"How many bedrooms and bathrooms are you looking for?", tip:null},
+  {label:'Current Living Situation', question:"Are you currently renting right now? When does your lease end?", tip:null},
+  {label:'Amenities', question:"What's most important to you in your next home, or any specific amenities you're looking for?", tip:null},
+];
+const AMENITIES_QUESTION_IDX = DISCOVERY.length - 1; // amenities checklist appears right under this one
+const ACTION_ITEM = "Funnel preference card updated";
+const AMENITIES = [
+  "In-Unit Washer/Dryer","Swimming Pool","Fitness Center","Pet-Friendly","Covered/Assigned Parking",
+  "Balcony or Patio","Walk-In Closets","Stainless Steel Appliances","Central A/C","Elevator Access",
+  "Clubhouse/Lounge","Business Center","Dog Park","EV Charging","Additional Storage","Gated Access",
+];
+const PITCH_LINES = {
+  "In-Unit Washer/Dryer": "you won't have to worry about laundromats — every home comes with its own in-unit washer and dryer",
+  "Swimming Pool": "our resort-style pool is the perfect spot to relax and unwind",
+  "Fitness Center": "you can get a full workout in without ever leaving home, thanks to our fitness center",
+  "Pet-Friendly": "and since you've got a furry friend, you'll be happy to know we're a pet-friendly community",
+  "Covered/Assigned Parking": "you'll never have to circle the block looking for parking, we've got that covered",
+  "Balcony or Patio": "you'll get your own private balcony or patio to enjoy some fresh air",
+  "Walk-In Closets": "the walk-in closets here give you all the storage space you've been wishing for",
+  "Stainless Steel Appliances": "the kitchen comes fully equipped with sleek stainless steel appliances",
+  "Central A/C": "you'll stay comfortable year-round with central air conditioning",
+  "Elevator Access": "elevator access makes getting around effortless",
+  "Clubhouse/Lounge": "our clubhouse is a great space to unwind or host friends",
+  "Business Center": "if you ever need to work from home, our business center has you covered",
+  "Dog Park": "and your pup will love our on-site dog park",
+  "EV Charging": "we've even got EV charging stations on site",
+  "Additional Storage": "there's extra storage space available too, so you'll never feel cramped",
+  "Gated Access": "you'll have the peace of mind that comes with gated community access",
+};
+const TONES = [
+  {id:'warm', label:'😊 Warm & Friendly', opener:"Honestly, I think this could be such a great fit for you!", connector:"And on top of that,", closer:"I really think you're going to love it here — want to grab a time to come see it in person?"},
+  {id:'upbeat', label:'🔥 Confident & Upbeat', opener:"Okay, I'm genuinely excited about this one for you!", connector:"Plus, get this —", closer:"I've got a really good feeling about this one — let's get you on the calendar to see it!"},
+  {id:'polished', label:'✨ Polished & Professional', opener:"Based on everything you've shared, I believe this community would be an excellent match for your needs.", connector:"In addition,", closer:"I'd welcome the opportunity to show you the community in person — shall we schedule a convenient time?"},
+];
+
+function renderTopicGuideScreen(){
+  return `
+    <div class="page-header"><h1>📞 Availability Inquiry</h1><p>Live call guide — work top to bottom, copy your note whenever you're ready</p></div>
+    <div class="content">
+      <div class="section"><div class="section-title">💬 Opening</div><div class="spiel-box">${OPENING_LINE}</div></div>
+
+      <div class="section">
+        <div class="section-title">❓ If They Ask About...</div>
+        <div class="guide-only-tag">Interject with these any time during the call — using one logs it to your note automatically</div>
+        <div id="quickAnswerList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📋 Discovery Checklist</div>
+        <div class="guide-only-tag">👁️ The questions themselves are just for your reference — but anything they mention wanting (amenities, etc.) does get added to the note</div>
+        <div id="discoveryList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">💰 Ask Permission to Discuss Pricing</div>
+        <div class="spiel-box" style="margin-bottom:8px">Would it be helpful if we discuss pricing now?</div>
+        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:10px">Other ways to ask: "Would now be a good time to go over pricing?" or "Mind if I share some pricing details with you?"</div>
+        <div id="pricingPermissionButtons"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">🎯 Elevator Pitch — Say This With Energy!</div>
+        <div class="tone-tabs" id="toneTabs"></div>
+        <div class="pitch-box" id="pitchBox"></div>
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="detailsBox" placeholder="Anything specific worth noting...">${cgState.details}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function renderQuickAnswerList(){
+  document.getElementById('quickAnswerList').innerHTML = QUICK_ANSWER_TOPICS.map(topic=>{
+    const isTopicOpen = cgState.quickAnswerOpenTopic===topic.id;
+    const usedCount = cgState.quickAnswersUsed.filter(u=>u.topicId===topic.id).length;
+    return `
+      <div class="aaa-scenario">
+        <div class="aaa-scenario-header" onclick="toggleQuickAnswerTopic('${topic.id}')">
+          <span class="title">${usedCount?'✅ ':''}${topic.label}${topic.draft?' <span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;margin-left:6px">Draft</span>':''}</span>
+          <span class="chev${isTopicOpen?' open':''}">▾</span>
+        </div>
+        ${isTopicOpen?`
+          <div class="aaa-scenario-body">
+            ${topic.scenarios.map(s=>{
+              const isScenarioOpen = cgState.quickAnswerOpenScenario===s.id;
+              const wasUsed = cgState.quickAnswersUsed.some(u=>u.scenarioId===s.id);
+              return `
+                <div class="aaa-scenario" style="margin-top:8px">
+                  <div class="aaa-scenario-header" onclick="event.stopPropagation();toggleQuickAnswerScenario('${s.id}')">
+                    <span class="title" style="font-size:12px">${wasUsed?'✅ ':''}${s.title}</span>
+                    <span class="chev${isScenarioOpen?' open':''}">▾</span>
+                  </div>
+                  ${isScenarioOpen?`
+                    <div class="aaa-scenario-body">
+                      <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
+                      <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.aaa.answer}</span></div>
+                      <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
+                      ${s.id==='realtor_represented'?`
+                        <div class="tone-tabs" style="margin-bottom:8px">
+                          <div class="tone-tab${cgState.realtorClientProvided==='yes'?' active':''}" onclick="event.stopPropagation();setRealtorClientProvided('yes')">Client Name Provided</div>
+                          <div class="tone-tab${cgState.realtorClientProvided==='no'?' active':''}" onclick="event.stopPropagation();setRealtorClientProvided('no')">Not Provided</div>
+                        </div>
+                        ${cgState.realtorClientProvided==='yes'?`<input class="other-input" id="realtorClientNameInput" placeholder="Client's name" value="${cgState.realtorClientName}" style="margin-bottom:8px" onclick="event.stopPropagation()"/>`:''}
+                        <div class="stub-note" style="margin-bottom:8px">📌 Keep the lead active as a Prospect — do not change status to Vendor. Use DNR instead if needed, so the client's future calls still come through. Document the lead as "realtor-represented."</div>
+                      `:''}
+                      <button class="use-scenario-btn" onclick="event.stopPropagation();useQuickAnswer('${topic.id}','${topic.label.replace(/'/g,"\\'")}','${s.id}','${s.title.replace(/'/g,"\\'")}')">${wasUsed?'✓ Logged to note':'✅ Used This — Log to Note'}</button>
+                    </div>`:''
+                  }
+                </div>`;
+            }).join('')}
+          </div>`:''
+        }
+      </div>`;
+  }).join('');
+}
+function toggleQuickAnswerTopic(id){
+  cgState.quickAnswerOpenTopic = cgState.quickAnswerOpenTopic===id ? null : id;
+  cgState.quickAnswerOpenScenario = null;
+  renderQuickAnswerList();
+}
+function toggleQuickAnswerScenario(id){
+  cgState.quickAnswerOpenScenario = cgState.quickAnswerOpenScenario===id ? null : id;
+  renderQuickAnswerList();
+  const nameInput = document.getElementById('realtorClientNameInput');
+  if(nameInput) nameInput.addEventListener('input', ()=>{ cgState.realtorClientName = nameInput.value; });
+}
+function setRealtorClientProvided(val){
+  cgState.realtorClientProvided = cgState.realtorClientProvided===val ? null : val;
+  renderQuickAnswerList();
+  const nameInput = document.getElementById('realtorClientNameInput');
+  if(nameInput) nameInput.addEventListener('input', ()=>{ cgState.realtorClientName = nameInput.value; });
+}
+function useQuickAnswer(topicId, topicLabel, scenarioId, scenarioTitle){
+  if(!cgState.quickAnswersUsed.some(u=>u.scenarioId===scenarioId)){
+    const entry = {topicId, topicLabel, scenarioId, scenarioTitle};
+    if(scenarioId==='realtor_represented'){
+      entry.realtorClientProvided = cgState.realtorClientProvided;
+      entry.realtorClientName = cgState.realtorClientName;
     }
+    cgState.quickAnswersUsed.push(entry);
+  }
+  renderQuickAnswerList();
+  // Update whichever note is currently active
+  if(cgState.screen==='topicGuide') updateNote();
+  else if(cgState.screen==='pricingGuide') updatePricingNote();
+}
+
+function renderDiscoveryList(){
+  let html = DISCOVERY.map((d,i)=>{
+    let item = `
+    <div class="discovery-item${cgState.discoveryChecked[i]?' checked':''}" onclick="toggleDiscovery(${i})">
+      <span class="pseudo-check${cgState.discoveryChecked[i]?' on':''}">${cgState.discoveryChecked[i]?'✓':''}</span>
+      <span><span style="font-weight:800;color:#0f172a">${d.label}:</span> ${d.question}${d.tip?`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px">e.g. "${d.tip}"</div>`:''}</span>
+    </div>`;
+    if(i===AMENITIES_QUESTION_IDX){
+      item += `
+      <div style="padding:10px 0 6px 25px">
+        <div class="amenity-grid" id="amenityGrid"></div>
+        <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px">Anything else they mentioned?</label>
+        <input class="other-input" id="otherAmenities" placeholder="e.g. quiet floor, near elevator..." value="${cgState.otherAmenities}"/>
+      </div>`;
+    }
+    return item;
+  }).join('');
+  html += `
+    <div class="discovery-item action-item${cgState.actionChecked?' checked':''}" onclick="toggleAction()">
+      <span class="pseudo-check${cgState.actionChecked?' on':''}">${cgState.actionChecked?'✓':''}</span><span>✅ ${ACTION_ITEM}</span>
+    </div>`;
+  document.getElementById('discoveryList').innerHTML = html;
+  renderAmenities();
+  document.getElementById('otherAmenities').addEventListener('input', ()=>{
+    cgState.otherAmenities = document.getElementById('otherAmenities').value;
+    updatePitch();
+    if(cgState.screen==='topicGuide') updateNote();
+    else if(cgState.screen==='pricingGuide') updatePricingNote();
+    else if(cgState.screen==='qualificationGuide') updateQualificationNote();
   });
 }
+function toggleDiscovery(i){ cgState.discoveryChecked[i]=!cgState.discoveryChecked[i]; renderDiscoveryList(); }
+function toggleAction(){
+  cgState.actionChecked=!cgState.actionChecked;
+  renderDiscoveryList();
+  if(cgState.screen==='topicGuide') updateNote();
+  else if(cgState.screen==='pricingGuide') updatePricingNote();
+  else if(cgState.screen==='qualificationGuide') updateQualificationNote();
+}
+function renderAmenities(){
+  document.getElementById('amenityGrid').innerHTML = AMENITIES.map((a,i)=>`
+    <div class="amenity-chip${cgState.amenitiesChecked[i]?' active':''}" onclick="toggleAmenity(${i})">
+      <span class="pseudo-check${cgState.amenitiesChecked[i]?' on':''}">${cgState.amenitiesChecked[i]?'✓':''}</span>${a}
+    </div>`).join('');
+}
+function toggleAmenity(i){
+  cgState.amenitiesChecked[i]=!cgState.amenitiesChecked[i];
+  renderAmenities();
+  updatePitch();
+  if(cgState.screen==='topicGuide') updateNote();
+  else if(cgState.screen==='pricingGuide') updatePricingNote();
+  else if(cgState.screen==='qualificationGuide') updateQualificationNote();
+}
+function renderPricingPermission(){
+  const el = document.getElementById('pricingPermissionButtons');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="tone-tabs">
+      <div class="tone-tab${cgState.pricingPermission==='yes'?' active':''}" onclick="setPricingPermission('yes')">✅ Budget Aligns</div>
+      <div class="tone-tab${cgState.pricingPermission==='no'?' active':''}" onclick="setPricingPermission('no')">❌ Doesn't Align</div>
+    </div>`;
+}
+function setPricingPermission(val){
+  cgState.pricingPermission = cgState.pricingPermission===val ? null : val;
+  renderPricingPermission();
+  updateNote();
+  updatePitch();
+}
+function renderToneTabs(){
+  document.getElementById('toneTabs').innerHTML = TONES.map(t=>`<div class="tone-tab${cgState.activeTone===t.id?' active':''}" onclick="setTone('${t.id}')">${t.label}</div>`).join('');
+}
+function setTone(id){ cgState.activeTone=id; renderToneTabs(); updatePitch(); }
+function updatePitch(){
+  const box = document.getElementById('pitchBox');
+  if(!box) return; // this screen (e.g. Pricing) has no Elevator Pitch section
+  const checked = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
+  const otherList = other ? other.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  const tone = TONES.find(t=>t.id===cgState.activeTone);
+  if(checked.length===0 && otherList.length===0){
+    box.innerHTML = '<span class="pitch-empty">Check off what the prospect mentioned above, and your personalized pitch appears here.</span>';
+    return;
+  }
+  let lines = checked.map(a=>PITCH_LINES[a]);
+  otherList.forEach(o=>lines.push(`we've got you covered on ${o} too`));
+  let pitch = tone.opener + " ";
+  if(lines.length===1){ pitch += lines[0].charAt(0).toUpperCase()+lines[0].slice(1)+'.'; }
+  else { pitch += lines.slice(0,-1).map(l=>l.charAt(0).toUpperCase()+l.slice(1)).join('. ') + `. ${tone.connector} ${lines[lines.length-1]}.`; }
+  if(cgState.pricingPermission==='yes') pitch += " And since this fits right within your budget, I really think this could be the perfect match!";
+  pitch += " " + tone.closer;
+  box.textContent = pitch;
+}
+// Joins a list of items into natural prose: "A", "A and B", or "A, B, and C"
+function joinNaturally(arr){
+  if(arr.length===0) return '';
+  if(arr.length===1) return arr[0];
+  if(arr.length===2) return arr[0]+' and '+arr[1];
+  return arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
+}
+
+function updateNote(){
+  const details = (document.getElementById('detailsBox')?.value || cgState.details || '').trim();
+  cgState.details = details;
+  const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
+  if(other) needs.push(other);
+
+  const realtorEntry = cgState.quickAnswersUsed.find(u=>u.scenarioId==='realtor_represented');
+  const uniqueTopics = [...new Map(cgState.quickAnswersUsed.filter(u=>u.topicId!=='realtor').map(u=>[u.topicId,u.topicLabel])).values()];
+
+  let story = 'Prospect called in asking about availability.';
+  if(realtorEntry){
+    story = realtorEntry.realtorClientProvided==='yes' && realtorEntry.realtorClientName.trim()
+      ? `Realtor called in on behalf of client "${realtorEntry.realtorClientName.trim()}." Lead kept active as Prospect (realtor-represented) — not changed to Vendor.`
+      : `Realtor called in on behalf of a client; client info not provided. Lead kept active as Prospect (realtor-represented) — not changed to Vendor. All follow-ups will go through the realtor.`;
+  }
+  if(uniqueTopics.length) story += ` They also asked about ${joinNaturally(uniqueTopics.map(t=>t.toLowerCase()))}.`;
+  if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
+  if(cgState.pricingPermission==='yes') story += ' Confirmed their budget aligns with our pricing.';
+  else if(cgState.pricingPermission==='no') story += " Budget doesn't currently align with our pricing.";
+  if(details) story += ` ${details}`;
+  if(cgState.actionChecked) story += ' Funnel preference card updated.';
+
+  const hasContent = needs.length || details || cgState.actionChecked || uniqueTopics.length || cgState.pricingPermission || realtorEntry;
+  document.getElementById('notePreview').textContent = hasContent ? story : '';
+  const itemCount = needs.length + (details?1:0) + (cgState.actionChecked?1:0) + uniqueTopics.length + (cgState.pricingPermission?1:0) + (realtorEntry?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── SCREEN: PRICING & SPECIALS (real Spiels Library content) ────
+function renderPricingGuideScreen(){
+  return `
+    <div class="page-header"><h1>💰 Pricing &amp; Specials</h1><p>They asked first — answer with the 3 A's, then move into discovery</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response <span style="font-weight:500;text-transform:none;color:#94a3b8;font-size:10.5px">— pulled from your Spiels Library</span></div>
+        <div id="scenarioList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 Discovery Checklist</div>
+        <div class="guide-only-tag">👁️ The questions themselves are just for your reference — but anything they mention wanting (amenities, etc.) does get added to the note</div>
+        <div id="discoveryList"></div>
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="pricingDetailsBox" placeholder="What specifically did they ask, and how did the conversation go?">${cgState.pricingDetails}</textarea></div>
+      <div class="goal-reminder">🎯 <strong>Remember the goal:</strong> once you've addressed their pricing question, don't forget to ask for the tour!</div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function renderScenarioList(){
+  document.getElementById('scenarioList').innerHTML = PRICING_SCENARIOS.map(s=>{
+    const isOpen = cgState.openScenario===s.id;
+    const wasUsed = cgState.usedScenarios.includes(s.id);
+    return `
+      <div class="aaa-scenario">
+        <div class="aaa-scenario-header" onclick="toggleScenario('${s.id}')">
+          <span class="title">${wasUsed?'✅ ':''}${s.title}</span>
+          <span class="chev${isOpen?' open':''}">▾</span>
+        </div>
+        ${isOpen?`
+          <div class="aaa-scenario-body">
+            <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
+            <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.aaa.answer}</span></div>
+            <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
+            <button class="use-scenario-btn" onclick="event.stopPropagation();useScenario('${s.id}')">${wasUsed?'✓ Logged to note':'✅ Used This Scenario'}</button>
+          </div>`:''}
+      </div>`;
+  }).join('');
+}
+function toggleScenario(id){ cgState.openScenario = cgState.openScenario===id ? null : id; renderScenarioList(); }
+function useScenario(id){
+  if(!cgState.usedScenarios.includes(id)) cgState.usedScenarios.push(id);
+  renderScenarioList();
+  updatePricingNote();
+}
+function updatePricingNote(){
+  cgState.pricingDetails = document.getElementById('pricingDetailsBox')?.value || cgState.pricingDetails;
+  const titles = cgState.usedScenarios.map(id=>PRICING_SCENARIOS.find(s=>s.id===id).title);
+  const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
+  if(other) needs.push(other);
+
+  let story = 'Prospect called in with a pricing question.';
+  if(titles.length) story += ` Addressed concerns around ${joinNaturally(titles)}.`;
+  if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
+  if(cgState.pricingDetails.trim()) story += ` ${cgState.pricingDetails.trim()}`;
+  if(cgState.actionChecked) story += ' Funnel preference card updated.';
+
+  const hasContent = titles.length || needs.length || cgState.pricingDetails.trim() || cgState.actionChecked;
+  document.getElementById('notePreview').textContent = hasContent ? story : '';
+  const itemCount = titles.length + needs.length + (cgState.pricingDetails.trim()?1:0) + (cgState.actionChecked?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+function renderQualificationGuideScreen(){
+  return `
+    <div class="page-header"><h1>📋 Rental Criteria &amp; Qualification</h1><p>They asked first — answer with the 3 A's, then move into discovery</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response <span style="font-weight:500;text-transform:none;color:#94a3b8;font-size:10.5px">— pulled from your Spiels Library</span></div>
+        <div id="qualScenarioList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 Discovery Checklist</div>
+        <div class="guide-only-tag">👁️ The questions themselves are just for your reference — but anything they mention wanting (amenities, etc.) does get added to the note</div>
+        <div id="discoveryList"></div>
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="qualDetailsBox" placeholder="What specifically did they ask, and how did it go?">${cgState.qualDetails}</textarea></div>
+      <div class="goal-reminder">🎯 <strong>Remember the goal:</strong> once you've addressed their qualification question, don't forget to ask for the tour!</div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function renderQualScenarioList(){
+  document.getElementById('qualScenarioList').innerHTML = QUALIFICATION_SCENARIOS.map(s=>{
+    const isOpen = cgState.qualOpenScenario===s.id;
+    const wasUsed = cgState.qualUsedScenarios.includes(s.id);
+    return `
+      <div class="aaa-scenario">
+        <div class="aaa-scenario-header" onclick="toggleQualScenario('${s.id}')">
+          <span class="title">${wasUsed?'✅ ':''}${s.title}</span>
+          <span class="chev${isOpen?' open':''}">▾</span>
+        </div>
+        ${isOpen?`
+          <div class="aaa-scenario-body">
+            <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
+            <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.aaa.answer}</span></div>
+            <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
+            <button class="use-scenario-btn" onclick="event.stopPropagation();useQualScenario('${s.id}')">${wasUsed?'✓ Logged to note':'✅ Used This Scenario'}</button>
+          </div>`:''}
+      </div>`;
+  }).join('');
+}
+function toggleQualScenario(id){ cgState.qualOpenScenario = cgState.qualOpenScenario===id ? null : id; renderQualScenarioList(); }
+function useQualScenario(id){
+  if(!cgState.qualUsedScenarios.includes(id)) cgState.qualUsedScenarios.push(id);
+  renderQualScenarioList();
+  updateQualificationNote();
+}
+function updateQualificationNote(){
+  cgState.qualDetails = document.getElementById('qualDetailsBox')?.value || cgState.qualDetails;
+  const titles = cgState.qualUsedScenarios.map(id=>QUALIFICATION_SCENARIOS.find(s=>s.id===id).title);
+  const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
+  if(other) needs.push(other);
+
+  let story = 'Prospect called in asking about rental criteria and qualification.';
+  if(titles.length) story += ` Addressed: ${joinNaturally(titles)}.`;
+  if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
+  if(cgState.qualDetails.trim()) story += ` ${cgState.qualDetails.trim()}`;
+  if(cgState.actionChecked) story += ' Funnel preference card updated.';
+
+  const hasContent = titles.length || needs.length || cgState.qualDetails.trim() || cgState.actionChecked;
+  document.getElementById('notePreview').textContent = hasContent ? story : '';
+  const itemCount = titles.length + needs.length + (cgState.qualDetails.trim()?1:0) + (cgState.actionChecked?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── APPLICANT: ASKING FOR APPLICATION UPDATE ────────────────────
+function renderAppUpdateScreen(){
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>Follow the 3 A's — Acknowledge, Answer, Ask</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response</div>
+        <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">I completely understand wanting to know where things stand!</span></div>
+        <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">Let me pull up your application to check the latest status for you.</span></div>
+        <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">Can I get your name and the community you applied to, so I can look that up?</span></div>
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="What's the current status, and what did you tell them?">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function updateAppUpdateNote(){
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+  let story = 'Applicant called in asking for an update on their application.';
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── APPLICANT: DENIED APPLICATION INQUIRY (real SOP) ────────────
+function renderAppDeniedScreen(){
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>Tell the broad reason only — follow the SOP carefully</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response</div>
+        <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">I understand this is disappointing news, and I want to help clarify this for you.</span></div>
+        <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">Based on our screening process, the decision was related to [broad reason below] — I'm not able to share the specific details, but that's the general area that affected the decision.</span></div>
+        <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">Is there anything else I can help clarify?</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 Broad Denial Reason</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${cgState.deniedReason==='credit'?' active':''}" onclick="setDeniedReason('credit')">Credit</div>
+          <div class="tone-tab${cgState.deniedReason==='income'?' active':''}" onclick="setDeniedReason('income')">Income</div>
+          <div class="tone-tab${cgState.deniedReason==='rentalhistory'?' active':''}" onclick="setDeniedReason('rentalhistory')">Rental History</div>
+        </div>
+      </div>
+      <div class="stub-note">
+        📌 <strong>Per SOP:</strong> If denied due to credit, criminal, or eviction screening — advise the applicant to file a dispute directly with TransUnion. Guarantors and internal re-evaluations are <strong>not</strong> valid ways to overturn this. If within 30 days of the original application, do <strong>not</strong> tell them to submit a new one — request the AA team reactivate the original application after the TransUnion dispute. If you're unsure what to say, pause and ask the AA team first — do not transfer the call when the situation is unclear.
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="Anything else worth noting...">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function setDeniedReason(val){ cgState.deniedReason = cgState.deniedReason===val?null:val; renderCallGuideView(); }
+function updateAppDeniedNote(){
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+  let story = 'Applicant called in regarding their denied application.';
+  if(cgState.deniedReason) story += ` Advised the broad reason was related to ${cgState.deniedReason==='rentalhistory'?'rental history':cgState.deniedReason}.`;
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.deniedReason?1:0) + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+// ── APPLICANT: DEPOSIT REFUND INQUIRY (real SOP + real sample spiel) ──
+function renderAppRefundScreen(){
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>Verify, set expectations, and follow up if needed</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Sample Spiel</div>
+        <div class="spiel-box">Thank you so much for your interest in living in our community. I truly apologize for any inconvenience regarding your deposit refund. I am happy to help check the status for you. Typically, refunds are processed within 5 to 10 business days. If you do not receive it after that timeframe, I will gladly partner with our AA team and submit a ticket to further review the status for you. I will also personally monitor the update and keep you informed.</div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 Refund Status</div>
+        <div class="tone-tabs">
+          <div class="tone-tab${cgState.refundStatus==='inprocess'?' active':''}" onclick="setRefundStatus('inprocess')">In Process (within 10 days)</div>
+          <div class="tone-tab${cgState.refundStatus==='notreceived'?' active':''}" onclick="setRefundStatus('notreceived')">Not Received After 10 Days</div>
+        </div>
+        ${cgState.refundStatus==='notreceived'?`<div class="stub-note" style="margin-top:10px">Partner with the AA team, submit a ticket for backend review (3–5 business days), and create a personal follow-up task to check status and update the applicant.</div>`:''}
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="Anything else worth noting...">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function setRefundStatus(val){ cgState.refundStatus = cgState.refundStatus===val?null:val; renderCallGuideView(); }
+function updateAppRefundNote(){
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+  let story = 'Applicant called in about their deposit refund.';
+  if(cgState.refundStatus==='inprocess') story += ' Refund is in process — set expectation of 5 to 10 business days.';
+  else if(cgState.refundStatus==='notreceived') story += ' Refund not received after 10 business days — partnering with AA team, ticket submitted, personal follow-up task created.';
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.refundStatus?1:0) + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
+function copyNote(){
+  const text = document.getElementById('notePreview').textContent;
+  if(!text){ return; }
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    const original = btn.textContent;
+    btn.textContent = '✓ Copied to clipboard';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ── ROUTER ────────────────────────────────────────────────────────
+function renderCallGuideView(){
+  renderBreadcrumb();
+  const content = document.getElementById('cgPageContent');
+  if(cgState.screen==='direction') content.innerHTML = renderDirectionScreen();
+  else if(cgState.screen==='greeting') content.innerHTML = renderGreetingScreen();
+  else if(cgState.screen==='outboundGuide') content.innerHTML = renderOutboundScreen();
+  else if(cgState.screen==='simpleTagList') content.innerHTML = renderSimpleTagListScreen();
+  else if(cgState.screen==='transferGuide') content.innerHTML = renderTransferScreen();
+  else if(cgState.screen==='bmBillingGuide') content.innerHTML = renderBmBillingScreen();
+  else if(cgState.screen==='differentPhoneGuide') content.innerHTML = renderDifferentPhoneScreen();
+  else if(cgState.screen==='appUpdateGuide') content.innerHTML = renderAppUpdateScreen();
+  else if(cgState.screen==='appDeniedGuide') content.innerHTML = renderAppDeniedScreen();
+  else if(cgState.screen==='appRefundGuide') content.innerHTML = renderAppRefundScreen();
+  else if(cgState.screen==='branch') content.innerHTML = renderBranchScreen();
+  else if(cgState.screen==='topicList') content.innerHTML = renderTopicListScreen();
+  else if(cgState.screen==='topicStub') content.innerHTML = renderTopicStubScreen();
+  else if(cgState.screen==='tourGuide') content.innerHTML = renderTourGuideScreen();
+  else if(cgState.screen==='topicGuide') content.innerHTML = renderTopicGuideScreen();
+  else if(cgState.screen==='pricingGuide') content.innerHTML = renderPricingGuideScreen();
+  else if(cgState.screen==='qualificationGuide') content.innerHTML = renderQualificationGuideScreen();
+
+  if(cgState.screen==='outboundGuide'){
+    renderAttemptTabs(); renderOutcomeGrid(); updateOutboundNote();
+    document.getElementById('outboundDetailsBox').addEventListener('input', updateOutboundNote);
+  }
+  if(cgState.screen==='transferGuide'){
+    updateTransferNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateTransferNote);
+  }
+  if(cgState.screen==='bmBillingGuide'){
+    updateBmBillingNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateBmBillingNote);
+    if(cgState.bmAnswered==='no'){
+      ['bmResidentName','bmFunnelProfile','bmCommunity','bmConcern'].forEach(id=>{
+        document.getElementById(id).addEventListener('input', updateBmBillingNote);
+      });
+    }
+  }
+  if(cgState.screen==='differentPhoneGuide'){
+    updateDifferentPhoneNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateDifferentPhoneNote);
+  }
+  if(cgState.screen==='appUpdateGuide'){
+    updateAppUpdateNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateAppUpdateNote);
+  }
+  if(cgState.screen==='appDeniedGuide'){
+    updateAppDeniedNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateAppDeniedNote);
+  }
+  if(cgState.screen==='appRefundGuide'){
+    updateAppRefundNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateAppRefundNote);
+  }
+  if(cgState.screen==='tourGuide'){
+    updateTourNote();
+    document.getElementById('tourDetailsBox').addEventListener('input', updateTourNote);
+  }
+  if(cgState.screen==='topicGuide'){
+    renderQuickAnswerList(); renderDiscoveryList(); renderToneTabs(); updatePitch(); updateNote();
+    document.getElementById('detailsBox').addEventListener('input', updateNote);
+    renderPricingPermission();
+  }
+  if(cgState.screen==='pricingGuide'){
+    renderDiscoveryList(); renderScenarioList(); updatePricingNote();
+    document.getElementById('pricingDetailsBox').addEventListener('input', updatePricingNote);
+  }
+  if(cgState.screen==='qualificationGuide'){
+    renderDiscoveryList(); renderQualScenarioList(); updateQualificationNote();
+    document.getElementById('qualDetailsBox').addEventListener('input', updateQualificationNote);
+  }
+}
+
+// ══════════════════ END CALL GUIDE & NOTES ══════════════════
 
 
 function renderCallListening(){
@@ -4233,6 +5588,7 @@ function renderPage(){
   // clicks — this covers incidental re-renders too (e.g. Firestore hydration
   // finishing in the background while someone's browsing the map tab).
   if(state.page==='communities'){ initCmMap(); } else { destroyCmMap(); }
+  if(state.page==='notes'){ initCallGuide(); }
 }
 function flagSyncIssue(message){
   state.syncError = message;
