@@ -546,6 +546,9 @@ async function hydrateFromFirestore(){
     state.lastAutoSyncError = null;
     state.kpiSyncSource = 'firestore';
   }
+  if(remote.kpi_dashboard && remote.kpi_dashboard.pecScores){
+    state.pecScores = {...state.pecScores, ...remote.kpi_dashboard.pecScores};
+  }
   if(remote.kpi_dashboard && Array.isArray(remote.kpi_dashboard.agents) && remote.kpi_dashboard.agents.length){
     // Merge by name so a previously-uploaded Fenix score for this agent
     // isn't wiped out just because this sync only carries Lead
@@ -918,6 +921,17 @@ const KPI_CONFIG = [
   {id:'fenix_scored_calls',label:'Fenix Scored Calls',     goal:90,unit:'%', agentTable:true},
 ];
 
+// PEC (Prospect Experience Crew) scores — a separate, newer report stream
+// from Looker (subject suffix "_PEC"), tracked as its own section rather
+// than merged into the original KPI_CONFIG above.
+const PEC_KPI_CONFIG = [
+  {id:'pec_phone_completion',  label:'Phone Completion',              goal:90,unit:'%', agentTable:false, group:null},
+  {id:'pec_lead_engagement',   label:'Lead Engagement',                goal:9, unit:'',  agentTable:false, group:'Agent Score'},
+  {id:'pec_task_management',   label:'Task Management',                goal:9, unit:'',  agentTable:false, group:'Agent Score'},
+  {id:'pec_lead_to_scheduled', label:'Lead to Scheduled Tour',        goal:30,unit:'%', agentTable:false, group:null},
+  {id:'pec_lead_to_tour',      label:'Lead to Tour',                  goal:20,unit:'%', agentTable:false, group:null},
+];
+
 const CAT_COLORS = {
   'Tour & Scheduling':{bg:'#dbeafe',c:'#1e40af'},
   'Lead Management':{bg:'#d1fae5',c:'#065f46'},
@@ -967,6 +981,7 @@ let state = {
   fenixMsg:'', 
   periodMTD:'June 2026',
   teamScores:{call_completion:0,lead_engagement:0,task_management:0,lead_to_scheduled:0,lead_to_tour:0,fenix_scored_calls:0},
+  pecScores:{pec_phone_completion:0,pec_lead_engagement:0,pec_task_management:0,pec_lead_to_scheduled:0,pec_lead_to_tour:0},
   agents:[
     {name:'Agent 1',lead_engagement:0,task_management:0,fenix_scored_calls:0},
     {name:'Agent 2',lead_engagement:0,task_management:0,fenix_scored_calls:0},
@@ -4367,6 +4382,39 @@ function renderMTD(){
       }).join('')}
     </div>
 
+    <div class="section-label" style="margin-top:22px;display:flex;align-items:center;gap:8px">
+      <span>PEC (Prospect Experience Crew) Scores</span>
+      <span style="font-size:9px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:2px 8px;border-radius:20px;text-transform:none">Separate report stream</span>
+    </div>
+    ${(() => {
+      const agentScoreItems = PEC_KPI_CONFIG.filter(k=>k.group==='Agent Score');
+      const standaloneItems = PEC_KPI_CONFIG.filter(k=>!k.group);
+      const renderPecCard = kpi => {
+        const a=state.pecScores[kpi.id]||0;
+        const og=onGoal(a,kpi.goal);
+        const p=pct(a,kpi.goal);
+        return`<div class="kpi-card${a>0?(og?' on-goal':' below'):''}">
+          <div class="kpi-inner">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+              <div>
+                <div class="kpi-label">${kpi.label}</div>
+                <div><span class="kpi-score ${a>0?(og?'on-goal':'below'):'no-data'}">${a}${kpi.unit}</span><span class="kpi-goal">/ ${kpi.goal}${kpi.unit}</span></div>
+              </div>
+              ${statusChip(a,kpi.goal)}
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${a>0?(og?'#16a34a':'#e05c45'):'#e2e8f0'}"></div></div>
+          </div>
+        </div>`;
+      };
+      return `
+        ${agentScoreItems.length?`
+          <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.05em;margin:10px 0 8px">🎯 Agent Score</div>
+          <div class="kpi-grid" style="margin-bottom:14px">${agentScoreItems.map(renderPecCard).join('')}</div>
+        `:''}
+        <div class="kpi-grid">${standaloneItems.map(renderPecCard).join('')}</div>
+      `;
+    })()}
+
     <div class="sync-panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:18px">📤</span>
@@ -4392,6 +4440,9 @@ function renderMTD(){
         {k:'Lead to Scheduled Tour',v:'Tours Col C ÷ Lead Count Col E × 100'},
         {k:'Lead to Tour',v:'(Tours Col D + Col E) ÷ Lead Count Col E × 100'},
         {k:'Fenix Scored Calls',v:'Manual CSV upload from Fenix platform'},
+        {k:'PEC — Phone Completion',v:'Contact Center Phone Report_PEC → new_tile.csv → Col F (100% − missed call rate)'},
+        {k:'PEC — Agent Score',v:'Agent Score_PEC → agent_score.csv → Col L (Lead Engagement) / Col M (Task Management)'},
+        {k:'PEC — Lead to Scheduled/Tour',v:'Tours_PEC + Lead Count_PEC → same formula as above'},
       ].map(s=>`<div style="display:flex;gap:8px;font-size:11px;margin-bottom:4px"><span style="color:#0f172a;font-weight:600;min-width:150px">${s.k}</span><span style="color:#64748b">${s.v}</span></div>`).join('')}
     </div>`;
 }
@@ -4499,10 +4550,16 @@ async function addNewPeriod(tab){
   if(!state.newPeriodLabel||!state.newPeriodLabel.trim()){alert('Please enter a label.');return;}
   const history = tab==='monthend' ? state.monthendHistory : state.quarterlyHistory;
   const newId = history.length ? Math.max(...history.map(p=>p.id))+1 : 1;
+  const baseKpis = KPI_CONFIG.map(k=>({label:k.label,actual:0,goal:k.goal,unit:k.unit}));
+  // Month-End also tracks the separate PEC report stream, prefixed so it's
+  // clearly distinguished from the original KPIs above it in the same list.
+  const pecKpis = tab==='monthend'
+    ? PEC_KPI_CONFIG.map(k=>({label:`PEC — ${k.group?k.group+': ':''}${k.label}`,actual:0,goal:k.goal,unit:k.unit}))
+    : [];
   history.push({
     id:newId,
     label:state.newPeriodLabel.trim(),
-    kpis:KPI_CONFIG.map(k=>({label:k.label,actual:0,goal:k.goal,unit:k.unit})),
+    kpis:[...baseKpis, ...pecKpis],
   });
   state.newPeriodLabel='';
   state.showAddPeriodForm=false;
