@@ -379,6 +379,8 @@ function promptForVisitorName(){
       return;
     }
     setVisitorName(sel);
+    state.isGuest = sel === 'Guest';
+    render();
     document.body.removeChild(overlay);
     startPresenceSystem();
   };
@@ -608,7 +610,7 @@ const TEAM = [
 // Visitor sign-in roster: the PEC team plus leadership who may check in
 // on the Hub. Kept separate from TEAM so Olga/Ian don't show up in
 // coaching dropdowns or the home page team grid, which are PEC-only.
-const VISITOR_ROSTER = [...TEAM.map(t=>t.name), 'Olga Borges', 'Ian Andrews'];
+const VISITOR_ROSTER = [...TEAM.map(t=>t.name), 'Olga Borges', 'Ian Andrews', 'Guest'];
 
 // Lightweight deterrent against casual name mix-ups in the presence bar —
 // NOT real security, since this is a static file anyone can view-source.
@@ -629,6 +631,7 @@ const VISITOR_PASSWORDS = {
   'Kenneth Geronimo':     'Comet99',
   'Olga Borges':          'Delta64',
   'Ian Andrews':          'Maple53',
+  'Guest':                'Visitor25',
 };
 // Fixed animal avatar per person — same animal every time they visit, for a
 // little bit of personality and recognizability in the "who's online" bar.
@@ -648,6 +651,7 @@ const ANIMAL_AVATARS = {
   'Kenneth Geronimo': '🦅',
   'Olga Borges': '🦢',
   'Ian Andrews': '🦈',
+  'Guest': '🐣',
 };
 
 const KB = [
@@ -964,7 +968,7 @@ const CAT_COLORS = {
 // ── STATE ─────────────────────────────────────────────────────────
 let eodSubmissions = [];
 let state = {
-  page:'home', manager:null, onlineVisitors:[], commentDrafts:{},
+  page:'home', manager:null, onlineVisitors:[], commentDrafts:{}, isGuest:false,
   announcements:[
     {id:1, title:'Welcome to PEC Hub!', body:'This is your one-stop resource for everything you need. Explore SOPs and Policies, Spiels Library, Call Notes, and more.', date:'2026-06-11', pinned:true, type:'info'},
   ],
@@ -1028,13 +1032,20 @@ const NAV = [
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
   {id:'checklist', label:'Application Checklist', icon:'✅'},
-  {id:'applicants', label:'Applicant Status', icon:'🗂️'},
-  {id:'communities', label:'Communities Map', icon:'🗺️'},
+  {id:'applicants', label:'Applicant Status', icon:'🗂️', guestBlocked:true},
+  {id:'communities', label:'Communities Map', icon:'🗺️', guestBlocked:true},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
   {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
   {id:'cards', label:'Welcome Cards', icon:'🔒', managerOnly:true},
 ];
+
+// Guests see first names only, everywhere a team member's name is shown —
+// managers and signed-in team members always see the full name.
+function displayName(fullName){
+  if(!fullName) return fullName;
+  return state.isGuest ? fullName.split(' ')[0] : fullName;
+}
 
 function escapeHtml(text){
   return (text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1078,9 +1089,11 @@ function statusChip(a,g){
 }
 function renderNav(){
   // managerOnly tabs are not rendered at all unless signed in as manager,
-  // so the button never appears for the team.
+  // and guestBlocked tabs never render for the Guest visitor, so the
+  // button never appears for either.
   document.getElementById('navLinks').innerHTML=NAV
     .filter(n=>!n.managerOnly || state.manager)
+    .filter(n=>!n.guestBlocked || !state.isGuest)
     .map(n=>
       `<button class="nav-btn${state.page===n.id?' active':''}" onclick="showPage('${n.id}')">${n.icon} ${n.label}</button>`
     ).join('');
@@ -1144,7 +1157,7 @@ function renderHome(){
           {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
           {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
           {id:'offerletter',icon:'🔒',label:'Offer Letter Process',desc:'Manager access only',color:'#be185d'},
-        ].map(c=>`
+        ].filter(c=>!state.isGuest || c.id!=='communities').map(c=>`
           <button class="quick-card" onclick="showPage('${c.id}')"
             onmouseover="this.style.borderColor='${c.color}';this.style.boxShadow='0 0 0 3px ${c.color}22'"
             onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
@@ -1167,12 +1180,12 @@ function flipCard(m){
     <div class="flip-inner">
       <div class="flip-front" style="background:linear-gradient(160deg,${m.color}ee,${m.color}99);border:1.5px solid rgba(255,255,255,.15)">
         ${frontFace}
-        <div class="flip-name" style="font-size:13px;font-weight:800;color:#fff;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.3)">${m.name}</div>
+        <div class="flip-name" style="font-size:13px;font-weight:800;color:#fff;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.3)">${displayName(m.name)}</div>
         <div class="flip-hint" style="font-size:10px;color:rgba(255,255,255,.6);margin-top:6px">Tap to flip ↻</div>
       </div>
       <div class="flip-back" style="border:2px solid ${m.color}44">
         <div class="flip-bar" style="background:${m.color}"></div>
-        <div class="flip-back-name">${m.name}</div>
+        <div class="flip-back-name">${displayName(m.name)}</div>
         <div class="flip-quote" style="color:${m.color};border-left:3px solid ${m.color};padding-left:10px;font-size:11px;font-style:italic;line-height:1.6">"${m.quote}"</div>
       </div>
     </div>
@@ -1589,7 +1602,10 @@ function renderKB(){
             <div class="card-body">
               <p>${a.summary}</p>
               <div style="margin-top:12px;display:flex;gap:8px" onclick="event.stopPropagation()">
-                ${a.link ? `<button class="btn btn-primary" style="font-size:11px" onclick="event.stopPropagation();window.open('${a.link}','_blank')">View Full SOP →</button>` : `<span style="font-size:11px;color:#94a3b8;font-style:italic">Link coming soon</span>`}
+                ${state.isGuest
+                  ? `<span style="font-size:11px;color:#94a3b8;font-style:italic">🔒 Full document access is limited to the PEC team</span>`
+                  : (a.link ? `<button class="btn btn-primary" style="font-size:11px" onclick="event.stopPropagation();window.open('${a.link}','_blank')">View Full SOP →</button>` : `<span style="font-size:11px;color:#94a3b8;font-style:italic">Link coming soon</span>`)
+                }
               </div>
             </div>`:''
           }
@@ -3206,13 +3222,16 @@ function renderCallListening(){
           <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px">Call Listening Tracker</div>
           <div style="font-size:12px;color:#64748b">Weekly scores, notes, and call assignments by agent</div>
         </div>
-        ${state.clwSheetUrl?
-          `<a href="${state.clwSheetUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">Open Sheet →</a>`:
-          `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
+        ${state.isGuest ?
+          `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">🔒 PEC team only</span>` :
+          (state.clwSheetUrl?
+            `<a href="${state.clwSheetUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">Open Sheet →</a>`:
+            `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
+          )
         }
       </div>
 
-      ${(()=>{
+      ${state.isGuest ? '' : (()=>{
         const sheetEmbed = toSheetsEmbedUrl(state.clwSheetUrl);
         if(!sheetEmbed) return '';
         return `
@@ -3230,9 +3249,12 @@ function renderCallListening(){
           <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px">Recordings Drive Folder</div>
           <div style="font-size:12px;color:#64748b">All weekly call recordings, named AgentName_Date</div>
         </div>
-        ${state.clwFolderUrl?
-          `<a href="${state.clwFolderUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">RECORDINGS →</a>`:
-          `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
+        ${state.isGuest ?
+          `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">🔒 PEC team only</span>` :
+          (state.clwFolderUrl?
+            `<a href="${state.clwFolderUrl}" target="_blank" style="font-size:12px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 16px;text-decoration:none;white-space:nowrap">RECORDINGS →</a>`:
+            `<span style="font-size:11px;color:#94a3b8;font-style:italic;white-space:nowrap">${isManager?'Add link above':'Link coming soon'}</span>`
+          )
         }
       </div>
 
@@ -4469,7 +4491,7 @@ function renderAgentTable(kpiId,goal,unit,agentsList){
         const s=a[kpiId]||0;const og=s>=goal&&s>0;
         const ini=a.name.split(' ').map(n=>n[0]).join('').slice(0,2);
         return`<div class="agent-row" style="background:${i%2===0?'#fff':'#fafafa'}">
-          <div class="agent-name-wrap"><div class="agent-avatar" style="background:${og?'#dcfce7':'#fee2e2'};color:${og?'#15803d':'#dc2626'}">${ini}</div><span>${a.name}</span></div>
+          <div class="agent-name-wrap"><div class="agent-avatar" style="background:${og?'#dcfce7':'#fee2e2'};color:${og?'#15803d':'#dc2626'}">${ini}</div><span>${displayName(a.name)}</span></div>
           <span style="text-align:right;font-weight:700;color:${og?'#15803d':'#dc2626'}">${s}${unit}</span>
           <span style="text-align:right;font-size:10px;font-weight:700;color:${og?'#15803d':'#dc2626'}">${og?'✓ On Goal':'✗ Below'}</span>
         </div>`;
@@ -5635,6 +5657,12 @@ function renderCardStudio(){
 
 // ── RENDER ────────────────────────────────────────────────────────
 function renderPage(){
+  // Defense in depth: even if state.page somehow got set to a
+  // guest-blocked tab (stale state, direct call, etc.), bounce back home.
+  const blockedForGuest = ['applicants','communities'];
+  if(state.isGuest && blockedForGuest.includes(state.page)){
+    state.page = 'home';
+  }
   let html='';
   switch(state.page){
     case 'home':      html=renderHome();break;
@@ -5688,6 +5716,10 @@ function render(){renderNav();renderPage();renderSyncBanner();}
 // Restore a previously persisted manager login, if any, before the first render
 const restoredManager = loadPersistedManagerSession();
 if(restoredManager) state.manager = restoredManager;
+
+// Set before the first render so a returning Guest never sees a flash
+// of restricted tabs before the nav filters them out.
+state.isGuest = getVisitorName() === 'Guest';
 
 render();
 hydrateFromFirestore().then(()=>render()).catch(err=>console.error('Hydrate failed:', err));
