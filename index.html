@@ -362,12 +362,18 @@ function promptForVisitorName(){
         <option value="">Select your name...</option>
         ${names.map(n=>`<option value="${n}">${n}</option>`).join('')}
       </select>
-      <input id="visitorPasswordInput" type="password" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:6px;box-sizing:border-box"/>
+      <div id="visitorPasswordWrap">
+        <input id="visitorPasswordInput" type="password" placeholder="Password" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:6px;box-sizing:border-box"/>
+      </div>
       <div id="visitorPasswordError" style="display:none;color:#dc2626;font-size:11.5px;margin-bottom:8px;text-align:left"></div>
       <button id="visitorNameSubmit" style="width:100%;padding:11px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Continue →</button>
     </div>
   `;
   document.body.appendChild(overlay);
+  document.getElementById('visitorNameSelect').onchange = (e)=>{
+    const wrap = document.getElementById('visitorPasswordWrap');
+    wrap.style.display = e.target.value === 'Guest' ? 'none' : 'block';
+  };
   document.getElementById('visitorNameSubmit').onclick = ()=>{
     const sel = document.getElementById('visitorNameSelect').value;
     const pw = document.getElementById('visitorPasswordInput').value;
@@ -631,7 +637,8 @@ const VISITOR_PASSWORDS = {
   'Kenneth Geronimo':     'Comet99',
   'Olga Borges':          'Delta64',
   'Ian Andrews':          'Maple53',
-  'Guest':                'Visitor25',
+  // Guest intentionally has no password — it's meant to be quick, low-friction
+  // access for outside visitors, not another name to gatekeep.
 };
 // Fixed animal avatar per person — same animal every time they visit, for a
 // little bit of personality and recognizability in the "who's online" bar.
