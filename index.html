@@ -1915,6 +1915,7 @@ const OUTBOUND_SPIEL = "Hi, this is [Your Name] calling from [Community Name] �
 const OUTBOUND_ATTEMPTS = ['1st Attempt','2nd Attempt','3rd Attempt','4th Attempt','5th Attempt — DNR: No Response'];
 const OUTBOUND_TAGS = [
   {label:'No Answer', phrase:'No answer.'},
+  {label:'Failed to Connect', phrase:'Call failed to connect.'},
   {label:'Left Voicemail', phrase:'Left a voicemail.'},
   {label:'Unable to leave VM - VM is Full', phrase:'Unable to leave a voicemail — mailbox is full.'},
   {label:'Unable to leave VM - VM is Not Yet Set Up', phrase:'Unable to leave a voicemail — mailbox not set up yet.'},
@@ -2026,6 +2027,7 @@ let cgState = {
   discoveryChecked: [],
   actionChecked: false,
   amenitiesChecked: [],
+  reasonsChecked: [],
   otherAmenities: '',
   activeTone: 'warm',
   details: '',
@@ -2093,7 +2095,7 @@ function renderBreadcrumb(){
 function resetAll(){
   cgState = {
     screen: 'direction', callDirection: null, callerType: null, branch: null, topic: null,
-    discoveryChecked: [], actionChecked: false, amenitiesChecked: [], otherAmenities: '',
+    discoveryChecked: [], actionChecked: false, amenitiesChecked: [], reasonsChecked: [], otherAmenities: '',
     activeTone: 'warm', details: '', attemptIdx: 0, outboundTagsChecked: [], outboundDetails: '',
     openScenario: null, usedScenarios: [], pricingDetails: '', tourDetails: '',
     quickAnswerOpenTopic: null, quickAnswerOpenScenario: null, quickAnswersUsed: [],
@@ -2518,6 +2520,7 @@ function selectTopic(id){
 }
 function resetAvailabilityState(){
   cgState.amenitiesChecked = new Array(AMENITIES.length).fill(false);
+  cgState.reasonsChecked = new Array(REASONS_FOR_MOVE.length).fill(false);
   cgState.otherAmenities = ''; cgState.details = ''; cgState.activeTone = 'warm';
   cgState.pricingPermission = null;
 }
@@ -2587,15 +2590,20 @@ const DISCOVERY = [
   {label:'Budget', question:"Do you have a budget in mind you'd want to spend on your monthly rent?", tip:null},
   {label:'Lease Term', question:"How long are you planning to stay with us?", tip:"Do you have a lease length in mind, or are you open to what works best?"},
   {label:'Unit Size', question:"How many bedrooms and bathrooms are you looking for?", tip:null},
-  {label:'Current Living Situation', question:"Are you currently renting right now? When does your lease end?", tip:null},
   {label:'Amenities', question:"What's most important to you in your next home, or any specific amenities you're looking for?", tip:null},
 ];
+const REASON_QUESTION_IDX = 0; // reason-for-move checklist appears right under this one
 const AMENITIES_QUESTION_IDX = DISCOVERY.length - 1; // amenities checklist appears right under this one
 const ACTION_ITEM = "Funnel preference card updated";
 const AMENITIES = [
   "In-Unit Washer/Dryer","Swimming Pool","Fitness Center","Pet-Friendly","Covered/Assigned Parking",
   "Balcony or Patio","Walk-In Closets","Stainless Steel Appliances","Central A/C","Elevator Access",
   "Clubhouse/Lounge","Business Center","Dog Park","EV Charging","Additional Storage","Gated Access",
+];
+const REASONS_FOR_MOVE = [
+  "Job Relocation / New Job","Need More Space","Downsizing","Lease Ending / Not Renewing",
+  "Closer to Work","Better School District","Wants a Nicer Community","Moving In with Partner/Roommate",
+  "First Apartment / Moving Out on Own","Current Place Too Expensive","Safety/Neighborhood Concerns","Life Change",
 ];
 const PITCH_LINES = {
   "In-Unit Washer/Dryer": "you won't have to worry about laundromats — every home comes with its own in-unit washer and dryer",
@@ -2614,6 +2622,21 @@ const PITCH_LINES = {
   "EV Charging": "we've even got EV charging stations on site",
   "Additional Storage": "there's extra storage space available too, so you'll never feel cramped",
   "Gated Access": "you'll have the peace of mind that comes with gated community access",
+  // Reason-for-move lines — same pitch generator pulls from these too, so
+  // the elevator pitch can speak directly to WHY they're moving, not just
+  // what amenities they want.
+  "Job Relocation / New Job": "since you're relocating for work, we'll make sure your move-in is as smooth and quick as possible",
+  "Need More Space": "and since you're needing more room, our larger floor plans give you exactly the space to breathe you're looking for",
+  "Downsizing": "since you're looking to downsize, we've got layouts that feel just right without any wasted space",
+  "Lease Ending / Not Renewing": "and since your lease is wrapping up, the timing works out perfectly — we can line up your move-in right when you need it",
+  "Closer to Work": "being closer to work is going to save you so much time back in your day",
+  "Better School District": "and being in a great school district is going to make such a difference for your family",
+  "Wants a Nicer Community": "you're going to notice the difference the moment you walk in — this community was built with exactly that upgrade in mind",
+  "Moving In with Partner/Roommate": "that's an exciting next step — we'll make sure you find a layout that works great for both of you",
+  "First Apartment / Moving Out on Own": "congrats on this next chapter! We'll make sure you feel right at home from day one",
+  "Current Place Too Expensive": "and I think you'll be pleasantly surprised by the value you get here for the price",
+  "Safety/Neighborhood Concerns": "you'll have real peace of mind here — safety is something we take seriously",
+  "Life Change": "whatever's bringing about this change, we want to make sure this next chapter starts off on the right foot",
 };
 const TONES = [
   {id:'warm', label:'😊 Warm & Friendly', opener:"Honestly, I think this could be such a great fit for you!", connector:"And on top of that,", closer:"I really think you're going to love it here — want to grab a time to come see it in person?"},
@@ -2740,6 +2763,12 @@ function renderDiscoveryList(){
       <span class="pseudo-check${cgState.discoveryChecked[i]?' on':''}">${cgState.discoveryChecked[i]?'✓':''}</span>
       <span><span style="font-weight:800;color:#0f172a">${d.label}:</span> ${d.question}${d.tip?`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px">e.g. "${d.tip}"</div>`:''}</span>
     </div>`;
+    if(i===REASON_QUESTION_IDX){
+      item += `
+      <div style="padding:10px 0 6px 25px">
+        <div class="amenity-grid" id="reasonGrid"></div>
+      </div>`;
+    }
     if(i===AMENITIES_QUESTION_IDX){
       item += `
       <div style="padding:10px 0 6px 25px">
@@ -2755,6 +2784,7 @@ function renderDiscoveryList(){
       <span class="pseudo-check${cgState.actionChecked?' on':''}">${cgState.actionChecked?'✓':''}</span><span>✅ ${ACTION_ITEM}</span>
     </div>`;
   document.getElementById('discoveryList').innerHTML = html;
+  renderReasons();
   renderAmenities();
   document.getElementById('otherAmenities').addEventListener('input', ()=>{
     cgState.otherAmenities = document.getElementById('otherAmenities').value;
@@ -2763,6 +2793,20 @@ function renderDiscoveryList(){
     else if(cgState.screen==='pricingGuide') updatePricingNote();
     else if(cgState.screen==='qualificationGuide') updateQualificationNote();
   });
+}
+function renderReasons(){
+  document.getElementById('reasonGrid').innerHTML = REASONS_FOR_MOVE.map((r,i)=>`
+    <div class="amenity-chip${cgState.reasonsChecked[i]?' active':''}" onclick="toggleReason(${i})">
+      <span class="pseudo-check${cgState.reasonsChecked[i]?' on':''}">${cgState.reasonsChecked[i]?'✓':''}</span>${r}
+    </div>`).join('');
+}
+function toggleReason(i){
+  cgState.reasonsChecked[i]=!cgState.reasonsChecked[i];
+  renderReasons();
+  updatePitch();
+  if(cgState.screen==='topicGuide') updateNote();
+  else if(cgState.screen==='pricingGuide') updatePricingNote();
+  else if(cgState.screen==='qualificationGuide') updateQualificationNote();
 }
 function toggleDiscovery(i){ cgState.discoveryChecked[i]=!cgState.discoveryChecked[i]; renderDiscoveryList(); }
 function toggleAction(){
@@ -2808,15 +2852,18 @@ function setTone(id){ cgState.activeTone=id; renderToneTabs(); updatePitch(); }
 function updatePitch(){
   const box = document.getElementById('pitchBox');
   if(!box) return; // this screen (e.g. Pricing) has no Elevator Pitch section
-  const checked = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  const checkedAmenities = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  const checkedReasons = REASONS_FOR_MOVE.filter((r,i)=>cgState.reasonsChecked[i]);
   const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
   const otherList = other ? other.split(',').map(s=>s.trim()).filter(Boolean) : [];
   const tone = TONES.find(t=>t.id===cgState.activeTone);
-  if(checked.length===0 && otherList.length===0){
+  if(checkedAmenities.length===0 && checkedReasons.length===0 && otherList.length===0){
     box.innerHTML = '<span class="pitch-empty">Check off what the prospect mentioned above, and your personalized pitch appears here.</span>';
     return;
   }
-  let lines = checked.map(a=>PITCH_LINES[a]);
+  // Reasons first (why they're moving), then amenities (what they want) —
+  // reads more naturally as "since X, you'll love Y" than the reverse.
+  let lines = [...checkedReasons, ...checkedAmenities].map(a=>PITCH_LINES[a]);
   otherList.forEach(o=>lines.push(`we've got you covered on ${o} too`));
   let pitch = tone.opener + " ";
   if(lines.length===1){ pitch += lines[0].charAt(0).toUpperCase()+lines[0].slice(1)+'.'; }
@@ -2839,6 +2886,7 @@ function updateNote(){
   const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
   const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
   if(other) needs.push(other);
+  const reasons = REASONS_FOR_MOVE.filter((r,i)=>cgState.reasonsChecked[i]);
 
   const realtorEntry = cgState.quickAnswersUsed.find(u=>u.scenarioId==='realtor_represented');
   const uniqueTopics = [...new Map(cgState.quickAnswersUsed.filter(u=>u.topicId!=='realtor').map(u=>[u.topicId,u.topicLabel])).values()];
@@ -2849,6 +2897,7 @@ function updateNote(){
       ? `Realtor called in on behalf of client "${realtorEntry.realtorClientName.trim()}." Lead kept active as Prospect (realtor-represented) — not changed to Vendor.`
       : `Realtor called in on behalf of a client; client info not provided. Lead kept active as Prospect (realtor-represented) — not changed to Vendor. All follow-ups will go through the realtor.`;
   }
+  if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
   if(uniqueTopics.length) story += ` They also asked about ${joinNaturally(uniqueTopics.map(t=>t.toLowerCase()))}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
   if(cgState.pricingPermission==='yes') story += ' Confirmed their budget aligns with our pricing.';
@@ -2856,9 +2905,9 @@ function updateNote(){
   if(details) story += ` ${details}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
 
-  const hasContent = needs.length || details || cgState.actionChecked || uniqueTopics.length || cgState.pricingPermission || realtorEntry;
+  const hasContent = needs.length || reasons.length || details || cgState.actionChecked || uniqueTopics.length || cgState.pricingPermission || realtorEntry;
   document.getElementById('notePreview').textContent = hasContent ? story : '';
-  const itemCount = needs.length + (details?1:0) + (cgState.actionChecked?1:0) + uniqueTopics.length + (cgState.pricingPermission?1:0) + (realtorEntry?1:0);
+  const itemCount = needs.length + reasons.length + (details?1:0) + (cgState.actionChecked?1:0) + uniqueTopics.length + (cgState.pricingPermission?1:0) + (realtorEntry?1:0);
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
@@ -2917,16 +2966,18 @@ function updatePricingNote(){
   const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
   const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
   if(other) needs.push(other);
+  const reasons = REASONS_FOR_MOVE.filter((r,i)=>cgState.reasonsChecked[i]);
 
   let story = 'Prospect called in with a pricing question.';
+  if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
   if(titles.length) story += ` Addressed concerns around ${joinNaturally(titles)}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
   if(cgState.pricingDetails.trim()) story += ` ${cgState.pricingDetails.trim()}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
 
-  const hasContent = titles.length || needs.length || cgState.pricingDetails.trim() || cgState.actionChecked;
+  const hasContent = titles.length || needs.length || reasons.length || cgState.pricingDetails.trim() || cgState.actionChecked;
   document.getElementById('notePreview').textContent = hasContent ? story : '';
-  const itemCount = titles.length + needs.length + (cgState.pricingDetails.trim()?1:0) + (cgState.actionChecked?1:0);
+  const itemCount = titles.length + needs.length + reasons.length + (cgState.pricingDetails.trim()?1:0) + (cgState.actionChecked?1:0);
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
@@ -2984,16 +3035,18 @@ function updateQualificationNote(){
   const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
   const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
   if(other) needs.push(other);
+  const reasons = REASONS_FOR_MOVE.filter((r,i)=>cgState.reasonsChecked[i]);
 
   let story = 'Prospect called in asking about rental criteria and qualification.';
+  if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
   if(titles.length) story += ` Addressed: ${joinNaturally(titles)}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
   if(cgState.qualDetails.trim()) story += ` ${cgState.qualDetails.trim()}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
 
-  const hasContent = titles.length || needs.length || cgState.qualDetails.trim() || cgState.actionChecked;
+  const hasContent = titles.length || needs.length || reasons.length || cgState.qualDetails.trim() || cgState.actionChecked;
   document.getElementById('notePreview').textContent = hasContent ? story : '';
-  const itemCount = titles.length + needs.length + (cgState.qualDetails.trim()?1:0) + (cgState.actionChecked?1:0);
+  const itemCount = titles.length + needs.length + reasons.length + (cgState.qualDetails.trim()?1:0) + (cgState.actionChecked?1:0);
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
