@@ -1967,22 +1967,20 @@ const QUAL_MARKETS = [
   {id:'KSMO', label:'Kansas-Missouri'},
 ];
 
-// Direct links to each market's Rental Criteria document (source: the
-// per-market announcements on the Announcements tab). Fill in as each one
-// is confirmed — a market with no link here just shows "Link coming soon"
-// instead of a broken button.
+// Direct links to each market's Rental Criteria document, confirmed live.
+// Non-KC is still pending — ask Rowel for that one when he has it.
 const QUAL_DOCUMENT_LINKS = {
-  AZ: null,
-  CO: null,
-  FL: null,
-  UT: null,
-  TN: null,
-  KC: null,
+  AZ: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Arizona-Qualification-Criteria.pdf',
+  CO: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Colorado-Qualification-Criteria-1.pdf',
+  FL: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Florida-Qualification-Criteria.pdf',
+  UT: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Utah-Qualification-Criteria.pdf',
+  TN: 'https://avantiresidential.com/wp-content/uploads/sites/2/2026/04/Tennessee-Qualification-Criteria-1-1.2.pdf',
+  KC: 'https://avantiresidential.com/wp-content/uploads/sites/2/2026/01/KC-Qualification-Criteria-2.pdf',
   NONKC: null,
-  KSMO: null,
+  KSMO: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Kansas-Missouri-Qualification-Criteria.pdf',
 };
 
-const QUAL_STANDARD_ASK = "Would it be helpful if I send you a copy of this via email so you have it for your records? And if you have any other questions about our rental criteria, I'm happy to go over those too. In the meantime, should we go ahead and get you scheduled for a tour so you can see everything in person?";
+const QUAL_STANDARD_ASK = "Would it be helpful if I send you a copy of this via email so you have it for your records? Do you have any other questions about our rental criteria or qualifying process that I can help clarify?";
 
 const QUALIFICATION_SCENARIOS = [
   {id:'rentalquals', title:'Rental Qualifications (Income)', verbatim:true, aaa:{
