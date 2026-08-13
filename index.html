@@ -1953,40 +1953,129 @@ const PRICING_SCENARIOS = [
 ];
 
 // Real content — Spiels Library, "Qualification & Applications" category
+// The 8 markets Avanti operates in, each with its own Qualification
+// Criteria document. Selecting a market determines which VERBATIM policy
+// text shows below — read it exactly as written, no paraphrasing.
+const QUAL_MARKETS = [
+  {id:'AZ', label:'Arizona'},
+  {id:'CO', label:'Colorado'},
+  {id:'FL', label:'Florida'},
+  {id:'UT', label:'Utah'},
+  {id:'TN', label:'Tennessee'},
+  {id:'KC', label:'KC'},
+  {id:'NONKC', label:'Non-KC'},
+  {id:'KSMO', label:'Kansas-Missouri'},
+];
+
+const QUAL_STANDARD_ASK = "Would it be helpful if I read the Rental Criteria with you and send you a copy of it via email?";
+
 const QUALIFICATION_SCENARIOS = [
-  {id:'rentalquals', title:'Rental Qualifications', aaa:{
+  {id:'rentalquals', title:'Rental Qualifications (Income)', verbatim:true, aaa:{
     acknowledge:"Great question — it's smart to know what we look for before you apply.",
-    answer:'Our rental qualifications include meeting the income requirement of xx times the rent, along with credit, rental, and background screening conducted through TransUnion.',
-    ask:'Would you like me to send over our full rental criteria so you have all the details handy?'
+    answerByMarket:{
+      AZ: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      CO: "All applicants 18 and older must complete a digital income verification process. Non-Subsidy Applicants must digitally verify gross income equal to two (2) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      FL: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      UT: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      TN: "All applicants 18 and older must complete a digital income verification process to verify gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      KC: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      NONKC: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit, or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      KSMO: "Applicant must supply verifiable proof of funds equal to two and a half (2.5) times the monthly tenant paid rent. If an applicant's income is nonsufficient, a guarantor may be required. If a guarantor is required, the guarantor's income must be equal to four (4) times the tenant paid rental amount and provide proof of funds.",
+    },
+    ask: QUAL_STANDARD_ASK,
   }},
-  {id:'willigetapproved', title:'Will I Get Approved?', aaa:{
+  {id:'willigetapproved', title:'Will I Get Approved?', verbatim:false, aaa:{
     acknowledge:'I completely understand wanting some certainty before applying.',
     answer:"We welcome all individuals who apply and meet the qualifying requirements. Approval isn't guaranteed and is based on several factors in our rental criteria.",
-    ask:'Would you like me to walk you through that criteria now, or email it over so you can review it on your own time?'
+    ask: QUAL_STANDARD_ASK,
   }},
-  {id:'lowcredit', title:'Credit Is Low — Should I Still Apply?', aaa:{
+  {id:'creditconcerns', title:'Credit History Concerns', verbatim:true, aaa:{
     acknowledge:"Thanks for being upfront about that — it shows you're thinking this through carefully.",
-    answer:"Credit, eviction, and criminal history are all reviewed as part of TransUnion's screening process, and the result of that screening is what determines whether you'll be approved, conditionally approved, or denied.",
-    ask:'Would it help if I sent over our rental criteria so you can see exactly how that\'s weighed before deciding whether to apply?'
+    answerByMarket:{
+      AZ: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      CO: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      FL: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      UT: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      TN: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      KC: "Applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, the commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that shows an absence of established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      NONKC: "Applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, a commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      KSMO: "An applicant with an unsatisfactory (negative) credit report will be denied. Excessive collection accounts will result in denial of the rental application. An applicant whose credit report contains more negative than positive history may be approved subject to an additional deposit. Bankruptcy (regardless of discharge) or repossession within the last two (2) years may be grounds for denial of the application or may require an additional deposit for approval.",
+    },
+    ask: QUAL_STANDARD_ASK,
   }},
-  {id:'cosigner', title:'Can I Add a Cosigner?', aaa:{
+  {id:'cosigner', title:'Can I Add a Cosigner? (Guarantor)', verbatim:true, aaa:{
     acknowledge:"That's a fair thing to ask about, especially if you want extra support on the income side.",
-    answer:"We don't offer co-signers, but you can add a guarantor for income purposes — they'd need to qualify at 4 times the rent for their income to qualify.",
-    ask:'Do you have someone in mind who might be able to qualify as a guarantor?'
+    answerByMarket:{
+      AZ: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      CO: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      FL: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      UT: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      TN: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      KC: "If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      NONKC: "If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      KSMO: "Acceptable guarantors must reside in the United States and qualify in each of the above categories. An additional deposit may be accepted if a qualified guarantor is not available under certain circumstances.",
+    },
+    ask: QUAL_STANDARD_ASK,
   }},
-  {id:'eviction', title:'Eviction History', aaa:{
+  {id:'eviction', title:'Eviction / Rental History', verbatim:true, aaa:{
     acknowledge:'I appreciate you bringing that up directly — that helps me give you the clearest answer.',
-    answer:'We welcome anyone who applies and meets our qualifications. Rental history, including evictions, is part of the screening process.',
-    ask:'Would you like me to share our rental criteria so you can see exactly how that factors in before you apply?'
+    answerByMarket:{
+      AZ: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      CO: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      FL: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      UT: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      TN: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      KC: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
+      NONKC: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
+      KSMO: "All occupants 18 and over (except first-time renters) must have at least 6 months of verifiable and positive residency history immediately preceding application. Verification must be performed by a third-party entity. First-time renters or applicants with no verifiable residency history may require payment of an additional deposit or acceptable guarantor in lieu of immediate past rental history.",
+    },
+    ask: QUAL_STANDARD_ASK,
+  }},
+  {id:'criminal', title:'Criminal History', verbatim:true, aaa:{
+    acknowledge:'I understand this is an important question, and I want to give you an accurate answer.',
+    answerByMarket:{
+      AZ: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      CO: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. We are not required to rent to any person whose tenancy would constitute a direct threat to the health or safety of other individuals or whose tenancy would result in substantial physical damage to the property of others.",
+      FL: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes may result in the denial of the rental application with consideration given to the nature of the offense and the time since.",
+      UT: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      TN: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      KC: "To the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions, guilty pleas, or no-contest pleas related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      NONKC: "To the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      KSMO: "Any Applicant with felony convictions of Drug Offenses VII, Homicide I, II, III, IV, Sex Crimes Against a Person, Sex Crimes Against a Child, or lifetime registry on any sex offender registry will always result in automatic denial regardless of the disposition date.",
+    },
+    specialNoteByMarket: {
+      KC: "📌 KC-specific: Avanti will only inform the applicant that their application is denied and will NOT provide the reason for denial. If a denied applicant asks why, per Chapter 38 of the Kansas City, Missouri Code of Ordinances, you must affirmatively state it was not on the basis of a protected class or trait, and inform them in writing of their rights under Chapter 38.",
+    },
+    ask: QUAL_STANDARD_ASK,
   }},
 ];
 
-// DRAFT — placeholder content pending your real Pet Policy process
+// Real content — from your Qualification Criteria documents, written in
+// plain conversational language (not verbatim legal text) since this is
+// meant to be easy for prospects to digest over the phone. Two real
+// structural differences to get right: (1) Kansas-Missouri requires
+// written approval BEFORE the pet can move in, everywhere else just
+// screens/certifies after approval; (2) Colorado charges a refundable
+// DEPOSIT + rent per HOUSEHOLD, every other market charges a
+// nonrefundable FEE + rent per PET.
 const PET_POLICY_SCENARIOS = [
-  {id:'petpolicy_general', title:'General Pet Policy Question', aaa:{
+  {id:'petpolicy_general', title:'General Pet Policy Question', verbatim:true, aaa:{
     acknowledge:"Great question — I know pets are a big part of the family!",
-    answer:"We are a pet-friendly community! [DRAFT — confirm exact breed/weight restrictions, pet fees, and pet rent for this specific community before using live.]",
-    ask:"Do you have a pet you're looking to bring along, and if so, what type?"
+    answerByMarket:{
+      AZ: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
+      CO: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. Here in Colorado it works a little differently than our other markets — instead of a nonrefundable fee, you'll pay a refundable deposit plus monthly pet rent, both charged per household rather than per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed.",
+      FL: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
+      UT: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
+      TN: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
+      KC: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed.",
+      NONKC: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed.",
+      KSMO: "So pets work a little differently here — your pet actually needs Management's written approval BEFORE move-in, rather than a screening after the fact. There's a $25 screening fee per pet, charged through an ACH bank link. Cats and dogs are welcome once approved, up to 2 pets per household — support and service animals don't count toward that limit. On top of the screening fee, there's a one-time nonrefundable pet fee and monthly pet rent, both charged per pet. You'll also need a current rabies vaccination on file, and there are a few breed restrictions I'll want to check against your pet's breed.",
+    },
+    specialNoteByMarket: {
+      CO: "📌 Colorado-specific: this market uses a refundable DEPOSIT (not a nonrefundable fee) plus monthly pet rent, both charged per HOUSEHOLD rather than per pet — different from every other market.",
+      KSMO: "📌 Kansas-Missouri specific: pets require prior WRITTEN APPROVAL from Management before move-in — this is different from the standard post-approval screening process used in every other market. Don't tell this prospect their pet is automatically fine; it still needs to be submitted and approved first.",
+    },
+    ask: "What kind of pet do you have, and do you know the breed? I want to make sure I give you accurate info on your specific one.",
   }},
 ];
 
@@ -2012,7 +2101,7 @@ const REALTOR_SCENARIOS = [
 const QUICK_ANSWER_TOPICS = [
   {id:'pricing', label:'Pricing & Specials', scenarios: PRICING_SCENARIOS, draft:false},
   {id:'qualification', label:'Rental Criteria & Qualification', scenarios: QUALIFICATION_SCENARIOS, draft:false},
-  {id:'pets', label:'Pet Policy', scenarios: PET_POLICY_SCENARIOS, draft:true},
+  {id:'pets', label:'Pet Policy', scenarios: PET_POLICY_SCENARIOS, draft:false},
   {id:'fees', label:'Fees & Deposit', scenarios: FEES_SCENARIOS, draft:true},
   {id:'realtor', label:'Realtor Calling on Behalf of a Client', scenarios: REALTOR_SCENARIOS, draft:false},
 ];
@@ -2045,6 +2134,8 @@ let cgState = {
   qualOpenScenario: null,
   qualUsedScenarios: [],
   qualDetails: '',
+  qualMarket: null,
+  hasPet: null, // null | 'yes' | 'no' — gates whether Pet Policy talking points show at all
   pricingPermission: null, // null | 'yes' | 'no'
   simpleTag: null,
   simpleTagDetails: '',
@@ -2100,7 +2191,7 @@ function resetAll(){
     activeTone: 'warm', details: '', attemptIdx: 0, outboundTagsChecked: [], outboundDetails: '',
     openScenario: null, usedScenarios: [], pricingDetails: '', tourDetails: '',
     quickAnswerOpenTopic: null, quickAnswerOpenScenario: null, quickAnswersUsed: [],
-    qualOpenScenario: null, qualUsedScenarios: [], qualDetails: '', pricingPermission: null,
+    qualOpenScenario: null, qualUsedScenarios: [], qualDetails: '', qualMarket: null, hasPet: null, pricingPermission: null,
     simpleTag: null, simpleTagDetails: '', simpleTagHandling: null, simpleTagSpecialId: null,
     transferOutcome: null, transferOnsiteException: false, bmAnswered: null,
     bmResidentName: '', bmFunnelProfile: '', bmCommunity: '', bmConcern: '',
@@ -2693,19 +2784,45 @@ function renderQuickAnswerList(){
         </div>
         ${isTopicOpen?`
           <div class="aaa-scenario-body">
-            ${topic.scenarios.map(s=>{
+            ${topic.id==='pets'?`
+              <div style="margin-bottom:10px">
+                <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">Does the prospect have a pet or animal?</div>
+                <div class="tone-tabs">
+                  <div class="tone-tab${cgState.hasPet==='yes'?' active':''}" onclick="event.stopPropagation();setHasPet('yes')">✅ Yes</div>
+                  <div class="tone-tab${cgState.hasPet==='no'?' active':''}" onclick="event.stopPropagation();setHasPet('no')">No</div>
+                </div>
+              </div>
+            `:''}
+            ${(topic.id==='pets' && cgState.hasPet==='no')?`
+              <div class="stub-note">No pet — nothing further to discuss here. Move on with the rest of the call.</div>
+            `:''}
+            ${(topic.id==='qualification' || (topic.id==='pets' && cgState.hasPet==='yes'))?`
+              <div style="margin-bottom:10px">
+                <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">📍 Market (for verbatim wording)</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                  ${QUAL_MARKETS.map(m=>`<div class="tone-tab" style="flex:0 0 auto;padding:5px 10px;font-size:10px;${cgState.qualMarket===m.id?'background:#7c3aed;border-color:#7c3aed;color:#fff':''}" onclick="event.stopPropagation();setQualMarketInline('${m.id}')">${m.label}</div>`).join('')}
+                </div>
+              </div>
+            `:''}
+            ${(topic.id!=='pets' || cgState.hasPet==='yes')?topic.scenarios.map(s=>{
               const isScenarioOpen = cgState.quickAnswerOpenScenario===s.id;
               const wasUsed = cgState.quickAnswersUsed.some(u=>u.scenarioId===s.id);
+              const marketPicked = !!cgState.qualMarket;
+              const answerText = s.verbatim ? (marketPicked ? s.aaa.answerByMarket[cgState.qualMarket] : null) : s.aaa.answer;
+              const specialNote = s.verbatim && marketPicked ? (s.aaa.specialNoteByMarket && s.aaa.specialNoteByMarket[cgState.qualMarket]) : null;
               return `
                 <div class="aaa-scenario" style="margin-top:8px">
                   <div class="aaa-scenario-header" onclick="event.stopPropagation();toggleQuickAnswerScenario('${s.id}')">
-                    <span class="title" style="font-size:12px">${wasUsed?'✅ ':''}${s.title}</span>
+                    <span class="title" style="font-size:12px">${wasUsed?'✅ ':''}${s.title}${s.verbatim?' <span style="font-size:9px;font-weight:800;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:1px 6px;border-radius:20px;text-transform:uppercase;margin-left:4px">Verbatim</span>':''}</span>
                     <span class="chev${isScenarioOpen?' open':''}">▾</span>
                   </div>
                   ${isScenarioOpen?`
                     <div class="aaa-scenario-body">
                       <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
-                      <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.aaa.answer}</span></div>
+                      ${answerText?`
+                        <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.verbatim?`<span style="font-style:italic;border-left:3px solid #7c3aed;padding-left:8px;display:block">"${answerText}"</span><div style="font-size:10px;color:#94a3b8;margin-top:4px">— read exactly as written, word for word.</div>`:answerText}</span></div>
+                        ${specialNote?`<div class="stub-note" style="margin:8px 0">${specialNote}</div>`:''}
+                      `:`<div class="stub-note" style="margin:10px 0">📍 Select the market above first.</div>`}
                       <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
                       ${s.id==='realtor_represented'?`
                         <div class="tone-tabs" style="margin-bottom:8px">
@@ -2715,11 +2832,11 @@ function renderQuickAnswerList(){
                         ${cgState.realtorClientProvided==='yes'?`<input class="other-input" id="realtorClientNameInput" placeholder="Client's name" value="${cgState.realtorClientName}" style="margin-bottom:8px" onclick="event.stopPropagation()"/>`:''}
                         <div class="stub-note" style="margin-bottom:8px">📌 Keep the lead active as a Prospect — do not change status to Vendor. Use DNR instead if needed, so the client's future calls still come through. Document the lead as "realtor-represented."</div>
                       `:''}
-                      <button class="use-scenario-btn" onclick="event.stopPropagation();useQuickAnswer('${topic.id}','${topic.label.replace(/'/g,"\\'")}','${s.id}','${s.title.replace(/'/g,"\\'")}')">${wasUsed?'✓ Logged to note':'✅ Used This — Log to Note'}</button>
+                      <button class="use-scenario-btn" onclick="event.stopPropagation();useQuickAnswer('${topic.id}','${topic.label.replace(/'/g,"\\'")}','${s.id}','${s.title.replace(/'/g,"\\'")}')" ${s.verbatim && !marketPicked?'disabled style="opacity:.5;cursor:not-allowed"':''}>${wasUsed?'✓ Logged to note':'✅ Used This — Log to Note'}</button>
                     </div>`:''
                   }
                 </div>`;
-            }).join('')}
+            }).join(''):''}
           </div>`:''
         }
       </div>`;
@@ -2742,7 +2859,16 @@ function setRealtorClientProvided(val){
   const nameInput = document.getElementById('realtorClientNameInput');
   if(nameInput) nameInput.addEventListener('input', ()=>{ cgState.realtorClientName = nameInput.value; });
 }
+function setQualMarketInline(id){
+  cgState.qualMarket = cgState.qualMarket===id ? null : id;
+  renderQuickAnswerList();
+}
+function setHasPet(val){
+  cgState.hasPet = cgState.hasPet===val ? null : val;
+  renderQuickAnswerList();
+}
 function useQuickAnswer(topicId, topicLabel, scenarioId, scenarioTitle){
+  if((topicId==='qualification' || topicId==='pets') && !cgState.qualMarket) return; // defense in depth — button is disabled in the UI too
   if(!cgState.quickAnswersUsed.some(u=>u.scenarioId===scenarioId)){
     const entry = {topicId, topicLabel, scenarioId, scenarioTitle};
     if(scenarioId==='realtor_represented'){
@@ -2891,6 +3017,12 @@ function updateNote(){
 
   const realtorEntry = cgState.quickAnswersUsed.find(u=>u.scenarioId==='realtor_represented');
   const uniqueTopics = [...new Map(cgState.quickAnswersUsed.filter(u=>u.topicId!=='realtor').map(u=>[u.topicId,u.topicLabel])).values()];
+  const usedQualVerbatim = cgState.quickAnswersUsed.some(u=>{
+    if(u.topicId==='qualification') return QUALIFICATION_SCENARIOS.find(s=>s.id===u.scenarioId)?.verbatim;
+    if(u.topicId==='pets') return PET_POLICY_SCENARIOS.find(s=>s.id===u.scenarioId)?.verbatim;
+    return false;
+  });
+  const qualMarketLabel = cgState.qualMarket ? QUAL_MARKETS.find(m=>m.id===cgState.qualMarket).label : null;
 
   let story = 'Prospect called in asking about availability.';
   if(realtorEntry){
@@ -2899,7 +3031,7 @@ function updateNote(){
       : `Realtor called in on behalf of a client; client info not provided. Lead kept active as Prospect (realtor-represented) — not changed to Vendor. All follow-ups will go through the realtor.`;
   }
   if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
-  if(uniqueTopics.length) story += ` They also asked about ${joinNaturally(uniqueTopics.map(t=>t.toLowerCase()))}.`;
+  if(uniqueTopics.length) story += ` They also asked about ${joinNaturally(uniqueTopics.map(t=>t.toLowerCase()))}${usedQualVerbatim && qualMarketLabel?` (${qualMarketLabel} market criteria read verbatim)`:''}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
   if(cgState.pricingPermission==='yes') story += ' Confirmed their budget aligns with our pricing.';
   else if(cgState.pricingPermission==='no') story += " Budget doesn't currently align with our pricing.";
@@ -2987,7 +3119,12 @@ function renderQualificationGuideScreen(){
     <div class="page-header"><h1>📋 Rental Criteria &amp; Qualification</h1><p>They asked first — answer with the 3 A's, then move into discovery</p></div>
     <div class="content">
       <div class="section">
-        <div class="section-title">🗣️ Suggested Response <span style="font-weight:500;text-transform:none;color:#94a3b8;font-size:10.5px">— pulled from your Spiels Library</span></div>
+        <div class="section-title">📍 Which Market Is This Community In?</div>
+        <div class="guide-only-tag">Verbatim policy text below depends on the market — select one before opening a scenario</div>
+        <div id="qualMarketSelector" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response <span style="font-weight:500;text-transform:none;color:#94a3b8;font-size:10.5px">— verbatim from your Qualification Criteria documents</span></div>
         <div id="qualScenarioList"></div>
       </div>
       <div class="section">
@@ -3004,28 +3141,48 @@ function renderQualificationGuideScreen(){
       <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
     </div>`;
 }
+function renderQualMarketSelector(){
+  document.getElementById('qualMarketSelector').innerHTML = QUAL_MARKETS.map(m=>`
+    <div class="tone-tab" style="flex:0 0 auto;padding:7px 12px;${cgState.qualMarket===m.id?'background:#7c3aed;border-color:#7c3aed;color:#fff':''}" onclick="setQualMarket('${m.id}')">${m.label}</div>
+  `).join('');
+}
+function setQualMarket(id){
+  cgState.qualMarket = cgState.qualMarket===id ? null : id;
+  renderQualMarketSelector();
+  renderQualScenarioList();
+}
 function renderQualScenarioList(){
   document.getElementById('qualScenarioList').innerHTML = QUALIFICATION_SCENARIOS.map(s=>{
     const isOpen = cgState.qualOpenScenario===s.id;
     const wasUsed = cgState.qualUsedScenarios.includes(s.id);
+    const marketPicked = !!cgState.qualMarket;
+    const answerText = s.verbatim
+      ? (marketPicked ? s.aaa.answerByMarket[cgState.qualMarket] : null)
+      : s.aaa.answer;
+    const specialNote = s.verbatim && marketPicked ? (s.aaa.specialNoteByMarket && s.aaa.specialNoteByMarket[cgState.qualMarket]) : null;
     return `
       <div class="aaa-scenario">
         <div class="aaa-scenario-header" onclick="toggleQualScenario('${s.id}')">
-          <span class="title">${wasUsed?'✅ ':''}${s.title}</span>
+          <span class="title">${wasUsed?'✅ ':''}${s.title}${s.verbatim?' <span style="font-size:9px;font-weight:800;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:2px 7px;border-radius:20px;text-transform:uppercase;margin-left:4px">Verbatim</span>':''}</span>
           <span class="chev${isOpen?' open':''}">▾</span>
         </div>
         ${isOpen?`
           <div class="aaa-scenario-body">
             <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
-            <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.aaa.answer}</span></div>
+            ${answerText?`
+              <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.verbatim?`<span style="font-style:italic;border-left:3px solid #7c3aed;padding-left:8px;display:block">"${answerText}"</span><div style="font-size:10px;color:#94a3b8;margin-top:4px">— read exactly as written, word for word. Don't paraphrase or add your own take.</div>`:answerText}</span></div>
+              ${specialNote?`<div class="stub-note" style="margin:8px 0">${specialNote}</div>`:''}
+            `:`<div class="stub-note" style="margin:10px 0">📍 Select the community's market above first — the exact wording depends on which state/market this prospect is asking about.</div>`}
             <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
-            <button class="use-scenario-btn" onclick="event.stopPropagation();useQualScenario('${s.id}')">${wasUsed?'✓ Logged to note':'✅ Used This Scenario'}</button>
+            <button class="use-scenario-btn" onclick="event.stopPropagation();useQualScenario('${s.id}')" ${s.verbatim && !marketPicked?'disabled style="opacity:.5;cursor:not-allowed"':''}>${wasUsed?'✓ Logged to note':'✅ Used This Scenario'}</button>
           </div>`:''}
       </div>`;
   }).join('');
 }
 function toggleQualScenario(id){ cgState.qualOpenScenario = cgState.qualOpenScenario===id ? null : id; renderQualScenarioList(); }
 function useQualScenario(id){
+  const scenario = QUALIFICATION_SCENARIOS.find(s=>s.id===id);
+  if(scenario.verbatim && !cgState.qualMarket) return; // defense in depth — button is disabled in the UI too
   if(!cgState.qualUsedScenarios.includes(id)) cgState.qualUsedScenarios.push(id);
   renderQualScenarioList();
   updateQualificationNote();
@@ -3033,6 +3190,8 @@ function useQualScenario(id){
 function updateQualificationNote(){
   cgState.qualDetails = document.getElementById('qualDetailsBox')?.value || cgState.qualDetails;
   const titles = cgState.qualUsedScenarios.map(id=>QUALIFICATION_SCENARIOS.find(s=>s.id===id).title);
+  const usedVerbatim = cgState.qualUsedScenarios.some(id=>QUALIFICATION_SCENARIOS.find(s=>s.id===id).verbatim);
+  const marketLabel = cgState.qualMarket ? QUAL_MARKETS.find(m=>m.id===cgState.qualMarket).label : null;
   const needs = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
   const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
   if(other) needs.push(other);
@@ -3040,7 +3199,7 @@ function updateQualificationNote(){
 
   let story = 'Prospect called in asking about rental criteria and qualification.';
   if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
-  if(titles.length) story += ` Addressed: ${joinNaturally(titles)}.`;
+  if(titles.length) story += ` Addressed: ${joinNaturally(titles)}${usedVerbatim && marketLabel?` (${marketLabel} market criteria read verbatim)`:''}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
   if(cgState.qualDetails.trim()) story += ` ${cgState.qualDetails.trim()}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
@@ -3238,7 +3397,7 @@ function renderCallGuideView(){
     document.getElementById('pricingDetailsBox').addEventListener('input', updatePricingNote);
   }
   if(cgState.screen==='qualificationGuide'){
-    renderDiscoveryList(); renderQualScenarioList(); updateQualificationNote();
+    renderQualMarketSelector(); renderDiscoveryList(); renderQualScenarioList(); updateQualificationNote();
     document.getElementById('qualDetailsBox').addEventListener('input', updateQualificationNote);
   }
 }
