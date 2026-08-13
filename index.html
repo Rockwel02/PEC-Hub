@@ -1967,20 +1967,35 @@ const QUAL_MARKETS = [
   {id:'KSMO', label:'Kansas-Missouri'},
 ];
 
-const QUAL_STANDARD_ASK = "Would it be helpful if I read the Rental Criteria with you and send you a copy of it via email?";
+// Direct links to each market's Rental Criteria document (source: the
+// per-market announcements on the Announcements tab). Fill in as each one
+// is confirmed — a market with no link here just shows "Link coming soon"
+// instead of a broken button.
+const QUAL_DOCUMENT_LINKS = {
+  AZ: null,
+  CO: null,
+  FL: null,
+  UT: null,
+  TN: null,
+  KC: null,
+  NONKC: null,
+  KSMO: null,
+};
+
+const QUAL_STANDARD_ASK = "Would it be helpful if I send you a copy of this via email so you have it for your records? And if you have any other questions about our rental criteria, I'm happy to go over those too. In the meantime, should we go ahead and get you scheduled for a tour so you can see everything in person?";
 
 const QUALIFICATION_SCENARIOS = [
   {id:'rentalquals', title:'Rental Qualifications (Income)', verbatim:true, aaa:{
     acknowledge:"Great question — it's smart to know what we look for before you apply.",
     answerByMarket:{
-      AZ: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      CO: "All applicants 18 and older must complete a digital income verification process. Non-Subsidy Applicants must digitally verify gross income equal to two (2) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      FL: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      UT: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      TN: "All applicants 18 and older must complete a digital income verification process to verify gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      KC: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
-      NONKC: "All applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit, or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
-      KSMO: "Applicant must supply verifiable proof of funds equal to two and a half (2.5) times the monthly tenant paid rent. If an applicant's income is nonsufficient, a guarantor may be required. If a guarantor is required, the guarantor's income must be equal to four (4) times the tenant paid rental amount and provide proof of funds.",
+      AZ: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      CO: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process. Non-Subsidy Applicants must digitally verify gross income equal to two (2) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      FL: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      UT: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      TN: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      KC: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      NONKC: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit, or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      KSMO: "As per our Rental Criteria, applicant must supply verifiable proof of funds equal to two and a half (2.5) times the monthly tenant paid rent. If an applicant's income is nonsufficient, a guarantor may be required. If a guarantor is required, the guarantor's income must be equal to four (4) times the tenant paid rental amount and provide proof of funds.",
     },
     ask: QUAL_STANDARD_ASK,
   }},
@@ -1992,59 +2007,59 @@ const QUALIFICATION_SCENARIOS = [
   {id:'creditconcerns', title:'Credit History Concerns', verbatim:true, aaa:{
     acknowledge:"Thanks for being upfront about that — it shows you're thinking this through carefully.",
     answerByMarket:{
-      AZ: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      CO: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      FL: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      UT: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      TN: "An unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      KC: "Applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, the commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that shows an absence of established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      NONKC: "Applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, a commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
-      KSMO: "An applicant with an unsatisfactory (negative) credit report will be denied. Excessive collection accounts will result in denial of the rental application. An applicant whose credit report contains more negative than positive history may be approved subject to an additional deposit. Bankruptcy (regardless of discharge) or repossession within the last two (2) years may be grounds for denial of the application or may require an additional deposit for approval.",
+      AZ: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      CO: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      FL: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      UT: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      TN: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      KC: "As per our Rental Criteria, applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, the commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that shows an absence of established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      NONKC: "As per our Rental Criteria, applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, a commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      KSMO: "As per our Rental Criteria, an applicant with an unsatisfactory (negative) credit report will be denied. Excessive collection accounts will result in denial of the rental application. An applicant whose credit report contains more negative than positive history may be approved subject to an additional deposit. Bankruptcy (regardless of discharge) or repossession within the last two (2) years may be grounds for denial of the application or may require an additional deposit for approval.",
     },
     ask: QUAL_STANDARD_ASK,
   }},
   {id:'cosigner', title:'Can I Add a Cosigner? (Guarantor)', verbatim:true, aaa:{
     acknowledge:"That's a fair thing to ask about, especially if you want extra support on the income side.",
     answerByMarket:{
-      AZ: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      CO: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      FL: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      UT: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      TN: "If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
-      KC: "If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
-      NONKC: "If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
-      KSMO: "Acceptable guarantors must reside in the United States and qualify in each of the above categories. An additional deposit may be accepted if a qualified guarantor is not available under certain circumstances.",
+      AZ: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      CO: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      FL: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      UT: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      TN: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
+      KC: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      NONKC: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      KSMO: "As per our Rental Criteria, acceptable guarantors must reside in the United States and qualify in each of the above categories. An additional deposit may be accepted if a qualified guarantor is not available under certain circumstances.",
     },
     ask: QUAL_STANDARD_ASK,
   }},
   {id:'eviction', title:'Eviction / Rental History', verbatim:true, aaa:{
     acknowledge:'I appreciate you bringing that up directly — that helps me give you the clearest answer.',
     answerByMarket:{
-      AZ: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
-      CO: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
-      FL: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
-      UT: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
-      TN: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
-      KC: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
-      NONKC: "Negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
-      KSMO: "All occupants 18 and over (except first-time renters) must have at least 6 months of verifiable and positive residency history immediately preceding application. Verification must be performed by a third-party entity. First-time renters or applicants with no verifiable residency history may require payment of an additional deposit or acceptable guarantor in lieu of immediate past rental history.",
+      AZ: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      CO: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      FL: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      UT: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      TN: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
+      KC: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
+      NONKC: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
+      KSMO: "As per our Rental Criteria, all occupants 18 and over (except first-time renters) must have at least 6 months of verifiable and positive residency history immediately preceding application. Verification must be performed by a third-party entity. First-time renters or applicants with no verifiable residency history may require payment of an additional deposit or acceptable guarantor in lieu of immediate past rental history.",
     },
     ask: QUAL_STANDARD_ASK,
   }},
   {id:'criminal', title:'Criminal History', verbatim:true, aaa:{
     acknowledge:'I understand this is an important question, and I want to give you an accurate answer.',
     answerByMarket:{
-      AZ: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
-      CO: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. We are not required to rent to any person whose tenancy would constitute a direct threat to the health or safety of other individuals or whose tenancy would result in substantial physical damage to the property of others.",
-      FL: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes may result in the denial of the rental application with consideration given to the nature of the offense and the time since.",
-      UT: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
-      TN: "To the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
-      KC: "To the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions, guilty pleas, or no-contest pleas related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
-      NONKC: "To the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
-      KSMO: "Any Applicant with felony convictions of Drug Offenses VII, Homicide I, II, III, IV, Sex Crimes Against a Person, Sex Crimes Against a Child, or lifetime registry on any sex offender registry will always result in automatic denial regardless of the disposition date.",
+      AZ: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      CO: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. We are not required to rent to any person whose tenancy would constitute a direct threat to the health or safety of other individuals or whose tenancy would result in substantial physical damage to the property of others.",
+      FL: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes may result in the denial of the rental application with consideration given to the nature of the offense and the time since.",
+      UT: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      TN: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      KC: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions, guilty pleas, or no-contest pleas related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      NONKC: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      KSMO: "As per our Rental Criteria, any Applicant with felony convictions of Drug Offenses VII, Homicide I, II, III, IV, Sex Crimes Against a Person, Sex Crimes Against a Child, or lifetime registry on any sex offender registry will always result in automatic denial regardless of the disposition date.",
     },
     specialNoteByMarket: {
-      KC: "📌 KC-specific: Avanti will only inform the applicant that their application is denied and will NOT provide the reason for denial. If a denied applicant asks why, per Chapter 38 of the Kansas City, Missouri Code of Ordinances, you must affirmatively state it was not on the basis of a protected class or trait, and inform them in writing of their rights under Chapter 38.",
+      KC: "As per our Rental Criteria, 📌 KC-specific: Avanti will only inform the applicant that their application is denied and will NOT provide the reason for denial. If a denied applicant asks why, per Chapter 38 of the Kansas City, Missouri Code of Ordinances, you must affirmatively state it was not on the basis of a protected class or trait, and inform them in writing of their rights under Chapter 38.",
     },
     ask: QUAL_STANDARD_ASK,
   }},
@@ -2058,21 +2073,27 @@ const QUALIFICATION_SCENARIOS = [
 // screens/certifies after approval; (2) Colorado charges a refundable
 // DEPOSIT + rent per HOUSEHOLD, every other market charges a
 // nonrefundable FEE + rent per PET.
+// Verbatim from your Qualification Criteria documents — read exactly as
+// written, no paraphrasing, prefixed "As per our Rental Criteria" per your
+// request. The quick Yes/No + general pet answer for routine calls now
+// lives on the Discovery Checklist itself (see PETS_QUICK_AAA above) —
+// this scenario is for when a prospect asks something more specific and
+// you need the actual policy language.
 const PET_POLICY_SCENARIOS = [
   {id:'petpolicy_general', title:'General Pet Policy Question', verbatim:true, aaa:{
     acknowledge:"Great question — I know pets are a big part of the family!",
     answerByMarket:{
-      AZ: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
-      CO: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. Here in Colorado it works a little differently than our other markets — instead of a nonrefundable fee, you'll pay a refundable deposit plus monthly pet rent, both charged per household rather than per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed.",
-      FL: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
-      UT: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
-      TN: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed. And since it's a support or service animal, those fees and breed restrictions wouldn't apply if that's the case for you.",
-      KC: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed.",
-      NONKC: "Good news — we're pet-friendly! There's a $25 screening fee per pet, charged through an ACH bank link. You can have up to 2 pets per household — support and service animals don't count toward that limit, there's no cap on those. On top of the screening fee, there's a one-time nonrefundable pet fee and a monthly pet rent, both charged per pet. There are a few breed restrictions too, so I'll want to double check your pet's breed.",
-      KSMO: "So pets work a little differently here — your pet actually needs Management's written approval BEFORE move-in, rather than a screening after the fact. There's a $25 screening fee per pet, charged through an ACH bank link. Cats and dogs are welcome once approved, up to 2 pets per household — support and service animals don't count toward that limit. On top of the screening fee, there's a one-time nonrefundable pet fee and monthly pet rent, both charged per pet. You'll also need a current rabies vaccination on file, and there are a few breed restrictions I'll want to check against your pet's breed.",
+      AZ: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      CO: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      FL: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      UT: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      TN: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Staffordshire Terriers, Staffordshire Bull Terrier, Rottweiler, Cane Corso, Presa Canarias, Bull Mastiffs, wolf or wolf hybrids, Pitbulls, and any mix containing aforementioned breeds.",
+      KC: "As per our Rental Criteria, all households are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      NONKC: "As per our Rental Criteria, all households are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      KSMO: "As per our Rental Criteria, pets are not allowed without Management prior written approval. Cats and dogs welcome with approval; maximum of two (2) pets per apartment. An additional deposit, fee and monthly pet rent will be required for approval. Breed restrictions apply: American Staffordshire Terriers, Staffordshire Bull Terriers, Rottweilers, Cane Corso, Presa Canarias, Bull Mastiffs, Wolf Hybrids, Pitbulls where prohibited by local statute and any mix containing aforementioned breeds. Current rabies vaccination will be required. Applicant is responsible for keeping pet licensing and vaccinations up to date per county requirements.",
     },
     specialNoteByMarket: {
-      CO: "📌 Colorado-specific: this market uses a refundable DEPOSIT (not a nonrefundable fee) plus monthly pet rent, both charged per HOUSEHOLD rather than per pet — different from every other market.",
+      CO: "📌 Colorado-specific: this market uses a refundable DEPOSIT (not a nonrefundable fee) plus monthly pet rent, both charged per HOUSEHOLD rather than per pet — different from every other market. Also, screening fee is $25 per pet via ACH bank link (not in the written criteria, confirmed separately).",
       KSMO: "📌 Kansas-Missouri specific: pets require prior WRITTEN APPROVAL from Management before move-in — this is different from the standard post-approval screening process used in every other market. Don't tell this prospect their pet is automatically fine; it still needs to be submitted and approved first.",
     },
     ask: "What kind of pet do you have, and do you know the breed? I want to make sure I give you accurate info on your specific one.",
@@ -2685,8 +2706,14 @@ const DISCOVERY = [
   {label:'Amenities', question:"What's most important to you in your next home, or any specific amenities you're looking for?", tip:null},
 ];
 const REASON_QUESTION_IDX = 0; // reason-for-move checklist appears right under this one
+const PETS_QUESTION_IDX = 3; // pets Yes/No + quick 3 A's appears right under this one
 const AMENITIES_QUESTION_IDX = DISCOVERY.length - 1; // amenities checklist appears right under this one
 const ACTION_ITEM = "Funnel preference card updated";
+const PETS_QUICK_AAA = {
+  acknowledge: "Great, I love that you're bringing them along!",
+  answer: "We do allow pets here! You'll just need to set up a Pet Profile through our Pet Screening process, and there are some associated fees that come with that — I can get you the exact numbers for this community.",
+  ask: "What kind of pet do you have?",
+};
 const AMENITIES = [
   "In-Unit Washer/Dryer","Swimming Pool","Fitness Center","Pet-Friendly","Covered/Assigned Parking",
   "Balcony or Patio","Walk-In Closets","Stainless Steel Appliances","Central A/C","Elevator Access",
@@ -2784,27 +2811,16 @@ function renderQuickAnswerList(){
         </div>
         ${isTopicOpen?`
           <div class="aaa-scenario-body">
-            ${topic.id==='pets'?`
-              <div style="margin-bottom:10px">
-                <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">Does the prospect have a pet or animal?</div>
-                <div class="tone-tabs">
-                  <div class="tone-tab${cgState.hasPet==='yes'?' active':''}" onclick="event.stopPropagation();setHasPet('yes')">✅ Yes</div>
-                  <div class="tone-tab${cgState.hasPet==='no'?' active':''}" onclick="event.stopPropagation();setHasPet('no')">No</div>
-                </div>
-              </div>
-            `:''}
-            ${(topic.id==='pets' && cgState.hasPet==='no')?`
-              <div class="stub-note">No pet — nothing further to discuss here. Move on with the rest of the call.</div>
-            `:''}
-            ${(topic.id==='qualification' || (topic.id==='pets' && cgState.hasPet==='yes'))?`
+            ${(topic.id==='qualification' || topic.id==='pets')?`
               <div style="margin-bottom:10px">
                 <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">📍 Market (for verbatim wording)</div>
                 <div style="display:flex;flex-wrap:wrap;gap:5px">
                   ${QUAL_MARKETS.map(m=>`<div class="tone-tab" style="flex:0 0 auto;padding:5px 10px;font-size:10px;${cgState.qualMarket===m.id?'background:#7c3aed;border-color:#7c3aed;color:#fff':''}" onclick="event.stopPropagation();setQualMarketInline('${m.id}')">${m.label}</div>`).join('')}
                 </div>
+                ${renderQualDocLinkHtml()}
               </div>
             `:''}
-            ${(topic.id!=='pets' || cgState.hasPet==='yes')?topic.scenarios.map(s=>{
+            ${topic.scenarios.map(s=>{
               const isScenarioOpen = cgState.quickAnswerOpenScenario===s.id;
               const wasUsed = cgState.quickAnswersUsed.some(u=>u.scenarioId===s.id);
               const marketPicked = !!cgState.qualMarket;
@@ -2836,7 +2852,7 @@ function renderQuickAnswerList(){
                     </div>`:''
                   }
                 </div>`;
-            }).join(''):''}
+            }).join('')}
           </div>`:''
         }
       </div>`;
@@ -2863,10 +2879,6 @@ function setQualMarketInline(id){
   cgState.qualMarket = cgState.qualMarket===id ? null : id;
   renderQuickAnswerList();
 }
-function setHasPet(val){
-  cgState.hasPet = cgState.hasPet===val ? null : val;
-  renderQuickAnswerList();
-}
 function useQuickAnswer(topicId, topicLabel, scenarioId, scenarioTitle){
   if((topicId==='qualification' || topicId==='pets') && !cgState.qualMarket) return; // defense in depth — button is disabled in the UI too
   if(!cgState.quickAnswersUsed.some(u=>u.scenarioId===scenarioId)){
@@ -2890,6 +2902,21 @@ function renderDiscoveryList(){
       <span class="pseudo-check${cgState.discoveryChecked[i]?' on':''}">${cgState.discoveryChecked[i]?'✓':''}</span>
       <span><span style="font-weight:800;color:#0f172a">${d.label}:</span> ${d.question}${d.tip?`<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px">e.g. "${d.tip}"</div>`:''}</span>
     </div>`;
+    if(i===PETS_QUESTION_IDX){
+      item += `
+      <div style="padding:10px 0 6px 25px">
+        <div class="tone-tabs" style="margin-bottom:${cgState.hasPet==='yes'?'8px':'0'}">
+          <div class="tone-tab${cgState.hasPet==='yes'?' active':''}" onclick="togglePetsDiscovery('yes')">✅ Has a Pet</div>
+          <div class="tone-tab${cgState.hasPet==='no'?' active':''}" onclick="togglePetsDiscovery('no')">No Pet</div>
+        </div>
+        ${cgState.hasPet==='yes'?`
+          <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${PETS_QUICK_AAA.acknowledge}</span></div>
+          <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${PETS_QUICK_AAA.answer}</span></div>
+          <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${PETS_QUICK_AAA.ask}</span></div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:4px">Need specific breed/fee details? Use Pet Policy under "If They Ask About..." for the verbatim policy.</div>
+        `:''}
+      </div>`;
+    }
     if(i===REASON_QUESTION_IDX){
       item += `
       <div style="padding:10px 0 6px 25px">
@@ -2938,6 +2965,13 @@ function toggleReason(i){
 function toggleDiscovery(i){ cgState.discoveryChecked[i]=!cgState.discoveryChecked[i]; renderDiscoveryList(); }
 function toggleAction(){
   cgState.actionChecked=!cgState.actionChecked;
+  renderDiscoveryList();
+  if(cgState.screen==='topicGuide') updateNote();
+  else if(cgState.screen==='pricingGuide') updatePricingNote();
+  else if(cgState.screen==='qualificationGuide') updateQualificationNote();
+}
+function togglePetsDiscovery(val){
+  cgState.hasPet = cgState.hasPet===val ? null : val;
   renderDiscoveryList();
   if(cgState.screen==='topicGuide') updateNote();
   else if(cgState.screen==='pricingGuide') updatePricingNote();
@@ -3035,12 +3069,14 @@ function updateNote(){
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
   if(cgState.pricingPermission==='yes') story += ' Confirmed their budget aligns with our pricing.';
   else if(cgState.pricingPermission==='no') story += " Budget doesn't currently align with our pricing.";
+  if(cgState.hasPet==='yes') story += ' Confirmed they have a pet — discussed Pet Profile and screening fees.';
+  else if(cgState.hasPet==='no') story += ' No pet.';
   if(details) story += ` ${details}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
 
-  const hasContent = needs.length || reasons.length || details || cgState.actionChecked || uniqueTopics.length || cgState.pricingPermission || realtorEntry;
+  const hasContent = needs.length || reasons.length || details || cgState.actionChecked || uniqueTopics.length || cgState.pricingPermission || realtorEntry || cgState.hasPet;
   document.getElementById('notePreview').textContent = hasContent ? story : '';
-  const itemCount = needs.length + reasons.length + (details?1:0) + (cgState.actionChecked?1:0) + uniqueTopics.length + (cgState.pricingPermission?1:0) + (realtorEntry?1:0);
+  const itemCount = needs.length + reasons.length + (details?1:0) + (cgState.actionChecked?1:0) + uniqueTopics.length + (cgState.pricingPermission?1:0) + (realtorEntry?1:0) + (cgState.hasPet?1:0);
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
@@ -3105,12 +3141,14 @@ function updatePricingNote(){
   if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
   if(titles.length) story += ` Addressed concerns around ${joinNaturally(titles)}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
+  if(cgState.hasPet==='yes') story += ' Confirmed they have a pet — discussed Pet Profile and screening fees.';
+  else if(cgState.hasPet==='no') story += ' No pet.';
   if(cgState.pricingDetails.trim()) story += ` ${cgState.pricingDetails.trim()}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
 
-  const hasContent = titles.length || needs.length || reasons.length || cgState.pricingDetails.trim() || cgState.actionChecked;
+  const hasContent = titles.length || needs.length || reasons.length || cgState.pricingDetails.trim() || cgState.actionChecked || cgState.hasPet;
   document.getElementById('notePreview').textContent = hasContent ? story : '';
-  const itemCount = titles.length + needs.length + reasons.length + (cgState.pricingDetails.trim()?1:0) + (cgState.actionChecked?1:0);
+  const itemCount = titles.length + needs.length + reasons.length + (cgState.pricingDetails.trim()?1:0) + (cgState.actionChecked?1:0) + (cgState.hasPet?1:0);
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
@@ -3121,7 +3159,7 @@ function renderQualificationGuideScreen(){
       <div class="section">
         <div class="section-title">📍 Which Market Is This Community In?</div>
         <div class="guide-only-tag">Verbatim policy text below depends on the market — select one before opening a scenario</div>
-        <div id="qualMarketSelector" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div id="qualMarketSelector"></div>
       </div>
       <div class="section">
         <div class="section-title">🗣️ Suggested Response <span style="font-weight:500;text-transform:none;color:#94a3b8;font-size:10.5px">— verbatim from your Qualification Criteria documents</span></div>
@@ -3141,10 +3179,19 @@ function renderQualificationGuideScreen(){
       <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
     </div>`;
 }
+function renderQualDocLinkHtml(){
+  if(!cgState.qualMarket) return '';
+  const link = QUAL_DOCUMENT_LINKS[cgState.qualMarket];
+  const marketLabel = QUAL_MARKETS.find(m=>m.id===cgState.qualMarket).label;
+  return link
+    ? `<a href="${link}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 12px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none">📎 Download ${marketLabel} Rental Criteria PDF</a>`
+    : `<div style="margin-top:8px;font-size:10.5px;color:#94a3b8;font-style:italic">📎 Document link for ${marketLabel} coming soon — ask Rowel if you need it right now</div>`;
+}
 function renderQualMarketSelector(){
-  document.getElementById('qualMarketSelector').innerHTML = QUAL_MARKETS.map(m=>`
+  const tabsHtml = QUAL_MARKETS.map(m=>`
     <div class="tone-tab" style="flex:0 0 auto;padding:7px 12px;${cgState.qualMarket===m.id?'background:#7c3aed;border-color:#7c3aed;color:#fff':''}" onclick="setQualMarket('${m.id}')">${m.label}</div>
   `).join('');
+  document.getElementById('qualMarketSelector').innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px">${tabsHtml}</div>${renderQualDocLinkHtml()}`;
 }
 function setQualMarket(id){
   cgState.qualMarket = cgState.qualMarket===id ? null : id;
@@ -3201,12 +3248,14 @@ function updateQualificationNote(){
   if(reasons.length) story += ` Reason for the move: ${joinNaturally(reasons)}.`;
   if(titles.length) story += ` Addressed: ${joinNaturally(titles)}${usedVerbatim && marketLabel?` (${marketLabel} market criteria read verbatim)`:''}.`;
   if(needs.length) story += ` They mentioned they're interested in ${joinNaturally(needs)}.`;
+  if(cgState.hasPet==='yes') story += ' Confirmed they have a pet — discussed Pet Profile and screening fees.';
+  else if(cgState.hasPet==='no') story += ' No pet.';
   if(cgState.qualDetails.trim()) story += ` ${cgState.qualDetails.trim()}`;
   if(cgState.actionChecked) story += ' Funnel preference card updated.';
 
-  const hasContent = titles.length || needs.length || reasons.length || cgState.qualDetails.trim() || cgState.actionChecked;
+  const hasContent = titles.length || needs.length || reasons.length || cgState.qualDetails.trim() || cgState.actionChecked || cgState.hasPet;
   document.getElementById('notePreview').textContent = hasContent ? story : '';
-  const itemCount = titles.length + needs.length + reasons.length + (cgState.qualDetails.trim()?1:0) + (cgState.actionChecked?1:0);
+  const itemCount = titles.length + needs.length + reasons.length + (cgState.qualDetails.trim()?1:0) + (cgState.actionChecked?1:0) + (cgState.hasPet?1:0);
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
@@ -3764,6 +3813,10 @@ const CHECKLIST_SECTIONS = [
     {type:'simple', text:'Screenings reviewed'},
   ]},
   {key:'lease', title:'Before Sending Lease', color:'#92400e', bg:'#fef3c7', items:[
+    {type:'branch', id:'appstatus', text:'Application Status',
+      options:['Approved','Conditionally Approved'],
+      subChecksByOption:{'Conditionally Approved':['Removed the $500 Deposit — leaving the additional security deposit as what the applicant should pay']},
+    },
     {type:'simple', text:'CT Memo matched Lease Term Details (Unit Number, MI Date)'},
     {type:'simple', text:'Rate Verified (Reba Matrix uploaded by CT)'},
     {type:'branch', id:'jetty', text:'Separate Deposit and Jetty',
