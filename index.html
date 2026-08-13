@@ -1015,6 +1015,7 @@ let state = {
   expandedPeriod:null, showAddPeriodForm:false, newPeriodLabel:'',
   editingPeriodMetric:null,
   checklistChecked:{}, checklistCopyMsg:'', checklistRevision:'',
+  checklistExpandedSections:{}, checklistBranchSelected:{}, checklistSubChecked:{}, checklistSpielOpen:null,
   applicantEntries:[],
   syncError:null,
   showApplicantForm:false, editingApplicantId:null,
@@ -3562,39 +3563,83 @@ function renderPriorities(){
     </div>`;
 }
 
+// Real content — from Lauren's team-wide standard on income verification
+// communication, plus the polished spiel templates the team converged on
+// for each common scenario. Core standard: never send the generic Funnel
+// template as-is — personalize it with the specific reason and specific
+// ask, and always pair it with a documented call attempt.
+const INCOME_VERIFICATION_SPIELS = [
+  {id:'tax1040', title:'1040 / Tax Return Submitted (Not Accepted)', template:
+    "Thank you for submitting your proof of income. We've reviewed the documents provided; however, we're unable to use the 1040/tax return to verify your qualifying income, as we only accept W-2 and 1099 forms for tax documentation.\n\nTo continue processing your application, please provide one of the following:\n• W-2 or 1099 tax forms\n• Your three most recent pay stubs\n• Link your bank account through the application portal so we can verify your income and assets\n\nIf you have any questions or need assistance submitting the requested documents, please feel free to reach out. We're happy to assist.\n\nThank you for your cooperation."},
+  {id:'insufficient_paystubs', title:'Insufficient Paystubs (Only 2 Periods, Need 3)', template:
+    "The documents provided only reflect two pay periods, and our income verification requirements call for the three most recent consecutive paystubs. Can you please upload your three most recent paystubs so we can complete the review?"},
+  {id:'income_below', title:'Income Below Requirement (Guarantor Option)', template:
+    "Your verified income is currently below the requirement for this unit. Do you have additional income sources that have not been counted through your application? If so, we would be happy to send a link for you to upload your additional income. If not, we do offer the option of adding a guarantor, someone who can provide income of 4x the monthly rent to support your application. Please let me know if you would like to proceed with a guarantor, and I can send a request!"},
+  {id:'screenshot', title:'Screenshot Paystubs Rejected (Not Plaid-Verifiable)', template:
+    "Thank you for submitting your proof of income. The paystubs uploaded are screenshots, which are not considered verifiable by our Plaid system.\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nThank you for your cooperation. Please let us know if you have any questions."},
+  {id:'general', title:'General Template — Any Reason', template:
+    "We reviewed the documentation you submitted; however, we are unable to use it to verify qualifying income because [brief, specific reason]. To continue your application, please provide [specific documentation needed]."},
+];
+
+// Item types:
+//   {type:'simple', text:'...'} — plain checkbox
+//   {type:'branch', id:'...', text:'...', options:['A','B'], subChecksByOption:{A:['...','...']}, note:'...'}
+//     — pick one option; picking an option that has subChecksByOption entries
+//     reveals its own sub-checkboxes. `note` (optional) always shows above
+//     the options, e.g. reference SOP text.
 const CHECKLIST_SECTIONS = [
+  {key:'inProgress', title:'Application in Progress', color:'#1d4ed8', bg:'#dbeafe',
+    note: "📌 Standard (per Lauren — effective immediately, outgoing applicant emails and call activity are being monitored): never send the generic Funnel income template as-is. Personalize it — explain the SPECIFIC reason their documentation couldn't be used and SPECIFICALLY what's needed instead. Every documentation request must be preceded or followed by a call attempt, documented regardless of whether you reach them. A few extra minutes upfront prevents days of back-and-forth, office visits, and cancellations.",
+    hasSpielLibrary: true,
+    items:[
+      {type:'simple', text:"Reviewed exactly what was submitted and identified the specific reason it's insufficient"},
+      {type:'simple', text:'Personalized the email — explained the specific reason and specific documentation needed (not the generic Funnel template)'},
+      {type:'simple', text:'Made a call attempt to walk the applicant through the request'},
+      {type:'simple', text:'Documented the call attempt (reached or not reached)'},
+    ],
+  },
   {key:'approve', title:'Before Approving', color:'#0369a1', bg:'#e0f2fe', items:[
-    'Income verified, no duplicate sources, name match',
-    'Assets verified, no duplicate sources, amounts match, dates in range, name match',
-    'Warnings reviewed and addressed, if applicable',
-    'Screenings reviewed',
+    {type:'simple', text:'Income verified, no duplicate sources, name match'},
+    {type:'simple', text:'Assets verified, no duplicate sources, amounts match, dates in range, name match'},
+    {type:'simple', text:'Warnings reviewed and addressed, if applicable'},
+    {type:'simple', text:'Screenings reviewed'},
   ]},
   {key:'lease', title:'Before Sending Lease', color:'#92400e', bg:'#fef3c7', items:[
-    'Unit number verified',
-    'Move-in date verified',
-    'Move-out date verified',
-    'Lease term verified',
-    'Rate verified, matches Reba Matrix',
-    'Deposit verified, standard deposit, 1-month rent, 1.5-month rent, or Jetty uploaded',
-    'Concessions verified, match memo and current rate',
-    'Animals, fees match approved Pet Screening',
-    'Rentable items marked "unrentable"',
-    'Lease Sent 😊',
+    {type:'simple', text:'CT Memo matched Lease Term Details (Unit Number, MI Date)'},
+    {type:'simple', text:'Rate Verified (Reba Matrix uploaded by CT)'},
+    {type:'branch', id:'jetty', text:'Separate Deposit and Jetty',
+      options:['Using Jetty','Standard Deposit'],
+      subChecksByOption:{'Using Jetty':['Jetty bond is uploaded','Deposit amount matched']},
+    },
+    {type:'branch', id:'concessions', text:'Concessions',
+      options:['Yes','No'],
+      subChecksByOption:{'Yes':['Added concession per notes']},
+    },
+    {type:'branch', id:'pets', text:'Pets',
+      options:['With Pets','Without Pets'],
+      subChecksByOption:{'With Pets':['Checked Pet Screening approval','Checked applicable fees (No fees if ESA)']},
+    },
+    {type:'branch', id:'rentable', text:'Rentable Item',
+      note:'📌 SOP: The AA must review the carports (or any rentable item) assigned to residents and confirm they aren\'t already marked unrentable in Yardi. If the space IS marked unrentable already, communicate with the onsite team to confirm it wasn\'t already assigned to someone else. If the space is NOT marked unrentable, mark it unrentable so the onsite team knows it\'s taken. This applies to all rentable items, not just carports.',
+      options:['Already Marked Unrentable','Not Yet Marked'],
+      subChecksByOption:{'Not Yet Marked':['Task created to CT to confirm rentable item — Lease not sent yet']},
+    },
+    {type:'simple', text:'Lease Sent 😊'},
   ]},
   {key:'sysBefore', title:'Before Counter Signing', color:'#166534', bg:'#dcfce7', hasRevisionToggle:true, items:[
-    'Reba Matrix uploaded',
-    'Memo uploaded',
-    'Jetty bond uploaded, if applicable',
-    "Unit matches Yardi",
-    'Lease dates match Yardi',
-    'Rate matches Yardi',
-    'Lease Countersigned',
+    {type:'simple', text:'Reba Matrix uploaded'},
+    {type:'simple', text:'Memo uploaded'},
+    {type:'simple', text:'Jetty bond uploaded, if applicable'},
+    {type:'simple', text:'Unit matches Yardi'},
+    {type:'simple', text:'Lease dates match Yardi'},
+    {type:'simple', text:'Rate matches Yardi'},
+    {type:'simple', text:'Lease Countersigned'},
   ]},
   {key:'sysAfter', title:'System Accuracy After Countersign', color:'#6d28d9', bg:'#ede9fe', items:[
-    "Rentable items marked \"rentable\" and assigned on the resident's Yardi Move In Calculator",
-    "Unit matches Yardi",
-    'Lease dates match Yardi',
-    'Rate matches Yardi',
+    {type:'simple', text:"Rentable items marked \"rentable\" and assigned on the resident's Yardi Move In Calculator"},
+    {type:'simple', text:'Unit matches Yardi'},
+    {type:'simple', text:'Lease dates match Yardi'},
+    {type:'simple', text:'Rate matches Yardi'},
   ]},
 ];
 function setChecklistRevision(val){
@@ -3605,20 +3650,63 @@ function toggleChecklistItem(id){
   state.checklistChecked[id]=!state.checklistChecked[id];
   render();
 }
+function toggleChecklistSection(key){
+  state.checklistExpandedSections[key] = !state.checklistExpandedSections[key];
+  render();
+}
+function setChecklistBranch(itemId, option){
+  state.checklistBranchSelected[itemId] = state.checklistBranchSelected[itemId]===option ? null : option;
+  render();
+}
+function toggleChecklistSubItem(subId){
+  state.checklistSubChecked[subId] = !state.checklistSubChecked[subId];
+  render();
+}
+function toggleSpielCard(id){
+  state.checklistSpielOpen = state.checklistSpielOpen===id ? null : id;
+  render();
+}
+function copySpielTemplate(id, btn){
+  const spiel = INCOME_VERIFICATION_SPIELS.find(s=>s.id===id);
+  if(!spiel) return;
+  navigator.clipboard.writeText(spiel.template).then(()=>{
+    if(btn){
+      const original = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(()=>{ btn.textContent = original; }, 1500);
+    }
+  });
+}
 function resetChecklist(){
   state.checklistChecked={};
   state.checklistCopyMsg='';
   state.checklistRevision='';
+  state.checklistBranchSelected={};
+  state.checklistSubChecked={};
   render();
 }
 function finalizeChecklist(){
   const lines=[];
   CHECKLIST_SECTIONS.forEach(sec=>{
-    const checkedItems = sec.items.filter((_,i)=>state.checklistChecked[sec.key+i]);
     const revisionLine = (sec.hasRevisionToggle && state.checklistRevision)
       ? [state.checklistRevision==='with' ? 'With Revision' : 'Without Revision']
       : [];
-    const allLines = [...revisionLine, ...checkedItems.map(item=>'✅ '+item)];
+    const itemLines = [];
+    sec.items.forEach((item,i)=>{
+      if(item.type==='branch'){
+        const selected = state.checklistBranchSelected[item.id];
+        if(!selected) return;
+        itemLines.push(`${item.text}: ${selected}`);
+        const subChecks = (item.subChecksByOption && item.subChecksByOption[selected]) || [];
+        subChecks.forEach((sub,si)=>{
+          const subId = item.id+'_'+si;
+          if(state.checklistSubChecked[subId]) itemLines.push('   ✅ '+sub);
+        });
+      } else {
+        if(state.checklistChecked[sec.key+i]) itemLines.push('✅ '+item.text);
+      }
+    });
+    const allLines = [...revisionLine, ...itemLines];
     if(allLines.length){
       lines.push(sec.title+':');
       allLines.forEach(item=>lines.push('- '+item));
@@ -3635,6 +3723,8 @@ function finalizeChecklist(){
     state.checklistCopyMsg='✓ Copied to clipboard. Checklist cleared for the next file.';
     state.checklistChecked={};
     state.checklistRevision='';
+    state.checklistBranchSelected={};
+    state.checklistSubChecked={};
     render();
   };
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -3653,7 +3743,10 @@ function finalizeChecklist(){
 function renderChecklist(){
   const SECTIONS = CHECKLIST_SECTIONS;
   const totalItems = SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
-  const checkedCount = Object.values(state.checklistChecked).filter(Boolean).length;
+  const isItemDone = (sec,item,i) => item.type==='branch'
+    ? !!state.checklistBranchSelected[item.id]
+    : !!state.checklistChecked[sec.key+i];
+  const checkedCount = SECTIONS.reduce((s,sec)=>s+sec.items.filter((item,i)=>isItemDone(sec,item,i)).length, 0);
 
   return`
     <div class="page-header" style="background:linear-gradient(135deg,#065f46 0%,#10b981 100%)">
@@ -3669,13 +3762,41 @@ function renderChecklist(){
       </div>
 
       ${SECTIONS.map(sec=>{
-        const secChecked = sec.items.filter((_,i)=>state.checklistChecked[sec.key+i]).length;
+        const secChecked = sec.items.filter((item,i)=>isItemDone(sec,item,i)).length;
+        const isOpen = !!state.checklistExpandedSections[sec.key];
         return`
         <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:14px">
-          <div style="padding:10px 16px;background:${sec.bg};display:flex;align-items:center;justify-content:space-between">
+          <div style="padding:10px 16px;background:${sec.bg};display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleChecklistSection('${sec.key}')">
             <div style="font-size:12.5px;font-weight:800;color:${sec.color};text-transform:uppercase;letter-spacing:.04em">${sec.title}</div>
-            <div style="font-size:11px;font-weight:700;color:${sec.color}">${secChecked}/${sec.items.length}</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:11px;font-weight:700;color:${sec.color}">${secChecked}/${sec.items.length}</div>
+              <span style="font-size:12px;color:${sec.color};transition:transform .15s;transform:rotate(${isOpen?'180deg':'0deg'})">▾</span>
+            </div>
           </div>
+          ${isOpen?`
+          ${sec.note?`
+          <div style="padding:12px 16px;border-top:1px solid #f1f5f9;background:#fffbeb">
+            <div style="font-size:11.5px;color:#92400e;line-height:1.6">${sec.note}</div>
+          </div>`:''}
+          ${sec.hasSpielLibrary?`
+          <div style="padding:12px 16px;border-top:1px solid #f1f5f9">
+            <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📧 Spiel Templates — personalize before sending, don't paste as-is</div>
+            ${INCOME_VERIFICATION_SPIELS.map(spiel=>{
+              const spielOpen = state.checklistSpielOpen===spiel.id;
+              return`
+              <div style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;overflow:hidden">
+                <div onclick="toggleSpielCard('${spiel.id}')" style="padding:9px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:#f8fafc">
+                  <span style="font-size:12px;font-weight:700;color:#0f172a">${spiel.title}</span>
+                  <span style="font-size:11px;color:#94a3b8;transform:rotate(${spielOpen?'180deg':'0deg'})">▾</span>
+                </div>
+                ${spielOpen?`
+                <div style="padding:12px;background:#fff">
+                  <div style="font-size:12px;color:#334155;line-height:1.7;white-space:pre-line;background:#f8fafc;border-radius:8px;padding:10px;margin-bottom:8px">${spiel.template}</div>
+                  <button onclick="copySpielTemplate('${spiel.id}', this)" style="width:100%;padding:8px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer">📋 Copy Template</button>
+                </div>`:''}
+              </div>`;
+            }).join('')}
+          </div>`:''}
           ${sec.hasRevisionToggle?`
           <div style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid #f1f5f9;align-items:center">
             <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-right:2px">Lease:</span>
@@ -3683,14 +3804,38 @@ function renderChecklist(){
             <button onclick="setChecklistRevision('without')" style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${state.checklistRevision==='without'?sec.color:sec.color+'55'};background:${state.checklistRevision==='without'?sec.color:'#fff'};color:${state.checklistRevision==='without'?'#fff':sec.color}">Without Revision</button>
           </div>`:''}
           ${sec.items.map((item,i)=>{
+            if(item.type==='branch'){
+              const selected = state.checklistBranchSelected[item.id];
+              const subChecks = (selected && item.subChecksByOption && item.subChecksByOption[selected]) || [];
+              return`
+              <div style="padding:10px 16px;border-top:1px solid #f1f5f9">
+                <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-bottom:8px">${item.text}</div>
+                ${item.note?`<div style="font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.5">${item.note}</div>`:''}
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:${subChecks.length?'8px':'0'}">
+                  ${item.options.map(opt=>`
+                    <button onclick="setChecklistBranch('${item.id}','${opt.replace(/'/g,"\\'")}')" style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${selected===opt?sec.color:sec.color+'55'};background:${selected===opt?sec.color:'#fff'};color:${selected===opt?'#fff':sec.color}">${opt}</button>
+                  `).join('')}
+                </div>
+                ${subChecks.map((sub,si)=>{
+                  const subId = item.id+'_'+si;
+                  const subChecked = !!state.checklistSubChecked[subId];
+                  return`
+                  <label style="display:flex;align-items:flex-start;gap:9px;padding:6px 0 6px 10px;cursor:pointer">
+                    <input type="checkbox" ${subChecked?'checked':''} onchange="toggleChecklistSubItem('${subId}')" style="width:15px;height:15px;margin-top:1px;flex-shrink:0;accent-color:#16a34a;cursor:pointer"/>
+                    <span style="font-size:12px;color:${subChecked?'#94a3b8':'#475569'};line-height:1.5;text-decoration:${subChecked?'line-through':'none'}">${sub}</span>
+                  </label>`;
+                }).join('')}
+              </div>`;
+            }
             const id=sec.key+i;
             const checked=!!state.checklistChecked[id];
             return`
             <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-top:1px solid #f1f5f9;cursor:pointer">
               <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${id}')" style="width:16px;height:16px;margin-top:1px;flex-shrink:0;accent-color:#16a34a;cursor:pointer"/>
-              <span style="font-size:12.5px;color:${checked?'#94a3b8':'#334155'};line-height:1.55;text-decoration:${checked?'line-through':'none'};display:flex;align-items:center;gap:7px">${checked?'<span style="text-decoration:none">✅</span>':''}${item}</span>
+              <span style="font-size:12.5px;color:${checked?'#94a3b8':'#334155'};line-height:1.55;text-decoration:${checked?'line-through':'none'};display:flex;align-items:center;gap:7px">${checked?'<span style="text-decoration:none">✅</span>':''}${item.text}</span>
             </label>`;
           }).join('')}
+          `:''}
         </div>`;
       }).join('')}
 
