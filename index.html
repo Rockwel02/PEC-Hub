@@ -681,10 +681,30 @@ const KB = [
 
 const SPIELS = [
   // Qualification & Applications
-  {id:900, title:'\u26A0\uFE0F Rental Criteria & Qualification \u2014 Moved',cat:'Qualification & Applications',recordingUrl:'',aaa:{
-    acknowledge:'These spiels have been retired.',
-    answer:'Rental qualifications, income requirements, credit, cosigner/guarantor, eviction history, and criminal history questions now live in the LIVE CALL GUIDE, under "If They Ask About..." \u2192 Rental Criteria & Qualification. The Call Guide version is market-specific and read VERBATIM from the published Qualification Criteria document, which is what keeps our answers consistent for every caller. The old free-text versions here were not market-gated and could give two callers two different answers.',
-    ask:'Open the Live Call Guide and select the market before answering any criteria question.'
+  {id:1, title:'Rental Qualifications',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'Great question — it\'s smart to know what we look for before you apply.',
+    answer:'Our rental qualifications include meeting the income requirement of xx times the rent, along with credit, rental, and background screening conducted through TransUnion.',
+    ask:'Would you like me to send over our full rental criteria so you have all the details handy?'
+  }},
+  {id:2, title:'Will I Get Approved?',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'I completely understand wanting some certainty before applying.',
+    answer:'We welcome all individuals who apply and meet the qualifying requirements. Approval isn\'t guaranteed and is based on several factors in our rental criteria.',
+    ask:'Would you like me to walk you through that criteria now, or email it over so you can review it on your own time?'
+  }},
+  {id:3, title:'Credit is Low — Should I Still Apply?',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'Thanks for being upfront about that — it shows you\'re thinking this through carefully.',
+    answer:'Credit, eviction, and criminal history are all reviewed as part of TransUnion\'s screening process, and the result of that screening is what determines whether you\'ll be approved, conditionally approved, or denied.',
+    ask:'Would it help if I sent over our rental criteria so you can see exactly how that\'s weighed before deciding whether to apply?'
+  }},
+  {id:4, title:'Can I Add a Cosigner?',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'That\'s a fair thing to ask about, especially if you want extra support on the income side.',
+    answer:'We don\'t offer co-signers, but you can add a guarantor for income purposes — they\'d need to qualify at 4 times the rent for their income to qualify. They also have the option to qualify using their assets instead, calculated as Rate x Lease Term x 4 for CO communities, and either their income or asset would be used for your approval.',
+    ask:'Do you have someone in mind who might be able to qualify as a guarantor?'
+  }},
+  {id:5, title:'Eviction History',cat:'Qualification & Applications',recordingUrl:'',aaa:{
+    acknowledge:'I appreciate you bringing that up directly — that helps me give you the clearest answer.',
+    answer:'We welcome anyone who applies and meets our qualifications. Rental history, including evictions, is part of the screening process.',
+    ask:'Would you like me to share our rental criteria so you can see exactly how that factors in before you apply?'
   }},
   {id:6, title:'Section 8 / Housing Voucher',cat:'Qualification & Applications',recordingUrl:'',aaa:{
     acknowledge:'Thanks for letting me know — that\'s good context for me to have, and I want to make sure you get connected with the right person on this too.',
@@ -697,8 +717,8 @@ const SPIELS = [
     ask:'Once you\'ve had a chance to reach out to them, would it be okay if I followed up with you in a few days to see where things stand?'
   }},
   {id:8, title:'Application Denial — Dispute Guidance',cat:'Qualification & Applications',recordingUrl:'',aaa:{
-    acknowledge:'I did look at your application, and I want to be honest with you about where things stand.',
-    answer:'I\'m not able to go into the specific reason on my end, and I don\'t want to guess at it either. What I can tell you is that the screening is run by TransUnion, and they can walk you through the details and handle a dispute if something isn\'t right. Their contact information is in the screening results email you received. This isn\'t something our team is able to review or override.',
+    acknowledge:'I checked your application and I can see the decision was based on your [credit / criminal screening / eviction history] — I want to be honest with you about that.',
+    answer:'This is something our team isn\'t able to review or override on our end. For disputes or additional information, you\'d need to contact TransUnion directly — their contact details are in the screening results email you received.',
     ask:'I\'m sorry I couldn\'t bring you better news today, but is there anything else I can help you with?'
   }},
   // Pricing & Budget
@@ -1933,9 +1953,9 @@ const PRICING_SCENARIOS = [
 ];
 
 // Real content — Spiels Library, "Qualification & Applications" category
-// The 7 market criteria sets Avanti operates under, each with its own
-// Qualification Criteria document. Selecting a market determines which
-// VERBATIM policy text shows below — read it exactly as written.
+// The 8 markets Avanti operates in, each with its own Qualification
+// Criteria document. Selecting a market determines which VERBATIM policy
+// text shows below — read it exactly as written, no paraphrasing.
 const QUAL_MARKETS = [
   {id:'AZ', label:'Arizona'},
   {id:'CO', label:'Colorado'},
@@ -1943,10 +1963,12 @@ const QUAL_MARKETS = [
   {id:'UT', label:'Utah'},
   {id:'TN', label:'Tennessee'},
   {id:'KC', label:'KC'},
+  {id:'NONKC', label:'Non-KC'},
   {id:'KSMO', label:'Kansas-Missouri'},
 ];
 
 // Direct links to each market's Rental Criteria document, confirmed live.
+// Non-KC is still pending — ask Rowel for that one when he has it.
 const QUAL_DOCUMENT_LINKS = {
   AZ: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Arizona-Qualification-Criteria.pdf',
   CO: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Colorado-Qualification-Criteria-1.pdf',
@@ -1954,6 +1976,7 @@ const QUAL_DOCUMENT_LINKS = {
   UT: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Utah-Qualification-Criteria.pdf',
   TN: 'https://avantiresidential.com/wp-content/uploads/sites/2/2026/04/Tennessee-Qualification-Criteria-1-1.2.pdf',
   KC: 'https://avantiresidential.com/wp-content/uploads/sites/2/2026/01/KC-Qualification-Criteria-2.pdf',
+  NONKC: null,
   KSMO: 'https://avantiresidential.com/wp-content/uploads/sites/2/2025/04/Kansas-Missouri-Qualification-Criteria.pdf',
 };
 
@@ -1969,6 +1992,7 @@ const QUALIFICATION_SCENARIOS = [
       UT: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
       TN: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify gross income equal to two and a half (2.5) times the monthly tenant paid rental amount or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
       KC: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      NONKC: "As per our Rental Criteria, all applicants 18 and older must complete a digital income verification process to verify a combined gross income equal to two and a half (2.5) times the monthly tenant paid rental value of the unit, or certify a zero-income contribution to the household. If the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
       KSMO: "As per our Rental Criteria, applicant must supply verifiable proof of funds equal to two and a half (2.5) times the monthly tenant paid rent. If an applicant's income is nonsufficient, a guarantor may be required. If a guarantor is required, the guarantor's income must be equal to four (4) times the tenant paid rental amount and provide proof of funds.",
     },
     ask: QUAL_STANDARD_ASK,
@@ -1987,6 +2011,7 @@ const QUALIFICATION_SCENARIOS = [
       UT: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
       TN: "As per our Rental Criteria, an unsatisfactory credit report will result in the requirement of an additional security deposit, the requirement of a guarantor, or denial. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
       KC: "As per our Rental Criteria, applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, the commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that shows an absence of established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
+      NONKC: "As per our Rental Criteria, applicants that receive an unsatisfactory credit report may be required to provide an additional security deposit, a commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means a report that lacks established credit or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgements, foreclosures, or bankruptcies.",
       KSMO: "As per our Rental Criteria, an applicant with an unsatisfactory (negative) credit report will be denied. Excessive collection accounts will result in denial of the rental application. An applicant whose credit report contains more negative than positive history may be approved subject to an additional deposit. Bankruptcy (regardless of discharge) or repossession within the last two (2) years may be grounds for denial of the application or may require an additional deposit for approval.",
     },
     ask: QUAL_STANDARD_ASK,
@@ -2000,6 +2025,7 @@ const QUALIFICATION_SCENARIOS = [
       UT: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
       TN: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify four (4) times the tenant paid rental amount.",
       KC: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
+      NONKC: "As per our Rental Criteria, if the verified income is insufficient, a guarantor will be required to digitally verify a gross income equal to four (4) times the tenant paid rental value of the unit.",
       KSMO: "As per our Rental Criteria, acceptable guarantors must reside in the United States and qualify in each of the above categories. An additional deposit may be accepted if a qualified guarantor is not available under certain circumstances.",
     },
     ask: QUAL_STANDARD_ASK,
@@ -2013,6 +2039,7 @@ const QUALIFICATION_SCENARIOS = [
       UT: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
       TN: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may need additional deposits or a guarantor.",
       KC: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
+      NONKC: "As per our Rental Criteria, negative rental history, such as evictions, disturbances, or previous move out damages may result in denial. First-time renters may be required to provide additional deposits or a guarantor.",
       KSMO: "As per our Rental Criteria, all occupants 18 and over (except first-time renters) must have at least 6 months of verifiable and positive residency history immediately preceding application. Verification must be performed by a third-party entity. First-time renters or applicants with no verifiable residency history may require payment of an additional deposit or acceptable guarantor in lieu of immediate past rental history.",
     },
     ask: QUAL_STANDARD_ASK,
@@ -2026,45 +2053,13 @@ const QUALIFICATION_SCENARIOS = [
       UT: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
       TN: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check is obtained on each applicant who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
       KC: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions, guilty pleas, or no-contest pleas related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
+      NONKC: "As per our Rental Criteria, to the extent permitted by state and local law, a criminal background check will be obtained for each adult who will reside in the apartment community. Criminal convictions related to homicide, sex crimes, certain drug offenses, and most violent crimes will result in the denial of the rental application.",
       KSMO: "As per our Rental Criteria, any Applicant with felony convictions of Drug Offenses VII, Homicide I, II, III, IV, Sex Crimes Against a Person, Sex Crimes Against a Child, or lifetime registry on any sex offender registry will always result in automatic denial regardless of the disposition date.",
     },
     specialNoteByMarket: {
       KC: "As per our Rental Criteria, 📌 KC-specific: Avanti will only inform the applicant that their application is denied and will NOT provide the reason for denial. If a denied applicant asks why, per Chapter 38 of the Kansas City, Missouri Code of Ordinances, you must affirmatively state it was not on the basis of a protected class or trait, and inform them in writing of their rights under Chapter 38.",
-      FL: "⚠️ Florida wording mentions 'the nature of the offense and the time since.' Reading that often makes the caller volunteer details or ask you to weigh them. Read it, then stop. Do not ask follow-up questions about the offense and do not weigh anything yourself.",
     },
-    guardrails: [
-      "Do NOT ask what the offense was, when it happened, or any detail about it. We do not need it and we cannot act on it.",
-      "Do NOT predict the outcome. Not 'that should be fine' and not 'that will probably be denied.' Both are predictions you are not able to make.",
-      "Do NOT explain, soften, interpret, or add 'so basically what that means is' after reading. Read it, then stop talking.",
-      "Do NOT debate the policy or agree that it is unfair. Stay warm, hand over the document, move to the Ask.",
-      "If the caller volunteers details anyway, acknowledge kindly and move on. Do not write the details into the note.",
-      "Every caller gets the same wording. Consistency is what protects the prospect, the community, and you.",
-    ],
     ask: QUAL_STANDARD_ASK,
-  }},
-  {id:'alreadypaid', title:'"That Was Years Ago" / Fairness Pushback', verbatim:false, aaa:{
-    acknowledge:'I hear you, and that is a fair thing to feel. I am not going to pretend otherwise.',
-    answer:"I want to be straight with you about where I sit in this. The screening is run by a third party against the written criteria, and I am not the one who makes that decision. I would not want to guess and have you counting on it either way, because that would not be fair to you. What I can do is make sure you have the actual criteria in your hands so you are not guessing either. That is the same document our screening team goes by.",
-    guardrails: [
-      "Same destination as 'Will I Get Approved?' — the difference is the acknowledge, not the answer.",
-      "Be transparent about the PROCESS and about your LIMITS. Never be transparent about your opinion of their odds.",
-      "Do not agree the policy is unfair and do not defend it. Both pull you into a conversation you are not authorized to have.",
-      "Never say 'honestly, that sounds like it might be okay.' That is a prediction, and it costs them an application fee.",
-    ],
-    ask: "What is the best email for me to send that to? And while I have you — would you still want to come see the place? There is no application needed to tour.",
-  }},
-  {id:'accommodation', title:'🛑 Disability / Accommodation / Service or Assistance Animal', verbatim:false, aaa:{
-    acknowledge:'Thank you so much for letting me know, I really appreciate you telling me.',
-    answer:"That is something our onsite team handles directly so it gets the right attention from the right person. What I will do is get this over to them today, and someone from the team will reach out to you directly about it.",
-    guardrails: [
-      "STOP HERE. Do not evaluate the request, and do not answer it yourself.",
-      "Do NOT ask what the disability is. We do not need to know and asking creates exposure.",
-      "Do NOT ask for documentation, proof, or a letter. That is not our role.",
-      "Do NOT say 'let me see if we can accommodate that' or 'let me check if that is allowed.' That implies discretion we do not have.",
-      "Do NOT quote pet fees, deposits, or breed restrictions once a service or assistance animal is mentioned.",
-      "Route to onsite the SAME DAY and flag it to Rowel. A callback with no timeframe is how these get lost.",
-    ],
-    ask: "What is the best number to reach you, and is there a time of day that works better for you?",
   }},
 ];
 
@@ -2092,6 +2087,7 @@ const PET_POLICY_SCENARIOS = [
       UT: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
       TN: "As per our Rental Criteria, all households, regardless of pet or animal ownership, are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. Fees and breed restrictions do not apply to qualified service or assistance animals. The following breeds will not be approved: American Staffordshire Terriers, Staffordshire Bull Terrier, Rottweiler, Cane Corso, Presa Canarias, Bull Mastiffs, wolf or wolf hybrids, Pitbulls, and any mix containing aforementioned breeds.",
       KC: "As per our Rental Criteria, all households are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
+      NONKC: "As per our Rental Criteria, all households are required to undergo pet screening to certify their pet or animal status. If approved, a maximum of two (2) pets may reside in an apartment home. An additional deposit, fee, and monthly pet rent may be required upon approval. Animal recertification will be required to ensure up to date licensing and vaccination requirements. The following breeds will not be approved: American Bully, American Staffordshire Terriers, Bull Mastiffs, Cane Corso, Pit Bull, Pit Mix, Presa Canarias, Rottweiler, Staffordshire Bull Terrier, Wolf or Wolf Dog Mix, and any mix containing aforementioned breeds.",
       KSMO: "As per our Rental Criteria, pets are not allowed without Management prior written approval. Cats and dogs welcome with approval; maximum of two (2) pets per apartment. An additional deposit, fee and monthly pet rent will be required for approval. Breed restrictions apply: American Staffordshire Terriers, Staffordshire Bull Terriers, Rottweilers, Cane Corso, Presa Canarias, Bull Mastiffs, Wolf Hybrids, Pitbulls where prohibited by local statute and any mix containing aforementioned breeds. Current rabies vaccination will be required. Applicant is responsible for keeping pet licensing and vaccinations up to date per county requirements.",
     },
     specialNoteByMarket: {
@@ -2841,7 +2837,6 @@ function renderQuickAnswerList(){
                         <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.verbatim?`<span style="font-style:italic;border-left:3px solid #7c3aed;padding-left:8px;display:block">"${answerText}"</span><div style="font-size:10px;color:#94a3b8;margin-top:4px">— read exactly as written, word for word.</div>`:answerText}</span></div>
                         ${specialNote?`<div class="stub-note" style="margin:8px 0">${specialNote}</div>`:''}
                       `:`<div class="stub-note" style="margin:10px 0">📍 Select the market above first.</div>`}
-                      ${s.aaa.guardrails?`<div style=\"background:#fef2f2;border:1px solid #fecaca;border-left:3px solid #b42318;border-radius:6px;padding:8px 10px;margin:8px 0\"><div style=\"font-size:10px;font-weight:800;color:#b42318;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px\">\u26A0\uFE0F Guardrails \u2014 read before you speak</div><ul style=\"margin:0;padding-left:16px;font-size:11px;color:#7f1d1d;line-height:1.5\">${s.aaa.guardrails.map(g=>`<li style=\"margin-bottom:2px\">${g}</li>`).join('')}</ul></div>`:''}
                       <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
                       ${s.id==='realtor_represented'?`
                         <div class="tone-tabs" style="margin-bottom:8px">
@@ -3223,7 +3218,6 @@ function renderQualScenarioList(){
               <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.verbatim?`<span style="font-style:italic;border-left:3px solid #7c3aed;padding-left:8px;display:block">"${answerText}"</span><div style="font-size:10px;color:#94a3b8;margin-top:4px">— read exactly as written, word for word. Don't paraphrase or add your own take.</div>`:answerText}</span></div>
               ${specialNote?`<div class="stub-note" style="margin:8px 0">${specialNote}</div>`:''}
             `:`<div class="stub-note" style="margin:10px 0">📍 Select the community's market above first — the exact wording depends on which state/market this prospect is asking about.</div>`}
-            ${s.aaa.guardrails?`<div style=\"background:#fef2f2;border:1px solid #fecaca;border-left:3px solid #b42318;border-radius:6px;padding:8px 10px;margin:8px 0\"><div style=\"font-size:10px;font-weight:800;color:#b42318;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px\">\u26A0\uFE0F Guardrails \u2014 read before you speak</div><ul style=\"margin:0;padding-left:16px;font-size:11px;color:#7f1d1d;line-height:1.5\">${s.aaa.guardrails.map(g=>`<li style=\"margin-bottom:2px\">${g}</li>`).join('')}</ul></div>`:''}
             <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
             <button class="use-scenario-btn" onclick="event.stopPropagation();useQualScenario('${s.id}')" ${s.verbatim && !marketPicked?'disabled style="opacity:.5;cursor:not-allowed"':''}>${wasUsed?'✓ Logged to note':'✅ Used This Scenario'}</button>
           </div>`:''}
@@ -3782,15 +3776,15 @@ function renderPriorities(){
 // ask, and always pair it with a documented call attempt.
 const INCOME_VERIFICATION_SPIELS = [
   {id:'tax1040', title:'1040 / Tax Return Submitted (Not Accepted)', template:
-    "Thank you for submitting your proof of income. We've reviewed the documents provided; however, we're unable to use the 1040/tax return to verify your qualifying income, as we only accept W-2 and 1099 forms for tax documentation.\n\nTo continue processing your application, please provide one of the following:\n• W-2 or 1099 tax forms\n• Your three most recent pay stubs\n• Link your bank account through the application portal so we can verify your income and assets\n\nIf you have any questions or need assistance submitting the requested documents, please feel free to reach out. We're happy to assist.\n\nThank you for your cooperation."},
+    "Thank you for submitting your proof of income. We've reviewed the documents provided; however, we're unable to use the 1040/tax return to verify your qualifying income, as we only accept W-2 and 1099 forms for tax documentation.\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nPlease let us know if you have any questions. Thank you for your cooperation."},
   {id:'insufficient_paystubs', title:'Insufficient Paystubs (Only 2 Periods, Need 3)', template:
-    "The documents provided only reflect two pay periods, and our income verification requirements call for the three most recent consecutive paystubs. Can you please upload your three most recent paystubs so we can complete the review?"},
+    "The documents provided only reflect two pay periods, and our income verification requirements call for the three most recent consecutive paystubs.\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nPlease let us know if you have any questions. Thank you for your cooperation."},
   {id:'income_below', title:'Income Below Requirement (Guarantor Option)', template:
-    "Your verified income is currently below the requirement for this unit. Do you have additional income sources that have not been counted through your application? If so, we would be happy to send a link for you to upload your additional income. If not, we do offer the option of adding a guarantor, someone who can provide income of 4x the monthly rent to support your application. Please let me know if you would like to proceed with a guarantor, and I can send a request!"},
+    "Your verified income is currently below the requirement for this unit. Do you have additional income sources that have not been counted through your application?\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nPlease let us know if you have any questions. Thank you for your cooperation."},
   {id:'screenshot', title:'Screenshot Paystubs Rejected (Not Plaid-Verifiable)', template:
-    "Thank you for submitting your proof of income. The paystubs uploaded are screenshots, which are not considered verifiable by our Plaid system.\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nThank you for your cooperation. Please let us know if you have any questions."},
+    "Thank you for submitting your proof of income. The paystubs uploaded are screenshots, which are not considered verifiable by our Plaid system.\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nPlease let us know if you have any questions. Thank you for your cooperation."},
   {id:'general', title:'General Template — Any Reason', template:
-    "We reviewed the documentation you submitted; however, we are unable to use it to verify qualifying income because [brief, specific reason]. To continue your application, please provide [specific documentation needed]."},
+    "We reviewed the documentation you submitted; however, we are unable to use it to verify qualifying income because [brief, specific reason].\n\nWe're requesting proof of income/assets. Please provide any of the following:\n• Link Bank Account — should show consistent and recurring income for the past 3 months\n• 3 most recent paystubs — uploaded as PDF files\n• Tax Documents — W-2 or 1099 from 2025\n• Proof of Assets — Rental Rate x Lease Term x 2 (4x for main Guarantors)\n• Add a Guarantor — please let us know if you need to add one\n\nPlease note that screenshots or photos of proof of income cannot be accepted. Documents should also not be password-protected.\n\nPlease let us know if you have any questions. Thank you for your cooperation."},
 ];
 
 // Item types:
@@ -3802,6 +3796,7 @@ const INCOME_VERIFICATION_SPIELS = [
 const CHECKLIST_SECTIONS = [
   {key:'inProgress', title:'Application in Progress', color:'#1d4ed8', bg:'#dbeafe',
     note: "📌 Standard (per Lauren — effective immediately, outgoing applicant emails and call activity are being monitored): never send the generic Funnel income template as-is. Personalize it — explain the SPECIFIC reason their documentation couldn't be used and SPECIFICALLY what's needed instead. Every documentation request must be preceded or followed by a call attempt, documented regardless of whether you reach them. A few extra minutes upfront prevents days of back-and-forth, office visits, and cancellations.",
+    howTo: "🖱️ How to send this: go to the Application, then Request for Income via Plaid through the link — this opens the Communication Modal. Once the template shows, select one of the templates below and customize it to fit the applicant's specific situation before sending.",
     hasSpielLibrary: true,
     items:[
       {type:'simple', text:"Reviewed exactly what was submitted and identified the specific reason it's insufficient"},
@@ -3993,6 +3988,10 @@ function renderChecklist(){
           ${sec.note?`
           <div style="padding:12px 16px;border-top:1px solid #f1f5f9;background:#fffbeb">
             <div style="font-size:11.5px;color:#92400e;line-height:1.6">${sec.note}</div>
+          </div>`:''}
+          ${sec.howTo?`
+          <div style="padding:12px 16px;border-top:1px solid #f1f5f9;background:#eff6ff">
+            <div style="font-size:11.5px;color:#1e40af;line-height:1.6">${sec.howTo}</div>
           </div>`:''}
           ${sec.hasSpielLibrary?`
           <div style="padding:12px 16px;border-top:1px solid #f1f5f9">
