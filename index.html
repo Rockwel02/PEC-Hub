@@ -6207,6 +6207,13 @@ let rbState = {
   done:{},                 // report id -> true (checklist ticks)
   showScript:false,
   recipients:[],
+  // Editable so the run script can name the exact browser profile to use.
+  // Claude in Chrome installs per profile, so with the extension signed in on
+  // both, it can list connected browsers and select the right one by name.
+  profiles:{
+    original:{name:'Rowel',   url:''},
+    pilot:{name:'Rowel_2', url:''},
+  },
   loaded:false,
 };
 
@@ -6354,13 +6361,34 @@ async function rbRemoveRecipient(i){
   await rbSave(); renderPage();
 }
 async function rbSave(){
-  const ok = await saveToFirestore('report_builder', {recipients: rbState.recipients});
+  const ok = await saveToFirestore('report_builder', {recipients: rbState.recipients, profiles: rbState.profiles});
   if(!ok) flagSaveFailed('Report Builder recipients');
   else if(state.syncError) clearSyncIssue();
 }
 function rbHydrate(data){
-  if(data && Array.isArray(data.recipients)) rbState.recipients = data.recipients;
+  if(!data) { rbState.loaded = true; return; }
+  if(Array.isArray(data.recipients)) rbState.recipients = data.recipients;
+  if(data.profiles){
+    ['original','pilot'].forEach(function(k){
+      if(data.profiles[k]){
+        rbState.profiles[k].name = data.profiles[k].name || '';
+        rbState.profiles[k].url  = data.profiles[k].url  || '';
+      }
+    });
+  }
   rbState.loaded = true;
+}
+function rbProfileLabel(eco){
+  const p = rbState.profiles[eco === 'pilot' ? 'pilot' : 'original'];
+  return p && p.name ? p.name : null;
+}
+function rbProfileUrl(eco){
+  const p = rbState.profiles[eco === 'pilot' ? 'pilot' : 'original'];
+  return p && p.url ? p.url : null;
+}
+async function rbSetProfile(eco, field, val){
+  rbState.profiles[eco][field] = val;
+  await rbSave();
 }
 
 // ── RUN BRIEF ────────────────────────────────────────────────────
@@ -6429,6 +6457,9 @@ function rbAgentScript(){
   const L = [];
   let n = 0;
   const step = function(t){ n++; L.push(n+'. '+t); };
+  const ecos = [];
+  if(sp.orig.length)  ecos.push({key:'original', label:'Original Funnel', comms:sp.orig});
+  if(sp.pilot.length) ecos.push({key:'pilot',    label:'Denver Pilot Funnel', comms:sp.pilot});
 
   L.push('RUN THE PEC REPORT');
   L.push('Scope: '+rbScopeLabel());
@@ -6442,18 +6473,38 @@ function rbAgentScript(){
   L.push('Use Claude in Chrome. I am already logged in. Do not ask me to log in again.');
   L.push('If you hit a login screen or a CAPTCHA, stop and tell me instead of guessing.');
   L.push('');
+  // Name the exact browser profile(s) so Claude picks the right session.
+  const named = ecos.filter(function(e){ return rbProfileLabel(e.key); });
+  L.push('BROWSER CONNECTION:');
+  L.push('  You can only be connected to ONE Chrome profile at a time, and you cannot');
+  L.push('  switch on your own. Request a browser connection and I click Connect in the');
+  L.push('  correct window. Say clearly which Funnel you need before each request.');
+  if(named.length){
+    L.push('');
+    named.forEach(function(e){
+      L.push('  '+e.label+' -> I click Connect in the "'+rbProfileLabel(e.key)+'" window'
+        + (rbProfileUrl(e.key) ? ', which runs '+rbProfileUrl(e.key) : ''));
+    });
+  }
+  L.push('');
+  L.push('  VERIFY BEFORE YOU PULL. Once connected, open the Funnel and tell me the URL');
+  L.push('  you landed on. Do not rely on the window name, you cannot see profile names.');
+  L.push('  The URL is the only proof of which system you are in.');
+  L.push('  If you see a login screen, that is the wrong profile or an expired session:');
+  L.push('  stop and tell me, do not try to log in.');
+  L.push('  Pulling from the wrong Funnel produces a clean-looking report about the wrong');
+  L.push('  communities, which is worse than failing outright. Confirm first, every time.');
+  L.push('');
   L.push('PERIOD: '+p.label+'  ('+p.range+')');
   L.push('Set every date filter to this exact range. Do not use the preset names,');
   L.push('they resolve differently depending on the day.');
   L.push('');
 
-  const ecos = [];
-  if(sp.orig.length)  ecos.push({key:'original', label:'Original Funnel', comms:sp.orig});
-  if(sp.pilot.length) ecos.push({key:'pilot',    label:'Denver Pilot Funnel', comms:sp.pilot});
-
   if(sp.both){
     L.push('⚠️ THIS RUN SPANS BOTH FUNNELS. They are separate systems in separate');
     L.push('Chrome profiles. Finish one completely, then switch profiles and do the other.');
+    L.push('Do not assume both Funnels are reachable from one profile. They are not.');
+    L.push('Expect TWO connection requests this run, one per Funnel. That is normal.');
     L.push('');
   }
 
@@ -6469,7 +6520,11 @@ function rbAgentScript(){
     if(!relevant.length) return;
     if(ecos.length > 1){
       L.push('--- '+e.label+' ('+e.comms.length+' communities) ---');
-      L.push('Switch to the Chrome profile signed into this Funnel first.');
+      L.push('STOP. Request a browser connection for the '+e.label+' now'
+        + (rbProfileLabel(e.key) ? ', and tell me to click Connect in the "'+rbProfileLabel(e.key)+'" window' : '')
+        + '.');
+      L.push('Wait for me to connect. Then open the Funnel, confirm the URL out loud,');
+      L.push('and only start the steps below once I have agreed it is the right one.');
       L.push('');
     }
     relevant.forEach(function(r){
@@ -6815,7 +6870,7 @@ function renderReportBuilder(){
       + (rbUrlTooLong() ? '<br><br>\u26a0\ufe0f This script is long, so it opens a blank Claude window instead of prefilling. It is already on your clipboard, just paste.' : '')
       + '<br><br><b>Why not fully automatic:</b> the Hub is a web page, so it cannot use your Funnel login or save files to your computer. Claude in Chrome can, because it drives the real browser you are already signed into.'
       + '</div>'
-      + (sp.both ? '<div style="margin-top:10px;background:rgba(255,255,255,.15);border-radius:8px;padding:9px 11px;color:#fff;font-size:11.5px;line-height:1.5">⚠️ Two Funnels this run. The script pauses between them so you can switch Chrome profiles.</div>' : '')
+      + (sp.both ? '<div style="margin-top:10px;background:rgba(255,255,255,.15);border-radius:8px;padding:9px 11px;color:#fff;font-size:11.5px;line-height:1.5">⚠️ Two Funnels this run, so expect <b>two Connect prompts</b>, one per window. That is the safety gate working, not an error.</div>' : '')
       + '<button class="btn" style="background:rgba(255,255,255,.15);color:#fff;margin-top:12px;width:100%" onclick="rbToggleScript()">'+(rbState.showScript?'Hide the script':'Preview the script')+'</button>'
       + '</div>';
 
@@ -6834,6 +6889,24 @@ function renderReportBuilder(){
     h += '<div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;padding:22px;text-align:center;color:#64748b;font-size:13px">'
       + 'Pick at least one report above and the pull checklist appears here.</div>';
   }
+
+  // BROWSER PROFILES
+  const pf = function(eco, label){
+    const p = rbState.profiles[eco];
+    return '<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:11px;margin-bottom:8px">'
+      + '<div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:7px">'+label+'</div>'
+      + '<input class="eod-select" style="margin-bottom:7px" placeholder="Chrome profile name, e.g. Work" value="'+rbEsc(p.name)+'" onchange="rbSetProfile(\''+eco+'\',\'name\',this.value)">'
+      + '<input class="eod-select" style="margin-bottom:0" placeholder="Funnel URL for this profile" value="'+rbEsc(p.url)+'" onchange="rbSetProfile(\''+eco+'\',\'url\',this.value)">'
+      + '</div>';
+  };
+  const anyProfile = rbState.profiles.original.name || rbState.profiles.pilot.name;
+  h += '<div style="background:#fff;border:1.5px solid '+(anyProfile?'#e2e8f0':'#fde68a')+';border-radius:14px;padding:16px;margin-top:14px">'
+    + '<label class="eod-label">Browser profiles</label>'
+    + '<div style="font-size:11.5px;color:#64748b;margin-bottom:11px;line-height:1.55">Name the Chrome profile each Funnel is signed into. The run script tells Claude which browser to select, so it never pulls from the wrong ecosystem. Install Claude in Chrome in both profiles and sign in on each.</div>'
+    + pf('original','Original Funnel')
+    + pf('pilot','Denver Pilot Funnel')
+    + (anyProfile ? '' : '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 11px;font-size:11px;color:#92400e;line-height:1.5">Not set yet. Until you fill these in, the script just says "the profile signed into this Funnel" and leaves the choice to you.</div>')
+    + '</div>';
 
   // RECIPIENTS
   h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:14px">'
