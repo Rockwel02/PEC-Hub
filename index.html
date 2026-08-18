@@ -528,6 +528,9 @@ async function hydrateFromFirestore(){
   if(remote.card_photos && remote.card_photos.map){
     csPhotos = remote.card_photos.map;
   }
+  if(remote.report_builder){
+    rbHydrate(remote.report_builder);
+  }
   if(remote.call_listening_links){
     state.clwSheetUrl  = remote.call_listening_links.sheetUrl  || state.clwSheetUrl;
     state.clwFolderUrl = remote.call_listening_links.folderUrl || state.clwFolderUrl;
@@ -1046,6 +1049,7 @@ const NAV = [
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
   {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
   {id:'cards', label:'Welcome Cards', icon:'🔒', managerOnly:true},
+  {id:'reports', label:'Report Builder', icon:'🔒', managerOnly:true},
 ];
 
 // Guests see first names only, everywhere a team member's name is shown —
@@ -6077,6 +6081,542 @@ function renderCardStudio(){
 }
 
 // ── RENDER ────────────────────────────────────────────────────────
+// ── REPORT BUILDER (Manager only) ────────────────────────────────
+// Turns the Report Recipe Book into a guided runner. Four selections
+// (Scope, Period, Reports, Format) produce an exact pull checklist with
+// every filter pre-resolved, plus a run brief to paste into Claude.
+//
+// Community, market and ecosystem all read from cmMarketsData so there is
+// only ever one community list in the Hub. Denver Pilot membership is a
+// separate flag because it does NOT match the market grouping: Mountain
+// Village sits in the Springs market but pulls from the Pilot Funnel.
+//
+// Firestore doc: pechub/report_builder  { recipients: [...], last: {...} }
+// Text only, a few KB. Raw CSVs stay on the desktop, never uploaded.
+
+const RB_PILOT_IDS = ['29x','beacon','centrecourt','copperridge','forumfitz',
+                      'sunsetpeak','economist','heightshuron','overland','mountainvillage'];
+
+// Service model drives the Snapshot Status filter, not the ecosystem.
+// PEC   = agents handle Prospects AND Applicants
+// Legacy = Prospects only, Applications handled by a separate team
+function rbServiceModel(id){ return RB_PILOT_IDS.includes(id) ? 'PEC' : 'Legacy'; }
+function rbEcosystem(id){ return RB_PILOT_IDS.includes(id) ? 'pilot' : 'original'; }
+
+const RB_PRESETS = [
+  {id:'today',    label:'Today'},
+  {id:'prevweek', label:'Previous week'},
+  {id:'prevmonth',label:'Previous month'},
+  {id:'prevqtr',  label:'Previous quarter'},
+  {id:'mtd',      label:'Month to date'},
+  {id:'qtd',      label:'Quarter to date'},
+  {id:'ytd',      label:'Year to date'},
+  {id:'custom',   label:'Custom range'},
+];
+
+const RB_REPORTS = [
+  {id:'attribution', name:'Marketing Attribution', kind:'Cohort',
+   set:['leadership','community'],
+   path:'Reports > Attributions > Marketing Attribution',
+   dateField:'Lead Created Date',
+   download:'Click the total number of leads to load the detail view, then download',
+   purpose:'The new lead cohort and its conversion. Source of truth for Total Leads.'},
+
+  {id:'tours', name:'Tour Report', kind:'Activity',
+   set:['leadership','community'],
+   path:'Reports > Tours',
+   dateField:'Tour Scheduled For Date',
+   download:'Click the total number of tours to load the detail view, then download',
+   purpose:'The real tour board, PEC booking impact, and show-up performance.'},
+
+  {id:'loss', name:'Loss Reason', kind:'Cohort',
+   set:['leadership','community'],
+   path:'Reports > Loss Reasons',
+   dateField:'Lost Date',
+   download:'Click the total number to load the detail view, then download',
+   purpose:'Why we are losing prospects, and whether it is follow-up or inventory/pricing.'},
+
+  {id:'status', name:'Prospect Status', kind:'Activity',
+   set:['community'],
+   path:'Reports > Prospect Status',
+   dateField:'Date',
+   download:'⚠️ No drill-in. Click the THREE DOTS in the upper right corner, then download',
+   purpose:'Current pipeline, ownership, who is still being worked.'},
+
+  {id:'warmhandoff', name:'Warm Handoff', kind:'Task',
+   set:['leadership'],
+   path:'Reports > Tasks',
+   dateField:'Date',
+   extra:['More > Automarketing Trigger = "Warm handoff call"'],
+   note:'Wait for the Automarketing Trigger list to finish loading. Warm handoff call sits at the bottom.',
+   download:'Download the task detail',
+   purpose:'How actively onsite connects with the prospect before the tour.'},
+
+  {id:'phone', name:'Phone (Missed Calls)', kind:'Activity',
+   set:['leadership'],
+   splitPath:true,
+   path:'Reports > Communication > Phone',
+   pilotPath:'Reports > Contact Center > Phones',
+   dateField:'Date',
+   extra:['During Business Hours = Yes'],
+   snapshot:true,
+   download:'Export the report',
+   purpose:'Answer rate. Goal is 10% missed or lower.'},
+
+  {id:'agentactivity', name:'Agent Activity (Scores)', kind:'Activity',
+   set:['leadership'],
+   path:'Reports > Activity > Agent Activity',
+   dateField:'Date',
+   snapshot:true,
+   agentFilter:true,
+   download:'Export the report',
+   purpose:'Lead Engagement and Task Management. Goal is 9 for both.'},
+
+  {id:'engagement', name:'Engagement Volume', kind:'Activity',
+   set:['leadership'],
+   path:'Reports > Communication > Engagement',
+   dateField:'Date',
+   extra:['Level of Detail = Summary','Snapshot Status = Prospect, Applicant','Heatmap Detail = Incoming and Outgoing'],
+   agentFilter:true,
+   download:'Export the report',
+   purpose:'Emails, calls out and in, SMS. Shows the work behind the numbers.'},
+
+  {id:'fenix', name:'Fenix (Call Quality)', kind:'External',
+   set:['leadership'],
+   external:true,
+   path:'LeaseHawk > Fenix > Agent Insights > Agent Ranking (Centralized Scorecard Filter)',
+   url:'https://my.leasehawk.com/reporting/Leasehawk%20Application/Fenix/Agent%20Insights/Agent%20Ranking%20-%20Centralized%20%5BScorecard%20Filter%5D',
+   download:'Export icon in the UPPER LEFT corner. Excel or CSV',
+   purpose:'Call quality. PEC standard is 90% and above.'},
+];
+
+const RB_FORMATS = [
+  {id:'A', label:'Email + PDF', desc:'Email body max 6 sentences in 2 paragraphs, plus a full PDF under 5 pages with tables, bullets and highlights.'},
+  {id:'B', label:'Email only',  desc:'The entire narrative lives in the email body. No attachment. Tables allowed.'},
+  {id:'C', label:'At a Glance', desc:'Dashboard style. Tables and graphs, raw numbers and percentages paired, green on goal, orange below goal with a short why line.'},
+];
+
+let rbState = {
+  scopeType:'portfolio',   // portfolio | market | community
+  market:'denver',
+  community:'',
+  preset:'prevmonth',
+  from:'', to:'',
+  picked:{},               // report id -> true
+  format:'A',
+  benchmark:'',
+  done:{},                 // report id -> true (checklist ticks)
+  recipients:[],
+  loaded:false,
+};
+
+// ── DATE RESOLUTION ──────────────────────────────────────────────
+// Always resolved against the US business date (Mountain Time), never
+// Manila time, so a run started at 7am PH doesn't roll to tomorrow.
+function rbToday(){
+  const s = new Date().toLocaleDateString('en-CA',{timeZone:'America/Denver'});
+  const p = s.split('-');
+  return new Date(+p[0], +p[1]-1, +p[2]);
+}
+function rbFmt(d){
+  return d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+}
+function rbIso(d){
+  const m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return d.getFullYear()+'-'+m+'-'+day;
+}
+function rbResolve(){
+  const t = rbToday();
+  let a, b, label;
+  switch(rbState.preset){
+    case 'today':
+      a = b = t; label = rbFmt(t); break;
+    case 'prevweek': {
+      const dow = t.getDay();                       // 0 = Sunday
+      b = new Date(t); b.setDate(t.getDate()-dow-1); // last Saturday
+      a = new Date(b); a.setDate(b.getDate()-6);     // that Sunday
+      label = rbFmt(a)+' to '+rbFmt(b); break;
+    }
+    case 'prevmonth':
+      a = new Date(t.getFullYear(), t.getMonth()-1, 1);
+      b = new Date(t.getFullYear(), t.getMonth(), 0);
+      label = a.toLocaleDateString('en-US',{month:'long',year:'numeric'}); break;
+    case 'prevqtr': {
+      const q = Math.floor(t.getMonth()/3) - 1;
+      const y = q < 0 ? t.getFullYear()-1 : t.getFullYear();
+      const qq = q < 0 ? 3 : q;
+      a = new Date(y, qq*3, 1);
+      b = new Date(y, qq*3+3, 0);
+      label = 'Q'+(qq+1)+' '+y; break;
+    }
+    case 'mtd':
+      a = new Date(t.getFullYear(), t.getMonth(), 1); b = t;
+      label = a.toLocaleDateString('en-US',{month:'long',year:'numeric'})+' month to date'; break;
+    case 'qtd': {
+      const q = Math.floor(t.getMonth()/3);
+      a = new Date(t.getFullYear(), q*3, 1); b = t;
+      label = 'Q'+(q+1)+' '+t.getFullYear()+' quarter to date'; break;
+    }
+    case 'ytd':
+      a = new Date(t.getFullYear(),0,1); b = t;
+      label = t.getFullYear()+' year to date'; break;
+    default:
+      if(!rbState.from || !rbState.to) return {label:'Pick a start and end date', a:null, b:null, range:''};
+      const pa = rbState.from.split('-'), pb = rbState.to.split('-');
+      a = new Date(+pa[0], +pa[1]-1, +pa[2]);
+      b = new Date(+pb[0], +pb[1]-1, +pb[2]);
+      label = rbFmt(a)+' to '+rbFmt(b);
+  }
+  return {label:label, a:a, b:b, range:rbFmt(a)+' to '+rbFmt(b)};
+}
+
+// ── SCOPE ────────────────────────────────────────────────────────
+function rbScopeCommunities(){
+  if(rbState.scopeType === 'community'){
+    for(const key in cmMarketsData){
+      const hit = cmMarketsData[key].communities.find(c=>c.id===rbState.community);
+      if(hit) return [hit];
+    }
+    return [];
+  }
+  if(rbState.scopeType === 'market') return cmMarketsData[rbState.market].communities.slice();
+  const all = [];
+  for(const key in cmMarketsData) all.push.apply(all, cmMarketsData[key].communities);
+  return all;
+}
+function rbScopeLabel(){
+  if(rbState.scopeType === 'community'){
+    const c = rbScopeCommunities()[0];
+    return c ? c.name : 'No community selected';
+  }
+  if(rbState.scopeType === 'market') return cmMarketsData[rbState.market].label;
+  return 'Entire portfolio';
+}
+function rbTeamFilter(){
+  if(rbState.scopeType === 'portfolio')
+    return 'Leave the Team filter EMPTY. It downloads all communities by default.';
+  const list = rbScopeCommunities();
+  if(rbState.scopeType === 'community') return 'Team = '+list[0].name;
+  return 'Team = select all '+list.length+' communities in this market: '+list.map(c=>c.name).join(', ');
+}
+// Which ecosystems does this scope touch, and how does it split?
+function rbSplit(){
+  const list = rbScopeCommunities();
+  const pilot = list.filter(c=>RB_PILOT_IDS.includes(c.id));
+  const orig  = list.filter(c=>!RB_PILOT_IDS.includes(c.id));
+  return {pilot:pilot, orig:orig, both:(pilot.length>0 && orig.length>0)};
+}
+function rbSnapshot(eco){
+  return eco === 'pilot'
+    ? 'Snapshot Status = Prospect, Did Not Rent, Applicant'
+    : 'Snapshot Status = Prospect, Did Not Rent';
+}
+
+// ── SELECTION HANDLERS ───────────────────────────────────────────
+function rbSet(k,v){ rbState[k]=v; if(k!=='benchmark'){ rbState.done={}; } renderPage(); }
+function rbSetScope(t){ rbState.scopeType=t; rbState.done={}; renderPage(); }
+function rbToggleReport(id){ rbState.picked[id]=!rbState.picked[id]; rbState.done={}; renderPage(); }
+function rbToggleDone(id){ rbState.done[id]=!rbState.done[id]; renderPage(); }
+function rbPickSet(which){
+  rbState.picked = {};
+  RB_REPORTS.forEach(function(r){ if(r.set.includes(which)) rbState.picked[r.id]=true; });
+  rbState.done={}; renderPage();
+}
+function rbClearSet(){ rbState.picked={}; rbState.done={}; renderPage(); }
+function rbSelected(){ return RB_REPORTS.filter(r=>rbState.picked[r.id]); }
+
+// ── RECIPIENTS ───────────────────────────────────────────────────
+async function rbAddRecipient(){
+  const n = document.getElementById('rbRecName'), t = document.getElementById('rbRecTitle'), e = document.getElementById('rbRecEmail');
+  if(!n || !n.value.trim()) return;
+  rbState.recipients.push({name:n.value.trim(), title:(t.value||'').trim(), email:(e.value||'').trim()});
+  n.value=''; t.value=''; e.value='';
+  await rbSave(); renderPage();
+}
+async function rbRemoveRecipient(i){
+  if(!confirm('Remove '+rbState.recipients[i].name+' from the recipient list?')) return;
+  rbState.recipients.splice(i,1);
+  await rbSave(); renderPage();
+}
+async function rbSave(){
+  const ok = await saveToFirestore('report_builder', {recipients: rbState.recipients});
+  if(!ok) flagSaveFailed('Report Builder recipients');
+  else if(state.syncError) clearSyncIssue();
+}
+function rbHydrate(data){
+  if(data && Array.isArray(data.recipients)) rbState.recipients = data.recipients;
+  rbState.loaded = true;
+}
+
+// ── RUN BRIEF ────────────────────────────────────────────────────
+// The text block to paste into Claude alongside the downloaded files.
+function rbBrief(){
+  const p = rbResolve(), sp = rbSplit(), sel = rbSelected();
+  const fmt = RB_FORMATS.find(f=>f.id===rbState.format);
+  const L = [];
+  L.push('PEC REPORT RUN');
+  L.push('Scope: '+rbScopeLabel());
+  L.push('Period: '+p.label+(p.range && p.label!==p.range ? '  ('+p.range+')' : ''));
+  L.push('Pulled on: '+rbFmt(rbToday())+' (US Mountain Time)');
+  L.push('Output format: '+fmt.id+' — '+fmt.label);
+  L.push('');
+  L.push('Reports attached:');
+  sel.forEach(function(r){ L.push('  - '+r.name+'  ['+r.kind+']'); });
+  if(rbState.benchmark) { L.push(''); L.push('Fenix industry benchmark this run: '+rbState.benchmark+'%'); }
+  L.push('');
+  if(sp.both){
+    L.push('METHODOLOGY NOTE: this scope spans both Funnel ecosystems.');
+    L.push('  Denver Pilot ('+sp.pilot.length+' communities, PEC service model, Applicant included)');
+    L.push('  Original Funnel ('+sp.orig.length+' communities, Legacy service model, Prospects only)');
+    L.push('  The two halves count different populations. Say so in the report.');
+    L.push('');
+  }
+  L.push('Rules for this run:');
+  L.push('  - State the resolved period in plain language, not the preset name.');
+  L.push('  - Label every Scheduled Tours figure with its source report. Marketing Attribution');
+  L.push('    is cohort, Tour Report is activity. They will not match and that is correct.');
+  L.push('  - Warm Handoff Completion = Completed / (Total - Cancelled - Not Applicable).');
+  L.push('    Bypassed stays in the denominator. A PEC teammate completing it is not a win.');
+  L.push('  - Dedupe the Tour Report on Column B before any rate.');
+  L.push('  - Walk-ins belong to the onsite team. Credit them there.');
+  L.push('  - Recount every figure from the files. No numbers from memory.');
+  L.push('  - Name the reports pulled and attach the raw exports to the email.');
+  L.push('  - No em dashes.');
+  L.push('');
+  L.push(fmt.desc);
+  if(rbState.recipients.length){
+    L.push('');
+    L.push('Recipients:');
+    rbState.recipients.forEach(function(r){
+      L.push('  - '+r.name+(r.title?', '+r.title:'')+(r.email?' <'+r.email+'>':''));
+    });
+  }
+  return L.join('\n');
+}
+function rbCopyBrief(){
+  const t = rbBrief();
+  navigator.clipboard.writeText(t).then(function(){
+    const b = document.getElementById('rbCopyBtn');
+    if(b){ const o=b.textContent; b.textContent='✓ Copied'; setTimeout(function(){b.textContent=o;},1600); }
+  }, function(){ alert('Copy failed. Select the brief text and copy manually.'); });
+}
+function rbEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── CHECKLIST ────────────────────────────────────────────────────
+function rbChecklistCard(r, eco, comms){
+  const p = rbResolve();
+  const isPilot = eco === 'pilot';
+  const path = (r.splitPath && isPilot) ? r.pilotPath : r.path;
+  const rows = [];
+  rows.push(['Path', path]);
+  if(r.external && r.url) rows.push(['Link', '<a href="'+r.url+'" target="_blank" rel="noopener" style="color:#1d4ed8;word-break:break-all">Open in LeaseHawk</a>']);
+  if(!r.external){
+    rows.push([r.dateField, p.range]);
+    if(r.snapshot) rows.push(['Status', rbSnapshot(eco).replace('Snapshot Status = ','')]);
+    (r.extra||[]).forEach(function(x){
+      const i = x.indexOf(' = ');
+      if(i>0) rows.push([x.slice(0,i), x.slice(i+3)]); else rows.push(['Also', x]);
+    });
+    if(r.agentFilter) rows.push(['Agent', 'Select all PEC members from the roster']);
+    rows.push(['Team', comms
+      ? (comms.length > 8 ? comms.length+' communities in this ecosystem' : comms.map(c=>c.name).join(', '))
+      : rbTeamFilter()]);
+  }
+  rows.push(['Download', r.download]);
+
+  const key = r.id + (r.splitPath || r.snapshot ? ':'+eco : '');
+  const done = !!rbState.done[key];
+
+  return '<div style="background:#fff;border:1.5px solid '+(done?'#86efac':'#e2e8f0')+';border-left:4px solid '+(done?'#16a34a':'#0d9488')+';border-radius:12px;padding:14px;margin-bottom:10px">'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">'
+    +   '<div><div style="font-size:14px;font-weight:800;color:#0f172a">'+rbEsc(r.name)+'</div>'
+    +   '<div style="font-size:11px;color:#64748b;margin-top:2px">'+rbEsc(r.purpose)+'</div></div>'
+    +   '<button class="btn" style="background:'+(done?'#16a34a':'#f1f5f9')+';color:'+(done?'#fff':'#475569')+';flex-shrink:0" onclick="rbToggleDone(\''+key+'\')">'+(done?'✓ Got it':'Mark done')+'</button>'
+    + '</div>'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    + rows.map(function(row){
+        return '<tr><td style="padding:4px 8px 4px 0;color:#64748b;font-weight:700;white-space:nowrap;vertical-align:top;width:1%">'+rbEsc(row[0])+'</td>'
+             + '<td style="padding:4px 0;color:#0f172a;line-height:1.5">'+row[1]+'</td></tr>';
+      }).join('')
+    + '</table>'
+    + (r.note ? '<div style="margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e">💡 '+rbEsc(r.note)+'</div>' : '')
+    + '</div>';
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+function renderReportBuilder(){
+  const p = rbResolve(), sp = rbSplit(), sel = rbSelected();
+  const chip = function(grp,val,label){
+    return '<button class="filter-btn'+(rbState[grp]===val?' active':'')+'" onclick="rbSet(\''+grp+'\',\''+val+'\')">'+label+'</button>';
+  };
+  const totalSteps = sel.length ? (sp.both ? sel.filter(r=>r.splitPath||r.snapshot).length*2 + sel.filter(r=>!(r.splitPath||r.snapshot)).length : sel.length) : 0;
+  const doneCount = Object.keys(rbState.done).filter(k=>rbState.done[k]).length;
+
+  let h = '<div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,#0d5c6b 100%)">'
+    + '<div class="page-header-inner"><span style="font-size:22px">🔒</span><h1>Report Builder</h1></div>'
+    + '<p>Manager only — pick the scope, period, reports and format. It writes the pull checklist and the run brief.</p>'
+    + '</div><div class="content" style="padding:20px 24px">';
+
+  // STEP 1 — SCOPE
+  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
+    + '<label class="eod-label">1. Scope</label>'
+    + '<div class="filters" style="margin-bottom:12px">'
+    +   '<button class="filter-btn'+(rbState.scopeType==='portfolio'?' active':'')+'" onclick="rbSetScope(\'portfolio\')">Entire portfolio</button>'
+    +   '<button class="filter-btn'+(rbState.scopeType==='market'?' active':'')+'" onclick="rbSetScope(\'market\')">By market</button>'
+    +   '<button class="filter-btn'+(rbState.scopeType==='community'?' active':'')+'" onclick="rbSetScope(\'community\')">Single community</button>'
+    + '</div>';
+
+  if(rbState.scopeType === 'market'){
+    h += '<select class="eod-select" onchange="rbSet(\'market\',this.value)">'
+      + Object.keys(cmMarketsData).map(function(k){
+          return '<option value="'+k+'"'+(rbState.market===k?' selected':'')+'>'+rbEsc(cmMarketsData[k].label)+' ('+cmMarketsData[k].communities.length+')</option>';
+        }).join('')
+      + '</select>';
+  }
+  if(rbState.scopeType === 'community'){
+    h += '<select class="eod-select" onchange="rbSet(\'community\',this.value)">'
+      + '<option value="">Select a community...</option>'
+      + Object.keys(cmMarketsData).map(function(k){
+          return '<optgroup label="'+rbEsc(cmMarketsData[k].label)+'">'
+            + cmMarketsData[k].communities.map(function(c){
+                return '<option value="'+c.id+'"'+(rbState.community===c.id?' selected':'')+'>'+rbEsc(c.name)+(RB_PILOT_IDS.includes(c.id)?' • Pilot':'')+'</option>';
+              }).join('')
+            + '</optgroup>';
+        }).join('')
+      + '</select>';
+  }
+  if(rbState.scopeType === 'portfolio'){
+    h += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;line-height:1.5">'
+      + '📋 <b>Leave the Team filter empty.</b> Funnel downloads all communities by default when nothing is selected.</div>';
+  }
+
+  // Ecosystem readout
+  if(sel.length || rbState.scopeType !== 'portfolio' || true){
+    h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'
+      + (sp.orig.length  ? '<span class="badge" style="background:#e0f2fe;color:#075985">Original Funnel · '+sp.orig.length+'</span>' : '')
+      + (sp.pilot.length ? '<span class="badge" style="background:#f3e8ff;color:#6b21a8">Denver Pilot · '+sp.pilot.length+'</span>' : '')
+      + '</div>';
+    if(sp.both){
+      h += '<div style="margin-top:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#92400e;line-height:1.55">'
+        + '⚠️ <b>This scope spans both ecosystems.</b> You will pull twice and combine. Denver Pilot runs the PEC service model so Applicant is included in status filters, Original does not. State the methodology note in the report.</div>';
+    }
+  }
+  h += '</div>';
+
+  // STEP 2 — PERIOD
+  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
+    + '<label class="eod-label">2. Period</label>'
+    + '<div class="filters">' + RB_PRESETS.map(function(x){ return chip('preset',x.id,x.label); }).join('') + '</div>';
+  if(rbState.preset === 'custom'){
+    h += '<div style="display:flex;gap:10px;margin-top:12px">'
+      + '<div style="flex:1"><label class="eod-label">From</label><input type="date" class="eod-select" value="'+rbState.from+'" onchange="rbSet(\'from\',this.value)"></div>'
+      + '<div style="flex:1"><label class="eod-label">To</label><input type="date" class="eod-select" value="'+rbState.to+'" onchange="rbSet(\'to\',this.value)"></div>'
+      + '</div>';
+  }
+  h += '<div style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">'
+    + '<div style="font-size:11px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Resolves to</div>'
+    + '<div style="font-size:15px;font-weight:800;color:#14532d;margin-top:3px">'+rbEsc(p.label)+'</div>'
+    + (p.range && p.label !== p.range ? '<div style="font-size:11.5px;color:#166534;margin-top:2px">'+rbEsc(p.range)+'</div>' : '')
+    + '<div style="font-size:10.5px;color:#4d7c58;margin-top:6px">Resolved against today, '+rbFmt(rbToday())+', US Mountain Time. The report says the real period, never the preset name.</div>'
+    + '</div></div>';
+
+  // STEP 3 — REPORTS
+  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
+    + '<label class="eod-label">3. Reports</label>'
+    + '<div class="filters" style="margin-bottom:12px">'
+    +   '<button class="filter-btn" onclick="rbPickSet(\'leadership\')">Leadership set</button>'
+    +   '<button class="filter-btn" onclick="rbPickSet(\'community\')">Community set</button>'
+    +   '<button class="filter-btn" onclick="rbClearSet()">Clear</button>'
+    + '</div>'
+    + RB_REPORTS.map(function(r){
+        const on = !!rbState.picked[r.id];
+        return '<div onclick="rbToggleReport(\''+r.id+'\')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px solid '+(on?'#0d9488':'#e2e8f0')+';background:'+(on?'#f0fdfa':'#fff')+';border-radius:9px;margin-bottom:6px">'
+          + '<div style="width:17px;height:17px;border-radius:5px;flex-shrink:0;border:2px solid '+(on?'#0d9488':'#cbd5e1')+';background:'+(on?'#0d9488':'#fff')+';color:#fff;font-size:11px;line-height:14px;text-align:center;font-weight:900">'+(on?'✓':'')+'</div>'
+          + '<div style="flex:1;min-width:0"><span style="font-size:13px;font-weight:700;color:#0f172a">'+rbEsc(r.name)+'</span>'
+          + ' <span class="badge" style="background:'+(r.kind==='Cohort'?'#fef3c7':r.kind==='Activity'?'#dbeafe':'#f1f5f9')+';color:#475569;margin-left:4px">'+r.kind+'</span></div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+
+  // STEP 4 — FORMAT
+  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
+    + '<label class="eod-label">4. Output format</label>'
+    + '<div class="filters">' + RB_FORMATS.map(function(f){ return chip('format',f.id,f.id+' · '+f.label); }).join('') + '</div>'
+    + '<div style="margin-top:10px;font-size:12px;color:#475569;line-height:1.55">'+rbEsc(RB_FORMATS.find(f=>f.id===rbState.format).desc)+'</div>';
+  if(rbState.picked.fenix){
+    h += '<label class="eod-label" style="margin-top:14px">Fenix industry benchmark for this run (%)</label>'
+      + '<input class="eod-select" style="margin-bottom:4px" placeholder="e.g. 61" value="'+rbEsc(rbState.benchmark)+'" oninput="rbState.benchmark=this.value">'
+      + '<div style="font-size:10.5px;color:#94a3b8">Confirm the live figure each run. Past reports have cited both 61% and 69%, do not reuse blindly.</div>';
+  }
+  h += '</div>';
+
+  // CHECKLIST
+  if(sel.length){
+    h += '<div style="background:#0f1e3d;border-radius:14px;padding:16px;margin-bottom:14px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+      + '<div style="color:#fff;font-size:14px;font-weight:800">Pull checklist</div>'
+      + '<div style="color:#93c5fd;font-size:12px;font-weight:700">'+doneCount+' of '+totalSteps+' done</div>'
+      + '</div>'
+      + '<div style="color:#cbd5e1;font-size:11.5px;margin-top:4px;line-height:1.5">Every filter below is already resolved for your selections. Downloads stay on your desktop, nothing uploads.</div>'
+      + '</div>';
+
+    const ecos = [];
+    if(sp.orig.length)  ecos.push({key:'original', label:'Original Funnel', comms:sp.orig,  color:'#075985', bg:'#e0f2fe'});
+    if(sp.pilot.length) ecos.push({key:'pilot',    label:'Denver Pilot Funnel', comms:sp.pilot, color:'#6b21a8', bg:'#f3e8ff'});
+
+    ecos.forEach(function(e){
+      const relevant = sel.filter(function(r){
+        if(r.external) return e.key === ecos[0].key;              // pull Fenix once
+        if(!(r.splitPath || r.snapshot)) return e.key === ecos[0].key; // identical both sides, pull once per scope
+        return true;
+      });
+      if(!relevant.length) return;
+      if(ecos.length > 1){
+        h += '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px">'
+          + '<span class="badge" style="background:'+e.bg+';color:'+e.color+'">'+e.label+'</span>'
+          + '<span style="font-size:11px;color:#64748b">'+e.comms.length+' communities · '+(e.key==='pilot'?'PEC model':'Legacy model')+'</span></div>';
+      }
+      relevant.forEach(function(r){
+        h += rbChecklistCard(r, e.key, ecos.length > 1 ? e.comms : null);
+      });
+    });
+
+    // RUN BRIEF
+    h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:16px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">'
+      + '<label class="eod-label" style="margin:0">Run brief</label>'
+      + '<button id="rbCopyBtn" class="btn" style="background:#0d9488;color:#fff" onclick="rbCopyBrief()">Copy brief</button></div>'
+      + '<div style="font-size:11.5px;color:#64748b;margin-bottom:10px;line-height:1.5">Paste this into Claude along with the downloaded files. It carries the resolved period, the ecosystem split, and the standing rules so nothing gets restated by hand.</div>'
+      + '<pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-size:11px;line-height:1.6;color:#0f172a;white-space:pre-wrap;word-break:break-word;margin:0;max-height:320px;overflow:auto">'+rbEsc(rbBrief())+'</pre>'
+      + '</div>';
+  } else {
+    h += '<div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;padding:22px;text-align:center;color:#64748b;font-size:13px">'
+      + 'Pick at least one report above and the pull checklist appears here.</div>';
+  }
+
+  // RECIPIENTS
+  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:14px">'
+    + '<label class="eod-label">Recipients</label>'
+    + '<div style="font-size:11.5px;color:#64748b;margin-bottom:10px">Editable list. Add a name and their job function, it flows into the run brief.</div>'
+    + (rbState.recipients.length
+        ? rbState.recipients.map(function(r,i){
+            return '<div style="display:flex;align-items:center;gap:10px;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:9px;margin-bottom:6px">'
+              + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#0f172a">'+rbEsc(r.name)+'</div>'
+              + '<div style="font-size:11px;color:#64748b">'+rbEsc(r.title||'')+(r.email?' · '+rbEsc(r.email):'')+'</div></div>'
+              + '<button class="btn" style="background:#fef2f2;color:#991b1b" onclick="rbRemoveRecipient('+i+')">Remove</button></div>';
+          }).join('')
+        : '<div style="font-size:12px;color:#94a3b8;padding:6px 0 10px">No recipients yet.</div>')
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'
+    + '<input id="rbRecName" class="eod-select" style="flex:1;min-width:120px;margin:0" placeholder="Name">'
+    + '<input id="rbRecTitle" class="eod-select" style="flex:1;min-width:120px;margin:0" placeholder="Title or job function">'
+    + '<input id="rbRecEmail" class="eod-select" style="flex:1;min-width:140px;margin:0" placeholder="Email">'
+    + '<button class="btn" style="background:#0d9488;color:#fff" onclick="rbAddRecipient()">Add</button></div>'
+    + '</div>';
+
+  h += '</div>';
+  return h;
+}
+
 function renderPage(){
   // Defense in depth: even if state.page somehow got set to a
   // guest-blocked tab (stale state, direct call, etc.), bounce back home.
@@ -6101,6 +6641,7 @@ function renderPage(){
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
     case 'offerletter': html=state.manager?renderOfferLetter():renderLogin();break;
     case 'cards':     html=state.manager?renderCardStudio():renderLogin();break;
+    case 'reports':   html=state.manager?renderReportBuilder():renderLogin();break;
     default:          html=renderHome();
   }
   document.getElementById('pageContent').innerHTML=html;
