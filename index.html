@@ -528,9 +528,6 @@ async function hydrateFromFirestore(){
   if(remote.card_photos && remote.card_photos.map){
     csPhotos = remote.card_photos.map;
   }
-  if(remote.report_builder){
-    rbHydrate(remote.report_builder);
-  }
   if(remote.call_listening_links){
     state.clwSheetUrl  = remote.call_listening_links.sheetUrl  || state.clwSheetUrl;
     state.clwFolderUrl = remote.call_listening_links.folderUrl || state.clwFolderUrl;
@@ -1049,7 +1046,6 @@ const NAV = [
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
   {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
   {id:'cards', label:'Welcome Cards', icon:'🔒', managerOnly:true},
-  {id:'reports', label:'Report Builder', icon:'🔒', managerOnly:true},
 ];
 
 // Guests see first names only, everywhere a team member's name is shown —
@@ -4357,6 +4353,8 @@ const cmMarketsData = {
   tennessee: {
     label: 'Tennessee',
     communities: [
+      { id:'crossingseast', name:'Crossings at East Nashville', address:'321 Walton Ln, Madison, TN 37115', county:'Davidson County', landmark:'Near Rivergate Mall & Opryland', school:'Amqui Elementary, Boy\'s Prep, Hunters Lane Comp High', mall:'RiverGate Mall', park:'Peeler Park (nearby)', lat:36.2609, lng:-86.7078, url:'https://avantiresidential.com/property-market/all-communities/' },
+      { id:'crossingsmadison', name:'Crossings at Madison', address:'110 Archwood Pl, Madison, TN 37115', county:'Davidson County', landmark:'Near Rivergate Mall & Opryland', school:'Amqui Elementary, Boy\'s Prep, Hunters Lane Comp High', mall:'RiverGate Mall', park:'Peeler Park (nearby)', lat:36.2650, lng:-86.7150, url:'https://avantiresidential.com/property-market/all-communities/' },
       { id:'oldhickory', name:'The Residence at Old Hickory Lake', address:'2401 Lakeshore Dr, Old Hickory, TN 37138', county:'Davidson County', landmark:'On Old Hickory Lake, near Hermitage Golf Course', school:'Metro Nashville Public Schools', mall:'The Shoppes at RiverGate', park:'Old Hickory Lake Greenway / Rockland Recreation Area', lat:36.2620, lng:-86.6280, url:'https://avantiresidential.com/property/residence-at-old-hickory-lake/' },
     ]
   },
@@ -5749,12 +5747,12 @@ const CS_COMMUNITIES = [
     ['Copper 87','West Jordan, UT'],['Overlook at Sunset Point','Layton, UT']]],
 ];
 
-const CS_SIZES = {sq:[1080,1080], wide:[1536,1024], story:[1080,1920]};
+const CS_SIZES = {wide:[1536,1024]}; // Email is the only size — simplified from sq/wide/story
 const CS_PREVIEW_W = 700;
 
 let csPhotos = {};   // slug -> [url, ...] — hydrated from Firestore on load
 let csState = {
-  community:'The Economist', tpl:'welcome', size:'sq', side:'right',
+  community:'The Economist', tpl:'welcome', size:'wide', side:'right',
   photo:'', prospect:'', when:'', msg:null, busy:false, note:'',
 };
 
@@ -5784,10 +5782,12 @@ function csDefaultMsg(){
   const p = csState.prospect.trim();
   const who = p ? p + ', thank you' : 'Thank you';
   if(csState.tpl==='confirmed')
-    return who + ' for booking your tour. The onsite team will be ready for you, and I am here in the meantime for anything you need before you arrive.';
+    return who + ' for booking your tour. You are in great hands from here — our onsite team is ready to welcome you, and I am here for anything you need before you arrive.';
   if(csState.tpl==='hello')
-    return who + ' for scheduling a tour at ' + csState.community + '. I handle everything before your visit, so ask me anything about floor plans, pricing, or pet policy.';
-  return who + ' for scheduling your tour. You are one step closer to a place you will love coming home to, and I will make sure everything is set before you walk in.';
+    return (p ? p + ', you' : 'You') + ' are in great hands through your visit — ask me anything about floor plans, pricing, or pet policy before you arrive.';
+  if(csState.tpl==='approved')
+    return (p ? p + ', congratulations!' : 'Congratulations!') + ' We can\'t wait to welcome you home to ' + csState.community + '. I am here for anything you need before move-in.';
+  return who + ' for scheduling your tour. You are in great hands — our onsite team can\'t wait to show you around, and I will make sure everything is set before you walk in.';
 }
 function csMsg(){ return csState.msg === null ? csDefaultMsg() : csState.msg; }
 
@@ -5833,19 +5833,19 @@ function csCardHtml(bodyOnly){
   const sz = CS_SIZES[csState.size], W = sz[0], H = sz[1];
   const S = W/1080;
   const px = function(v){ return Math.round(v*S)+'px'; };
-  const right = csState.side==='right', story = csState.size==='story', wide = csState.size==='wide';
+  const right = csState.side==='right';
   const comm = csEsc(csState.community), city = csEsc(csCity(csState.community));
   const msg = csEsc(csMsg()), when = csEsc(csState.when.trim());
   const tPos = right ? 'left:'+px(72)+';' : 'right:'+px(72)+';';
   const align = right ? 'left' : 'right';
-  const tw = wide ? W*0.50 : W*0.62;
+  const tw = W*0.50;
 
   const bg = '<img src="'+csAttr(csState.photo)+'" crossorigin="anonymous" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>';
 
-  const meH = csState.tpl==='confirmed'
-    ? (story ? H*0.42 : H*0.80)
-    : (story ? H*0.50 : (wide ? H*0.86 : H*0.74));
-  const meSide = (csState.tpl==='confirmed' || right) ? 'right:'+px(-30)+';' : 'left:'+px(-30)+';';
+  // Kept intentionally small — the community photo and the message are the
+  // focus of the card now, not the headshot.
+  const meH = H*0.40;
+  const meSide = (csState.tpl==='confirmed' || csState.tpl==='approved' || right) ? 'right:'+px(-20)+';' : 'left:'+px(-20)+';';
   const me = '<img src="'+CS_ME+'" crossorigin="anonymous" alt="" style="position:absolute;bottom:0;'+meSide
     + 'height:'+meH+'px;object-fit:contain;filter:drop-shadow(0 '+px(26)+' '+px(44)+' rgba(0,3,10,.55))"/>';
 
@@ -5854,8 +5854,8 @@ function csCardHtml(bodyOnly){
   if(csState.tpl==='welcome'){
     scrim = '<div style="position:absolute;inset:0;background:linear-gradient('+(right?100:260)+'deg,rgba(3,38,42,.93) 0%,rgba(3,38,42,.80) 42%,rgba(3,38,42,.18) 72%,rgba(3,38,42,.05) 100%)"></div>';
     body = '<div style="position:absolute;top:'+px(64)+';'+tPos+'text-align:'+align+';width:'+tw+'px">'
-      + csLogo(Math.round((story?30:26)*S))
-      + '<div style="font-family:Caveat,cursive;font-weight:700;line-height:.95;font-size:'+px(story?96:104)+';color:#8FD3B4;margin-top:'+px(story?70:44)+'">Welcome to</div>'
+      + csLogo(Math.round(26*S))
+      + '<div style="font-family:Caveat,cursive;font-weight:700;line-height:.95;font-size:'+px(104)+';color:#8FD3B4;margin-top:'+px(44)+'">Welcome to</div>'
       + '<div style="font-weight:800;line-height:.95;letter-spacing:-.02em;font-size:'+px(comm.length>22?58:76)+';margin-top:'+px(8)+'">'+comm+'</div>'
       + '<div style="height:'+px(5)+';width:'+px(96)+';background:#F2C14E;border-radius:99px;margin-top:'+px(22)+';margin-bottom:'+px(22)+';'+(right?'':'margin-left:auto')+'"></div>'
       + '<div style="font-size:'+px(30)+';line-height:1.42;font-weight:300;color:#DCEDEA">'+msg+'</div>'
@@ -5868,15 +5868,15 @@ function csCardHtml(bodyOnly){
 
   if(csState.tpl==='hello'){
     scrim = '<div style="position:absolute;inset:0;background:linear-gradient('+(right?95:265)+'deg,rgba(9,46,52,.90) 0%,rgba(9,46,52,.62) 50%,rgba(9,46,52,.12) 100%)"></div>';
-    const bw = wide ? W*0.46 : W*0.72;
+    const bw = W*0.50;
     body = '<div style="position:absolute;top:'+px(60)+';'+tPos+'text-align:'+align+';width:'+tw+'px">'+csLogo(Math.round(26*S))+'</div>'
-      + '<div style="position:absolute;top:'+px(story?260:150)+';'+tPos+'width:'+bw+'px">'
-      + '<div style="font-family:Caveat,cursive;font-weight:700;font-size:'+px(104)+';color:#F2C14E;line-height:.95">Hello!</div>'
-      + '<div style="background:#fff;color:#16283C;border-radius:'+px(34)+';padding:'+px(38)+' '+px(40)+';margin-top:'+px(18)+';box-shadow:0 '+px(28)+' '+px(60)+' rgba(0,0,0,.35)">'
-      + '<div style="font-weight:800;font-size:'+px(40)+';line-height:1.12">Your tour at '+comm+' is set.</div>'
-      + '<div style="font-size:'+px(27)+';line-height:1.45;color:#3D5560;margin-top:'+px(16)+';font-weight:300">'+msg+'</div>'
+      + '<div style="position:absolute;top:'+px(115)+';'+tPos+'width:'+bw+'px">'
+      + '<div style="font-family:Caveat,cursive;font-weight:700;font-size:'+px(68)+';color:#F2C14E;line-height:.95;margin-bottom:'+px(8)+'">Hello!</div>'
+      + '<div style="background:#fff;color:#16283C;border-radius:'+px(30)+';padding:'+px(28)+' '+px(32)+';box-shadow:0 '+px(28)+' '+px(60)+' rgba(0,0,0,.35)">'
+      + '<div style="font-weight:800;font-size:'+px(32)+';line-height:1.15">Your tour at '+comm+' is set.</div>'
+      + '<div style="font-size:'+px(24)+';line-height:1.42;color:#3D5560;margin-top:'+px(14)+';font-weight:300">'+msg+'</div>'
       + '</div>'
-      + '<div style="display:inline-block;background:#4FA88A;color:#03282c;border-radius:999px;font-weight:600;font-size:'+px(24)+';padding:'+px(14)+' '+px(26)+';margin-top:'+px(20)+'">'+city+'</div>'
+      + '<div style="display:inline-block;background:#4FA88A;color:#03282c;border-radius:999px;font-weight:600;font-size:'+px(22)+';padding:'+px(12)+' '+px(24)+';margin-top:'+px(14)+'">'+city+'</div>'
       + '</div>'
       + '<div style="position:absolute;bottom:'+px(56)+';'+tPos+'text-align:'+align+';width:'+tw+'px">'
       + '<div style="font-weight:700;font-size:'+px(28)+'">'+CS_NAME+'</div>'
@@ -5891,16 +5891,41 @@ function csCardHtml(bodyOnly){
       + csLogo(Math.round(26*S))
       + '<div style="border:'+px(2)+' solid rgba(255,255,255,.5);border-radius:999px;font-size:'+px(20)+';padding:'+px(10)+' '+px(20)+';letter-spacing:.14em;text-transform:uppercase;font-weight:600">Tour confirmed</div>'
       + '</div>'
-      + '<div style="position:absolute;top:'+px(story?300:150)+';left:'+px(60)+';width:'+(cw*0.72)+'px">'
+      + '<div style="position:absolute;top:'+px(150)+';left:'+px(60)+';width:'+(cw*0.72)+'px">'
       + '<div style="font-weight:800;font-size:'+px(comm.length>22?60:80)+';line-height:.95;letter-spacing:-.02em">'+comm+'</div>'
       + '<div style="font-size:'+px(26)+';color:#9FD9C2;margin-top:'+px(10)+';letter-spacing:.05em">'+city+'</div>'
       + '</div>'
-      + '<div style="position:absolute;left:'+px(60)+';bottom:'+px(story?420:210)+';width:'+(cw*0.62)+'px;background:#F2EDE4;color:#16283C;border-radius:'+px(26)+';padding:'+px(34)+' '+px(36)+';box-shadow:0 '+px(18)+' '+px(40)+' rgba(0,0,0,.5)">'
+      + '<div style="position:absolute;left:'+px(60)+';bottom:'+px(210)+';width:'+(cw*0.62)+'px;background:#F2EDE4;color:#16283C;border-radius:'+px(26)+';padding:'+px(34)+' '+px(36)+';box-shadow:0 '+px(18)+' '+px(40)+' rgba(0,0,0,.5)">'
       + (when ? '<div style="font-weight:800;font-size:'+px(38)+';line-height:1.15;color:#00454D">'+when+'</div>' : '')
       + '<div style="font-size:'+px(25)+';line-height:1.45;color:#3D5560;font-weight:300;'+(when?'margin-top:'+px(14):'')+'">'+msg+'</div>'
       + '</div>'
       + '<div style="position:absolute;left:'+px(60)+';bottom:'+px(60)+';width:'+(cw*0.62)+'px">'
       + '<div style="font-size:'+px(23)+';color:#CDE7E0;margin-bottom:'+px(14)+'">Questions before you arrive? Reply anytime.</div>'
+      + '<div style="font-weight:700;font-size:'+px(28)+'">'+CS_NAME+'</div>'
+      + '<div style="font-size:'+px(20)+';color:#9FD9C2;letter-spacing:.03em">'+CS_ROLE+' · Avanti Residential</div>'
+      + '</div>';
+  }
+
+  if(csState.tpl==='approved'){
+    // Congrats/welcome-home styling for approved applicants and future
+    // residents — no tour logistics, a warmer gold-toned scrim, and a
+    // celebratory badge instead of the tour-confirmed pill.
+    scrim = '<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(46,32,3,.82) 0%,rgba(46,32,3,.50) 34%,rgba(20,40,38,.92) 100%)"></div>';
+    const cw = W - Math.round(120*S);
+    body = '<div style="position:absolute;top:'+px(60)+';left:'+px(60)+';right:'+px(60)+';display:flex;justify-content:space-between;align-items:center">'
+      + csLogo(Math.round(26*S))
+      + '<div style="border:'+px(2)+' solid rgba(255,255,255,.5);border-radius:999px;font-size:'+px(20)+';padding:'+px(10)+' '+px(20)+';letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#F2C14E">🎉 Application Approved</div>'
+      + '</div>'
+      + '<div style="position:absolute;top:'+px(140)+';left:'+px(60)+';width:'+(cw*0.72)+'px">'
+      + '<div style="font-family:Caveat,cursive;font-weight:700;line-height:1;font-size:'+px(60)+';color:#F2C14E;margin-bottom:'+px(4)+'">Welcome home to</div>'
+      + '<div style="font-weight:800;font-size:'+px(comm.length>22?52:66)+';line-height:1.05;letter-spacing:-.02em">'+comm+'</div>'
+      + '<div style="font-size:'+px(24)+';color:#9FD9C2;margin-top:'+px(12)+';letter-spacing:.05em">'+city+'</div>'
+      + '</div>'
+      + '<div style="position:absolute;left:'+px(60)+';bottom:'+px(160)+';width:'+(cw*0.62)+'px;background:#F2EDE4;color:#16283C;border-radius:'+px(26)+';padding:'+px(30)+' '+px(34)+';box-shadow:0 '+px(18)+' '+px(40)+' rgba(0,0,0,.5)">'
+      + '<div style="font-size:'+px(25)+';line-height:1.45;color:#3D5560;font-weight:300">'+msg+'</div>'
+      + '</div>'
+      + '<div style="position:absolute;left:'+px(60)+';bottom:'+px(60)+';width:'+(cw*0.62)+'px">'
+      + '<div style="font-size:'+px(23)+';color:#CDE7E0;margin-bottom:'+px(14)+'">Questions before move-in? Reply anytime.</div>'
       + '<div style="font-weight:700;font-size:'+px(28)+'">'+CS_NAME+'</div>'
       + '<div style="font-size:'+px(20)+';color:#9FD9C2;letter-spacing:.03em">'+CS_ROLE+' · Avanti Residential</div>'
       + '</div>';
@@ -6018,10 +6043,7 @@ function renderCardStudio(){
     + '</select>'
 
     + '<label class="eod-label">Card style</label>'
-    + '<div class="filters">'+chip('tpl','welcome','Welcome')+chip('tpl','hello','Hello')+chip('tpl','confirmed','Tour confirmed')+'</div>'
-
-    + '<label class="eod-label" style="margin-top:10px">Size</label>'
-    + '<div class="filters">'+chip('size','sq','Square 1080')+chip('size','wide','Email 1536')+chip('size','story','Story 1080')+'</div>'
+    + '<div class="filters">'+chip('tpl','welcome','Welcome')+chip('tpl','hello','Hello')+chip('tpl','confirmed','Tour confirmed')+chip('tpl','approved','Approved / Future Resident')+'</div>'
 
     + '<label class="eod-label" style="margin-top:10px">Photo side</label>'
     + '<div class="filters">'+chip('side','right','Right')+chip('side','left','Left')+'</div>'
@@ -6029,8 +6051,10 @@ function renderCardStudio(){
     + '<div class="eod-grid" style="margin-top:10px">'
     + '<div><label class="eod-label">Prospect first name (optional)</label>'
     + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Jordan" value="'+csAttr(csState.prospect)+'" oninput="csState.prospect=this.value;csState.msg=null;csTouch()"/></div>'
-    + '<div><label class="eod-label">Tour date and time</label>'
-    + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Thursday, Aug 7 at 2:00 PM" value="'+csAttr(csState.when)+'" oninput="csState.when=this.value;csTouch()"/></div>'
+    + (csState.tpl==='confirmed'
+        ? '<div><label class="eod-label">Tour date and time</label>'
+          + '<input type="text" class="eod-input" style="margin-bottom:0" placeholder="Thursday, Aug 7 at 2:00 PM" value="'+csAttr(csState.when)+'" oninput="csState.when=this.value;csTouch()"/></div>'
+        : '')
     + '</div>'
 
     + '<label class="eod-label" style="margin-top:14px">Message</label>'
@@ -6079,858 +6103,6 @@ function renderCardStudio(){
 }
 
 // ── RENDER ────────────────────────────────────────────────────────
-// ── REPORT BUILDER (Manager only) ────────────────────────────────
-// Turns the Report Recipe Book into a guided runner. Four selections
-// (Scope, Period, Reports, Format) produce an exact pull checklist with
-// every filter pre-resolved, plus a run brief to paste into Claude.
-//
-// Community, market and ecosystem all read from cmMarketsData so there is
-// only ever one community list in the Hub. Denver Pilot membership is a
-// separate flag because it does NOT match the market grouping: Mountain
-// Village sits in the Springs market but pulls from the Pilot Funnel.
-//
-// Firestore doc: pechub/report_builder  { recipients: [...], last: {...} }
-// Text only, a few KB. Raw CSVs stay on the desktop, never uploaded.
-
-const RB_PILOT_IDS = ['29x','beacon','centrecourt','copperridge','forumfitz',
-                      'sunsetpeak','economist','heightshuron','overland','mountainvillage'];
-
-// Service model drives the Snapshot Status filter, not the ecosystem.
-// PEC   = agents handle Prospects AND Applicants
-// Legacy = Prospects only, Applications handled by a separate team
-function rbServiceModel(id){ return RB_PILOT_IDS.includes(id) ? 'PEC' : 'Legacy'; }
-function rbEcosystem(id){ return RB_PILOT_IDS.includes(id) ? 'pilot' : 'original'; }
-
-const RB_PRESETS = [
-  {id:'today',    label:'Today'},
-  {id:'prevweek', label:'Previous week'},
-  {id:'prevmonth',label:'Previous month'},
-  {id:'prevqtr',  label:'Previous quarter'},
-  {id:'mtd',      label:'Month to date'},
-  {id:'qtd',      label:'Quarter to date'},
-  {id:'ytd',      label:'Year to date'},
-  {id:'custom',   label:'Custom range'},
-];
-
-const RB_REPORTS = [
-  {id:'attribution', name:'Marketing Attribution', kind:'Cohort',
-   set:['leadership','community'],
-   path:'Reports > Attributions > Marketing Attribution',
-   dateField:'Lead Created Date',
-   download:'Click the total number of leads to load the detail view, then download',
-   purpose:'The new lead cohort and its conversion. Source of truth for Total Leads.'},
-
-  {id:'tours', name:'Tour Report', kind:'Activity',
-   set:['leadership','community'],
-   path:'Reports > Tours',
-   dateField:'Tour Scheduled For Date',
-   download:'Click the total number of tours to load the detail view, then download',
-   purpose:'The real tour board, PEC booking impact, and show-up performance.'},
-
-  {id:'loss', name:'Loss Reason', kind:'Cohort',
-   set:['leadership','community'],
-   path:'Reports > Loss Reasons',
-   dateField:'Lost Date',
-   download:'Click the total number to load the detail view, then download',
-   purpose:'Why we are losing prospects, and whether it is follow-up or inventory/pricing.'},
-
-  {id:'status', name:'Prospect Status', kind:'Activity',
-   set:['community'],
-   path:'Reports > Prospect Status',
-   dateField:'Date',
-   download:'⚠️ No drill-in. Click the THREE DOTS in the upper right corner, then download',
-   purpose:'Current pipeline, ownership, who is still being worked.'},
-
-  {id:'warmhandoff', name:'Warm Handoff', kind:'Task',
-   set:['leadership'],
-   path:'Reports > Tasks',
-   dateField:'Date',
-   extra:['More > Automarketing Trigger = "Warm handoff call"'],
-   note:'Wait for the Automarketing Trigger list to finish loading. Warm handoff call sits at the bottom.',
-   download:'Download the task detail',
-   purpose:'How actively onsite connects with the prospect before the tour.'},
-
-  {id:'phone', name:'Phone (Missed Calls)', kind:'Activity',
-   set:['leadership'],
-   splitPath:true,
-   path:'Reports > Communication > Phone',
-   pilotPath:'Reports > Contact Center > Phones',
-   dateField:'Date',
-   extra:['During Business Hours = Yes'],
-   snapshot:true,
-   download:'Export the report',
-   purpose:'Answer rate. Goal is 10% missed or lower.'},
-
-  {id:'agentactivity', name:'Agent Activity (Scores)', kind:'Activity',
-   set:['leadership'],
-   path:'Reports > Activity > Agent Activity',
-   dateField:'Date',
-   snapshot:true,
-   agentFilter:true,
-   download:'Export the report',
-   purpose:'Lead Engagement and Task Management. Goal is 9 for both.'},
-
-  {id:'engagement', name:'Engagement Volume', kind:'Activity',
-   set:['leadership'],
-   path:'Reports > Communication > Engagement',
-   dateField:'Date',
-   extra:['Level of Detail = Summary','Snapshot Status = Prospect, Applicant','Heatmap Detail = Incoming and Outgoing'],
-   agentFilter:true,
-   download:'Export the report',
-   purpose:'Emails, calls out and in, SMS. Shows the work behind the numbers.'},
-
-  {id:'fenix', name:'Fenix (Call Quality)', kind:'External',
-   set:['leadership'],
-   external:true,
-   path:'LeaseHawk > Fenix > Agent Insights > Agent Ranking (Centralized Scorecard Filter)',
-   url:'https://my.leasehawk.com/reporting/Leasehawk%20Application/Fenix/Agent%20Insights/Agent%20Ranking%20-%20Centralized%20%5BScorecard%20Filter%5D',
-   download:'Export icon in the UPPER LEFT corner. Excel or CSV',
-   purpose:'Call quality. PEC standard is 90% and above.'},
-];
-
-const RB_FORMATS = [
-  {id:'A', label:'Email + PDF', desc:'Email body max 6 sentences in 2 paragraphs, plus a full PDF under 5 pages with tables, bullets and highlights.'},
-  {id:'B', label:'Email only',  desc:'The entire narrative lives in the email body. No attachment. Tables allowed.'},
-  {id:'C', label:'At a Glance', desc:'Dashboard style. Tables and graphs, raw numbers and percentages paired, green on goal, orange below goal with a short why line.'},
-];
-
-let rbState = {
-  scopeType:'portfolio',   // portfolio | ecosystem | market | community
-  eco:'pilot',             // used when scopeType === 'ecosystem'
-  market:'denver',
-  community:'',
-  preset:'prevmonth',
-  from:'', to:'',
-  picked:{},               // report id -> true
-  format:'A',
-  benchmark:'',
-  done:{},                 // report id -> true (checklist ticks)
-  showScript:false,
-  recipients:[],
-  // Editable so the run script can name the exact browser profile to use.
-  // Claude in Chrome installs per profile, so with the extension signed in on
-  // both, it can list connected browsers and select the right one by name.
-  profiles:{
-    original:{name:'Rowel',   url:''},
-    pilot:{name:'Rowel_2', url:''},
-  },
-  loaded:false,
-};
-
-// ── DATE RESOLUTION ──────────────────────────────────────────────
-// Always resolved against the US business date (Mountain Time), never
-// Manila time, so a run started at 7am PH doesn't roll to tomorrow.
-function rbToday(){
-  const s = new Date().toLocaleDateString('en-CA',{timeZone:'America/Denver'});
-  const p = s.split('-');
-  return new Date(+p[0], +p[1]-1, +p[2]);
-}
-function rbFmt(d){
-  return d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-}
-function rbIso(d){
-  const m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-  return d.getFullYear()+'-'+m+'-'+day;
-}
-function rbResolve(){
-  const t = rbToday();
-  let a, b, label;
-  switch(rbState.preset){
-    case 'today':
-      a = b = t; label = rbFmt(t); break;
-    case 'prevweek': {
-      const dow = t.getDay();                       // 0 = Sunday
-      b = new Date(t); b.setDate(t.getDate()-dow-1); // last Saturday
-      a = new Date(b); a.setDate(b.getDate()-6);     // that Sunday
-      label = rbFmt(a)+' to '+rbFmt(b); break;
-    }
-    case 'prevmonth':
-      a = new Date(t.getFullYear(), t.getMonth()-1, 1);
-      b = new Date(t.getFullYear(), t.getMonth(), 0);
-      label = a.toLocaleDateString('en-US',{month:'long',year:'numeric'}); break;
-    case 'prevqtr': {
-      const q = Math.floor(t.getMonth()/3) - 1;
-      const y = q < 0 ? t.getFullYear()-1 : t.getFullYear();
-      const qq = q < 0 ? 3 : q;
-      a = new Date(y, qq*3, 1);
-      b = new Date(y, qq*3+3, 0);
-      label = 'Q'+(qq+1)+' '+y; break;
-    }
-    case 'mtd':
-      a = new Date(t.getFullYear(), t.getMonth(), 1); b = t;
-      label = a.toLocaleDateString('en-US',{month:'long',year:'numeric'})+' month to date'; break;
-    case 'qtd': {
-      const q = Math.floor(t.getMonth()/3);
-      a = new Date(t.getFullYear(), q*3, 1); b = t;
-      label = 'Q'+(q+1)+' '+t.getFullYear()+' quarter to date'; break;
-    }
-    case 'ytd':
-      a = new Date(t.getFullYear(),0,1); b = t;
-      label = t.getFullYear()+' year to date'; break;
-    default:
-      if(!rbState.from || !rbState.to) return {label:'Pick a start and end date', a:null, b:null, range:''};
-      const pa = rbState.from.split('-'), pb = rbState.to.split('-');
-      a = new Date(+pa[0], +pa[1]-1, +pa[2]);
-      b = new Date(+pb[0], +pb[1]-1, +pb[2]);
-      label = rbFmt(a)+' to '+rbFmt(b);
-  }
-  return {label:label, a:a, b:b, range:rbFmt(a)+' to '+rbFmt(b)};
-}
-
-// ── SCOPE ────────────────────────────────────────────────────────
-function rbScopeCommunities(){
-  // Ecosystem scope: pulls everything on one Funnel regardless of market.
-  // Needed because Pilot membership does not follow the map grouping -
-  // Mountain Village is in Steamboat (Springs market) but on the Pilot Funnel,
-  // so "Denver Metro market" would quietly miss it.
-  if(rbState.scopeType === 'ecosystem'){
-    const all = [];
-    for(const key in cmMarketsData) all.push.apply(all, cmMarketsData[key].communities);
-    return all.filter(c => rbEcosystem(c.id) === rbState.eco);
-  }
-  if(rbState.scopeType === 'community'){
-    for(const key in cmMarketsData){
-      const hit = cmMarketsData[key].communities.find(c=>c.id===rbState.community);
-      if(hit) return [hit];
-    }
-    return [];
-  }
-  if(rbState.scopeType === 'market') return cmMarketsData[rbState.market].communities.slice();
-  const all = [];
-  for(const key in cmMarketsData) all.push.apply(all, cmMarketsData[key].communities);
-  return all;
-}
-function rbScopeLabel(){
-  if(rbState.scopeType === 'community'){
-    const c = rbScopeCommunities()[0];
-    return c ? c.name : 'No community selected';
-  }
-  if(rbState.scopeType === 'market') return cmMarketsData[rbState.market].label;
-  if(rbState.scopeType === 'ecosystem')
-    return (rbState.eco === 'pilot' ? 'Denver Pilot Funnel' : 'Original Funnel') + ' (all communities)';
-  return 'Entire portfolio';
-}
-function rbTeamFilter(){
-  if(rbState.scopeType === 'portfolio')
-    return 'Leave the Team filter EMPTY. It downloads all communities by default.';
-  const list = rbScopeCommunities();
-  if(rbState.scopeType === 'community') return 'Team = '+list[0].name;
-  if(rbState.scopeType === 'ecosystem')
-    return 'Leave the Team filter EMPTY. You are already inside the '
-         + (rbState.eco === 'pilot' ? 'Denver Pilot' : 'Original')
-         + ' Funnel, so it returns all '+list.length+' of its communities.';
-  return 'Team = select all '+list.length+' communities in this market: '+list.map(c=>c.name).join(', ');
-}
-// Which ecosystems does this scope touch, and how does it split?
-function rbSplit(){
-  const list = rbScopeCommunities();
-  const pilot = list.filter(c=>RB_PILOT_IDS.includes(c.id));
-  const orig  = list.filter(c=>!RB_PILOT_IDS.includes(c.id));
-  return {pilot:pilot, orig:orig, both:(pilot.length>0 && orig.length>0)};
-}
-function rbSnapshot(eco){
-  return eco === 'pilot'
-    ? 'Snapshot Status = Prospect, Did Not Rent, Applicant'
-    : 'Snapshot Status = Prospect, Did Not Rent';
-}
-
-// ── SELECTION HANDLERS ───────────────────────────────────────────
-function rbSet(k,v){ rbState[k]=v; if(k!=='benchmark'){ rbState.done={}; } renderPage(); }
-function rbSetScope(t){ rbState.scopeType=t; rbState.done={}; renderPage(); }
-function rbToggleReport(id){ rbState.picked[id]=!rbState.picked[id]; rbState.done={}; renderPage(); }
-function rbToggleDone(id){ rbState.done[id]=!rbState.done[id]; renderPage(); }
-function rbPickSet(which){
-  rbState.picked = {};
-  RB_REPORTS.forEach(function(r){ if(r.set.includes(which)) rbState.picked[r.id]=true; });
-  rbState.done={}; renderPage();
-}
-function rbClearSet(){ rbState.picked={}; rbState.done={}; renderPage(); }
-function rbSelected(){ return RB_REPORTS.filter(r=>rbState.picked[r.id]); }
-
-// ── RECIPIENTS ───────────────────────────────────────────────────
-async function rbAddRecipient(){
-  const n = document.getElementById('rbRecName'), t = document.getElementById('rbRecTitle'), e = document.getElementById('rbRecEmail');
-  if(!n || !n.value.trim()) return;
-  rbState.recipients.push({name:n.value.trim(), title:(t.value||'').trim(), email:(e.value||'').trim()});
-  n.value=''; t.value=''; e.value='';
-  await rbSave(); renderPage();
-}
-async function rbRemoveRecipient(i){
-  if(!confirm('Remove '+rbState.recipients[i].name+' from the recipient list?')) return;
-  rbState.recipients.splice(i,1);
-  await rbSave(); renderPage();
-}
-async function rbSave(){
-  const ok = await saveToFirestore('report_builder', {recipients: rbState.recipients, profiles: rbState.profiles});
-  if(!ok) flagSaveFailed('Report Builder recipients');
-  else if(state.syncError) clearSyncIssue();
-}
-function rbHydrate(data){
-  if(!data) { rbState.loaded = true; return; }
-  if(Array.isArray(data.recipients)) rbState.recipients = data.recipients;
-  if(data.profiles){
-    ['original','pilot'].forEach(function(k){
-      if(data.profiles[k]){
-        rbState.profiles[k].name = data.profiles[k].name || '';
-        rbState.profiles[k].url  = data.profiles[k].url  || '';
-      }
-    });
-  }
-  rbState.loaded = true;
-}
-function rbProfileLabel(eco){
-  const p = rbState.profiles[eco === 'pilot' ? 'pilot' : 'original'];
-  return p && p.name ? p.name : null;
-}
-function rbProfileUrl(eco){
-  const p = rbState.profiles[eco === 'pilot' ? 'pilot' : 'original'];
-  return p && p.url ? p.url : null;
-}
-async function rbSetProfile(eco, field, val){
-  rbState.profiles[eco][field] = val;
-  await rbSave();
-}
-
-// ── RUN BRIEF ────────────────────────────────────────────────────
-// The text block to paste into Claude alongside the downloaded files.
-function rbBrief(){
-  const p = rbResolve(), sp = rbSplit(), sel = rbSelected();
-  const fmt = RB_FORMATS.find(f=>f.id===rbState.format);
-  const L = [];
-  L.push('PEC REPORT RUN');
-  L.push('Scope: '+rbScopeLabel());
-  L.push('Period: '+p.label+(p.range && p.label!==p.range ? '  ('+p.range+')' : ''));
-  L.push('Pulled on: '+rbFmt(rbToday())+' (US Mountain Time)');
-  L.push('Output format: '+fmt.id+': '+fmt.label);
-  L.push('');
-  L.push('Reports attached:');
-  sel.forEach(function(r){ L.push('  - '+r.name+'  ['+r.kind+']'); });
-  if(rbState.benchmark) { L.push(''); L.push('Fenix industry benchmark this run: '+rbState.benchmark+'%'); }
-  L.push('');
-  if(sp.both){
-    L.push('METHODOLOGY NOTE: this scope spans both Funnel ecosystems.');
-    L.push('  Denver Pilot ('+sp.pilot.length+' communities, PEC service model, Applicant included)');
-    L.push('  Original Funnel ('+sp.orig.length+' communities, Legacy service model, Prospects only)');
-    L.push('  The two halves count different populations. Say so in the report.');
-    L.push('');
-  }
-  L.push('Rules for this run:');
-  L.push('  - State the resolved period in plain language, not the preset name.');
-  L.push('  - Label every Scheduled Tours figure with its source report. Marketing Attribution');
-  L.push('    is cohort, Tour Report is activity. They will not match and that is correct.');
-  L.push('  - Warm Handoff Completion = Completed / (Total - Cancelled - Not Applicable).');
-  L.push('    Bypassed stays in the denominator. A PEC teammate completing it is not a win.');
-  L.push('  - Dedupe the Tour Report on Column B before any rate.');
-  L.push('  - Walk-ins belong to the onsite team. Credit them there.');
-  L.push('  - Recount every figure from the files. No numbers from memory.');
-  L.push('  - Name the reports pulled and attach the raw exports to the email.');
-  L.push('  - No em dashes.');
-  L.push('');
-  L.push(fmt.desc);
-  if(rbState.recipients.length){
-    L.push('');
-    L.push('Recipients:');
-    rbState.recipients.forEach(function(r){
-      L.push('  - '+r.name+(r.title?', '+r.title:'')+(r.email?' <'+r.email+'>':''));
-    });
-  }
-  return L.join('\n');
-}
-function rbCopyBrief(){
-  const t = rbBrief();
-  navigator.clipboard.writeText(t).then(function(){
-    const b = document.getElementById('rbCopyBtn');
-    if(b){ const o=b.textContent; b.textContent='✓ Copied'; setTimeout(function(){b.textContent=o;},1600); }
-  }, function(){ alert('Copy failed. Select the brief text and copy manually.'); });
-}
-function rbEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-
-// ── AGENT SCRIPT ─────────────────────────────────────────────────
-// The Hub cannot pull the files itself: a static page can't drive another
-// site's session or write to disk. Claude in Chrome can, because it's a
-// browser agent using your real logins. So the RUN button assembles a
-// click-by-click execution script the agent runs end to end.
-function rbAgentScript(){
-  const p = rbResolve(), sp = rbSplit(), sel = rbSelected();
-  const fmt = RB_FORMATS.find(f=>f.id===rbState.format);
-  const L = [];
-  let n = 0;
-  const step = function(t){ n++; L.push(n+'. '+t); };
-  const ecos = [];
-  if(sp.orig.length)  ecos.push({key:'original', label:'Original Funnel', comms:sp.orig});
-  if(sp.pilot.length) ecos.push({key:'pilot',    label:'Denver Pilot Funnel', comms:sp.pilot});
-
-  L.push('RUN THE PEC REPORT');
-  L.push('Scope: '+rbScopeLabel());
-  L.push('');
-  L.push('');
-  L.push('INTEGRITY CHECK: this script ends with a line reading "END OF RUN SCRIPT".');
-  L.push('If you cannot see that line, the text was cut off in transit. Stop, tell me,');
-  L.push('and ask me to paste the full script. Do not run a partial pull.');
-  L.push('');
-  L.push('You are pulling Funnel reports in the browser, then writing the report.');
-  L.push('Use Claude in Chrome. I am already logged in. Do not ask me to log in again.');
-  L.push('If you hit a login screen or a CAPTCHA, stop and tell me instead of guessing.');
-  L.push('');
-  // Name the exact browser profile(s) so Claude picks the right session.
-  const named = ecos.filter(function(e){ return rbProfileLabel(e.key); });
-  L.push('BROWSER CONNECTION:');
-  L.push('  You can only be connected to ONE Chrome profile at a time, and you cannot');
-  L.push('  switch on your own. Request a browser connection and I click Connect in the');
-  L.push('  correct window. Say clearly which Funnel you need before each request.');
-  if(named.length){
-    L.push('');
-    named.forEach(function(e){
-      L.push('  '+e.label+' -> I click Connect in the "'+rbProfileLabel(e.key)+'" window'
-        + (rbProfileUrl(e.key) ? ', which runs '+rbProfileUrl(e.key) : ''));
-    });
-  }
-  L.push('');
-  L.push('  VERIFY BEFORE YOU PULL. Once connected, open the Funnel and tell me the URL');
-  L.push('  you landed on. Do not rely on the window name, you cannot see profile names.');
-  L.push('  The URL is the only proof of which system you are in.');
-  L.push('  If you see a login screen, that is the wrong profile or an expired session:');
-  L.push('  stop and tell me, do not try to log in.');
-  L.push('  Pulling from the wrong Funnel produces a clean-looking report about the wrong');
-  L.push('  communities, which is worse than failing outright. Confirm first, every time.');
-  L.push('');
-  L.push('PERIOD: '+p.label+'  ('+p.range+')');
-  L.push('Set every date filter to this exact range. Do not use the preset names,');
-  L.push('they resolve differently depending on the day.');
-  L.push('');
-
-  if(sp.both){
-    L.push('⚠️ THIS RUN SPANS BOTH FUNNELS. They are separate systems in separate');
-    L.push('Chrome profiles. Finish one completely, then switch profiles and do the other.');
-    L.push('Do not assume both Funnels are reachable from one profile. They are not.');
-    L.push('Expect TWO connection requests this run, one per Funnel. That is normal.');
-    L.push('');
-  }
-
-  L.push('=== PART 1: DOWNLOAD ===');
-  L.push('');
-
-  ecos.forEach(function(e){
-    const relevant = sel.filter(function(r){
-      if(r.external) return e.key === ecos[0].key;
-      if(!(r.splitPath || r.snapshot)) return e.key === ecos[0].key;
-      return true;
-    });
-    if(!relevant.length) return;
-    if(ecos.length > 1){
-      L.push('--- '+e.label+' ('+e.comms.length+' communities) ---');
-      L.push('STOP. Request a browser connection for the '+e.label+' now'
-        + (rbProfileLabel(e.key) ? ', and tell me to click Connect in the "'+rbProfileLabel(e.key)+'" window' : '')
-        + '.');
-      L.push('Wait for me to connect. Then open the Funnel, confirm the URL out loud,');
-      L.push('and only start the steps below once I have agreed it is the right one.');
-      L.push('');
-    }
-    relevant.forEach(function(r){
-      const path = (r.splitPath && e.key==='pilot') ? r.pilotPath : r.path;
-      if(r.external){
-        step('FENIX: open '+r.url);
-        L.push('   Set the period to match '+p.range+'.');
-        L.push('   '+r.download+'.');
-      } else {
-        step(r.name.toUpperCase()+': navigate to: '+path);
-        L.push('   Set '+r.dateField+' = '+p.range);
-        if(r.snapshot) L.push('   Set '+rbSnapshot(e.key));
-        (r.extra||[]).forEach(function(x){ L.push('   Set '+x); });
-        if(r.agentFilter) L.push('   Set Agent = select every PEC team member');
-        L.push('   Set '+(ecos.length>1
-          ? (rbState.scopeType==='portfolio' || rbState.scopeType==='ecosystem'
-              ? 'Team = leave EMPTY (returns all communities on this Funnel)'
-              : 'Team = '+e.comms.map(c=>c.name).join(', '))
-          : rbTeamFilter().replace(/^Leave/,'Team = leave').replace('Leave the Team filter EMPTY.','Team = leave EMPTY.')));
-        L.push('   Then: '+r.download+'.');
-        if(r.note) L.push('   NOTE: '+r.note);
-      }
-      L.push('   Confirm the file actually downloaded before moving on.');
-      L.push('');
-    });
-  });
-
-  step('List every file you downloaded, with its row count. If any report came');
-  L.push('   back empty or a community is missing from the Team column, say so now.');
-  L.push('   Do not silently continue with a partial pull.');
-  L.push('');
-
-  L.push('=== PART 2: ANALYSE ===');
-  L.push('');
-  L.push('Read the downloaded files and compute:');
-  L.push('  - Total Leads (Marketing Attribution. This is the denominator.)');
-  L.push('  - Scheduled Tours from BOTH Marketing Attribution (cohort) and the Tour');
-  L.push('    Report (activity), reported separately and labelled. They will not match.');
-  L.push('    That is correct, not an error.');
-  L.push('  - Completed Tours + Walk-ins. Walk-ins belong to onsite, credit them there.');
-  L.push('  - Lead to Tour % = (Completed + Walk-ins) / Total Leads');
-  L.push('  - Lead to Scheduled Tour % = Scheduled Tours / Total Leads');
-  L.push('  - Tour Report: dedupe on Column B first. Then No Show Rate and Cancel Rate.');
-  L.push('    Column U = tours booked by each PEC member. Column W = Completed status,');
-  L.push('    so Tour Showed Up % = Completed / deduped total tours.');
-  L.push('  - Warm Handoff Completion = Completed / (Total - Cancelled - Not Applicable).');
-  L.push('    Bypassed STAYS in the denominator. Overrode=True is only acceptable when');
-  L.push('    status is Cancelled or Not Applicable. If a PEC teammate completed the');
-  L.push('    task it is NOT a win, the onsite connection never happened.');
-  L.push('    Bucket: active not yet due, completed but overdue, active and overdue.');
-  L.push('  - Loss Reasons cross-referenced to true lead creation date. Report lead age');
-  L.push('    for aged losses. Our cadence is call, voicemail, email, up to 5 attempts,');
-  L.push('    so Lost-No Response means genuinely not interested, not that we skipped it.');
-  L.push('  - Missed call %, with the raw ratio. Goal is 10% or lower.');
-  if(rbState.benchmark) L.push('  - Fenix vs our 90% standard and the '+rbState.benchmark+'% industry benchmark.');
-  else L.push('  - Fenix vs our 90% standard. Ask me for the industry benchmark, do not assume one.');
-  L.push('');
-  if(sp.both){
-    L.push('METHODOLOGY: combine the two Funnels, and say in the report that you did.');
-    L.push('Denver Pilot runs the PEC service model so Applicant is included in its');
-    L.push('status filters, Original does not. The two halves count different');
-    L.push('populations. Name that rather than presenting one blended number silently.');
-    L.push('');
-  }
-  L.push('Accuracy rules: recount every figure from the files, never from memory.');
-  L.push('Check each total against the row count. Sanity check every percentage');
-  L.push('against its own numerator and denominator. If a number cannot be verified,');
-  L.push('leave it out and tell me why rather than publishing a guess.');
-  L.push('');
-
-  L.push('=== PART 3: WRITE ===');
-  L.push('');
-  L.push('Format '+fmt.id+': '+fmt.label);
-  L.push(fmt.desc);
-  L.push('');
-  L.push('Correlate, do not just report. Give the WHY behind every number and a');
-  L.push('suggestion for improving it. Never blame individuals, frame gaps at the');
-  L.push('process or team level. Scheduled tour volume is collaborative across all');
-  L.push('channels including self-scheduling, never claim it as solely PEC-driven.');
-  L.push('');
-  L.push('Name the reports pulled and the resolved period ('+p.label+') in the report');
-  L.push('itself. Attach the raw exports so the recipient holds the source files.');
-  L.push('');
-  L.push('Tone: professional, friendly, subtle, happy, personal. Warm and a little');
-  L.push('jolly. Celebrate wins genuinely, deliver hard numbers without softening them.');
-  L.push('NO EM DASHES anywhere. Use commas, colons or periods.');
-  L.push('');
-  L.push('Sign off:');
-  L.push('Rowel De La Trinidad');
-  L.push('Lead Management Manager, Prospect Experience Crew');
-  L.push('Progress, not Perfection.');
-  if(rbState.recipients.length){
-    L.push('');
-    L.push('Addressed to:');
-    rbState.recipients.forEach(function(r){
-      L.push('  '+r.name+(r.title?', '+r.title:'')+(r.email?' <'+r.email+'>':''));
-    });
-  }
-  L.push('');
-  L.push('Draft it for my review. Do not send anything.');
-  L.push('');
-  L.push('END OF RUN SCRIPT');
-  return L.join('\n');
-}
-// Deep link into Claude Desktop with the script prefilled. Anthropic documents
-// claude://claude.ai/new?q=... : the app launches if it isn't running and the
-// prompt lands in the composer for review rather than auto-sending. We always
-// copy to the clipboard first, because custom protocol URLs have length limits
-// that vary by OS and a truncated run script is worse than no run script.
-const RB_URL_SAFE = 16000;
-function rbRunUrl(){ return 'claude://claude.ai/new?q=' + encodeURIComponent(rbAgentScript()); }
-function rbUrlTooLong(){ return rbRunUrl().length > RB_URL_SAFE; }
-function rbFlash(id, msg, ms){
-  const b = document.getElementById(id);
-  if(!b) return;
-  const o = b.innerHTML;
-  b.innerHTML = msg;
-  setTimeout(function(){ b.innerHTML = o; }, ms || 2600);
-}
-function rbCopyScript(){
-  navigator.clipboard.writeText(rbAgentScript()).then(function(){
-    rbFlash('rbCopyOnlyBtn', '\u2713 Copied');
-  }, function(){ alert('Copy failed. Open the preview below and copy manually.'); });
-}
-// Primary action: clipboard first (always works), then hand off to the app.
-function rbRunInClaude(){
-  const finish = function(){
-    if(rbUrlTooLong()){
-      rbFlash('rbRunBtn', '\u2713 Copied. Opening Claude, paste it there', 4000);
-      window.location.href = 'claude://claude.ai/new';
-    } else {
-      rbFlash('rbRunBtn', '\u2713 Sent to Claude Desktop', 4000);
-      window.location.href = rbRunUrl();
-    }
-  };
-  navigator.clipboard.writeText(rbAgentScript()).then(finish, finish);
-}
-function rbToggleScript(){ rbState.showScript=!rbState.showScript; renderPage(); }
-
-// ── CHECKLIST ────────────────────────────────────────────────────
-function rbChecklistCard(r, eco, comms){
-  const p = rbResolve();
-  const isPilot = eco === 'pilot';
-  const path = (r.splitPath && isPilot) ? r.pilotPath : r.path;
-  const rows = [];
-  rows.push(['Path', path]);
-  if(r.external && r.url) rows.push(['Link', '<a href="'+r.url+'" target="_blank" rel="noopener" style="color:#1d4ed8;word-break:break-all">Open in LeaseHawk</a>']);
-  if(!r.external){
-    rows.push([r.dateField, p.range]);
-    if(r.snapshot) rows.push(['Status', rbSnapshot(eco).replace('Snapshot Status = ','')]);
-    (r.extra||[]).forEach(function(x){
-      const i = x.indexOf(' = ');
-      if(i>0) rows.push([x.slice(0,i), x.slice(i+3)]); else rows.push(['Also', x]);
-    });
-    if(r.agentFilter) rows.push(['Agent', 'Select all PEC members from the roster']);
-    rows.push(['Team', comms
-      ? (comms.length > 8 ? comms.length+' communities in this ecosystem' : comms.map(c=>c.name).join(', '))
-      : rbTeamFilter()]);
-  }
-  rows.push(['Download', r.download]);
-
-  const key = r.id + (r.splitPath || r.snapshot ? ':'+eco : '');
-  const done = !!rbState.done[key];
-
-  return '<div style="background:#fff;border:1.5px solid '+(done?'#86efac':'#e2e8f0')+';border-left:4px solid '+(done?'#16a34a':'#0d9488')+';border-radius:12px;padding:14px;margin-bottom:10px">'
-    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">'
-    +   '<div><div style="font-size:14px;font-weight:800;color:#0f172a">'+rbEsc(r.name)+'</div>'
-    +   '<div style="font-size:11px;color:#64748b;margin-top:2px">'+rbEsc(r.purpose)+'</div></div>'
-    +   '<button class="btn" style="background:'+(done?'#16a34a':'#f1f5f9')+';color:'+(done?'#fff':'#475569')+';flex-shrink:0" onclick="rbToggleDone(\''+key+'\')">'+(done?'✓ Got it':'Mark done')+'</button>'
-    + '</div>'
-    + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
-    + rows.map(function(row){
-        return '<tr><td style="padding:4px 8px 4px 0;color:#64748b;font-weight:700;white-space:nowrap;vertical-align:top;width:1%">'+rbEsc(row[0])+'</td>'
-             + '<td style="padding:4px 0;color:#0f172a;line-height:1.5">'+row[1]+'</td></tr>';
-      }).join('')
-    + '</table>'
-    + (r.note ? '<div style="margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e">💡 '+rbEsc(r.note)+'</div>' : '')
-    + '</div>';
-}
-
-// ── RENDER ───────────────────────────────────────────────────────
-function renderReportBuilder(){
-  const p = rbResolve(), sp = rbSplit(), sel = rbSelected();
-  const chip = function(grp,val,label){
-    return '<button class="filter-btn'+(rbState[grp]===val?' active':'')+'" onclick="rbSet(\''+grp+'\',\''+val+'\')">'+label+'</button>';
-  };
-  const totalSteps = sel.length ? (sp.both ? sel.filter(r=>r.splitPath||r.snapshot).length*2 + sel.filter(r=>!(r.splitPath||r.snapshot)).length : sel.length) : 0;
-  const doneCount = Object.keys(rbState.done).filter(k=>rbState.done[k]).length;
-
-  let h = '<div class="page-header" style="background:linear-gradient(135deg,#0f1e3d 0%,#0d5c6b 100%)">'
-    + '<div class="page-header-inner"><span style="font-size:22px">🔒</span><h1>Report Builder</h1></div>'
-    + '<p>Manager only: pick the scope, period, reports and format. It writes the pull checklist and the run brief.</p>'
-    + '</div><div class="content" style="padding:20px 24px">';
-
-  // STEP 1: SCOPE
-  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
-    + '<label class="eod-label">1. Scope</label>'
-    + '<div class="filters" style="margin-bottom:12px">'
-    +   '<button class="filter-btn'+(rbState.scopeType==='portfolio'?' active':'')+'" onclick="rbSetScope(\'portfolio\')">Entire portfolio</button>'
-    +   '<button class="filter-btn'+(rbState.scopeType==='ecosystem'?' active':'')+'" onclick="rbSetScope(\'ecosystem\')">By Funnel</button>'
-    +   '<button class="filter-btn'+(rbState.scopeType==='market'?' active':'')+'" onclick="rbSetScope(\'market\')">By market</button>'
-    +   '<button class="filter-btn'+(rbState.scopeType==='community'?' active':'')+'" onclick="rbSetScope(\'community\')">Single community</button>'
-    + '</div>';
-
-  if(rbState.scopeType === 'ecosystem'){
-    const countFor = function(e){
-      let n = 0;
-      for(const k in cmMarketsData) n += cmMarketsData[k].communities.filter(c=>rbEcosystem(c.id)===e).length;
-      return n;
-    };
-    h += '<div class="filters" style="margin-bottom:10px">'
-      + '<button class="filter-btn'+(rbState.eco==='pilot'?' active':'')+'" onclick="rbSet(\'eco\',\'pilot\')">Denver Pilot ('+countFor('pilot')+')</button>'
-      + '<button class="filter-btn'+(rbState.eco==='original'?' active':'')+'" onclick="rbSet(\'eco\',\'original\')">Original Funnel ('+countFor('original')+')</button>'
-      + '</div>'
-      + '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;line-height:1.5">'
-      + '📋 <b>Leave the Team filter empty.</b> You are already inside this Funnel, so it returns all of its communities. '
-      + 'Use this instead of picking a market when you want one full Funnel, since Pilot membership does not follow the map grouping.</div>';
-  }
-  if(rbState.scopeType === 'market'){
-    h += '<select class="eod-select" onchange="rbSet(\'market\',this.value)">'
-      + Object.keys(cmMarketsData).map(function(k){
-          return '<option value="'+k+'"'+(rbState.market===k?' selected':'')+'>'+rbEsc(cmMarketsData[k].label)+' ('+cmMarketsData[k].communities.length+')</option>';
-        }).join('')
-      + '</select>';
-  }
-  if(rbState.scopeType === 'community'){
-    h += '<select class="eod-select" onchange="rbSet(\'community\',this.value)">'
-      + '<option value="">Select a community...</option>'
-      + Object.keys(cmMarketsData).map(function(k){
-          return '<optgroup label="'+rbEsc(cmMarketsData[k].label)+'">'
-            + cmMarketsData[k].communities.map(function(c){
-                return '<option value="'+c.id+'"'+(rbState.community===c.id?' selected':'')+'>'+rbEsc(c.name)+(RB_PILOT_IDS.includes(c.id)?' • Pilot':'')+'</option>';
-              }).join('')
-            + '</optgroup>';
-        }).join('')
-      + '</select>';
-  }
-  if(rbState.scopeType === 'portfolio'){
-    h += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e40af;line-height:1.5">'
-      + '📋 <b>Leave the Team filter empty.</b> Funnel downloads all communities by default when nothing is selected.</div>';
-  }
-
-  // Ecosystem readout
-  if(sel.length || rbState.scopeType !== 'portfolio' || true){
-    h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'
-      + (sp.orig.length  ? '<span class="badge" style="background:#e0f2fe;color:#075985">Original Funnel · '+sp.orig.length+'</span>' : '')
-      + (sp.pilot.length ? '<span class="badge" style="background:#f3e8ff;color:#6b21a8">Denver Pilot · '+sp.pilot.length+'</span>' : '')
-      + '</div>';
-    if(sp.both){
-      h += '<div style="margin-top:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#92400e;line-height:1.55">'
-        + '⚠️ <b>This scope spans both ecosystems.</b> You will pull twice and combine. Denver Pilot runs the PEC service model so Applicant is included in status filters, Original does not. State the methodology note in the report.</div>';
-    }
-  }
-  h += '</div>';
-
-  // STEP 2: PERIOD
-  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
-    + '<label class="eod-label">2. Period</label>'
-    + '<div class="filters">' + RB_PRESETS.map(function(x){ return chip('preset',x.id,x.label); }).join('') + '</div>';
-  if(rbState.preset === 'custom'){
-    h += '<div style="display:flex;gap:10px;margin-top:12px">'
-      + '<div style="flex:1"><label class="eod-label">From</label><input type="date" class="eod-select" value="'+rbState.from+'" onchange="rbSet(\'from\',this.value)"></div>'
-      + '<div style="flex:1"><label class="eod-label">To</label><input type="date" class="eod-select" value="'+rbState.to+'" onchange="rbSet(\'to\',this.value)"></div>'
-      + '</div>';
-  }
-  h += '<div style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">'
-    + '<div style="font-size:11px;color:#15803d;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Resolves to</div>'
-    + '<div style="font-size:15px;font-weight:800;color:#14532d;margin-top:3px">'+rbEsc(p.label)+'</div>'
-    + (p.range && p.label !== p.range ? '<div style="font-size:11.5px;color:#166534;margin-top:2px">'+rbEsc(p.range)+'</div>' : '')
-    + '<div style="font-size:10.5px;color:#4d7c58;margin-top:6px">Resolved against today, '+rbFmt(rbToday())+', US Mountain Time. The report says the real period, never the preset name.</div>'
-    + '</div></div>';
-
-  // STEP 3: REPORTS
-  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
-    + '<label class="eod-label">3. Reports</label>'
-    + '<div class="filters" style="margin-bottom:12px">'
-    +   '<button class="filter-btn" onclick="rbPickSet(\'leadership\')">Leadership set</button>'
-    +   '<button class="filter-btn" onclick="rbPickSet(\'community\')">Community set</button>'
-    +   '<button class="filter-btn" onclick="rbClearSet()">Clear</button>'
-    + '</div>'
-    + RB_REPORTS.map(function(r){
-        const on = !!rbState.picked[r.id];
-        return '<div onclick="rbToggleReport(\''+r.id+'\')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px solid '+(on?'#0d9488':'#e2e8f0')+';background:'+(on?'#f0fdfa':'#fff')+';border-radius:9px;margin-bottom:6px">'
-          + '<div style="width:17px;height:17px;border-radius:5px;flex-shrink:0;border:2px solid '+(on?'#0d9488':'#cbd5e1')+';background:'+(on?'#0d9488':'#fff')+';color:#fff;font-size:11px;line-height:14px;text-align:center;font-weight:900">'+(on?'✓':'')+'</div>'
-          + '<div style="flex:1;min-width:0"><span style="font-size:13px;font-weight:700;color:#0f172a">'+rbEsc(r.name)+'</span>'
-          + ' <span class="badge" style="background:'+(r.kind==='Cohort'?'#fef3c7':r.kind==='Activity'?'#dbeafe':'#f1f5f9')+';color:#475569;margin-left:4px">'+r.kind+'</span></div>'
-          + '</div>';
-      }).join('')
-    + '</div>';
-
-  // STEP 4: FORMAT
-  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px">'
-    + '<label class="eod-label">4. Output format</label>'
-    + '<div class="filters">' + RB_FORMATS.map(function(f){ return chip('format',f.id,f.id+' · '+f.label); }).join('') + '</div>'
-    + '<div style="margin-top:10px;font-size:12px;color:#475569;line-height:1.55">'+rbEsc(RB_FORMATS.find(f=>f.id===rbState.format).desc)+'</div>';
-  if(rbState.picked.fenix){
-    h += '<label class="eod-label" style="margin-top:14px">Fenix industry benchmark for this run (%)</label>'
-      + '<input class="eod-select" style="margin-bottom:4px" placeholder="e.g. 61" value="'+rbEsc(rbState.benchmark)+'" oninput="rbState.benchmark=this.value">'
-      + '<div style="font-size:10.5px;color:#94a3b8">Confirm the live figure each run. Past reports have cited both 61% and 69%, do not reuse blindly.</div>';
-  }
-  h += '</div>';
-
-  // CHECKLIST
-  if(sel.length){
-    h += '<div style="background:#0f1e3d;border-radius:14px;padding:16px;margin-bottom:14px">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-      + '<div style="color:#fff;font-size:14px;font-weight:800">Pull checklist</div>'
-      + '<div style="color:#93c5fd;font-size:12px;font-weight:700">'+doneCount+' of '+totalSteps+' done</div>'
-      + '</div>'
-      + '<div style="color:#cbd5e1;font-size:11.5px;margin-top:4px;line-height:1.5">Every filter below is already resolved for your selections. Downloads stay on your desktop, nothing uploads.</div>'
-      + '</div>';
-
-    const ecos = [];
-    if(sp.orig.length)  ecos.push({key:'original', label:'Original Funnel', comms:sp.orig,  color:'#075985', bg:'#e0f2fe'});
-    if(sp.pilot.length) ecos.push({key:'pilot',    label:'Denver Pilot Funnel', comms:sp.pilot, color:'#6b21a8', bg:'#f3e8ff'});
-
-    ecos.forEach(function(e){
-      const relevant = sel.filter(function(r){
-        if(r.external) return e.key === ecos[0].key;              // pull Fenix once
-        if(!(r.splitPath || r.snapshot)) return e.key === ecos[0].key; // identical both sides, pull once per scope
-        return true;
-      });
-      if(!relevant.length) return;
-      if(ecos.length > 1){
-        h += '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px">'
-          + '<span class="badge" style="background:'+e.bg+';color:'+e.color+'">'+e.label+'</span>'
-          + '<span style="font-size:11px;color:#64748b">'+e.comms.length+' communities · '+(e.key==='pilot'?'PEC model':'Legacy model')+'</span></div>';
-      }
-      relevant.forEach(function(r){
-        h += rbChecklistCard(r, e.key, ecos.length > 1 ? e.comms : null);
-      });
-    });
-
-    // RUN
-    h += '<div style="background:linear-gradient(135deg,#0d5c6b 0%,#0d9488 100%);border-radius:14px;padding:18px;margin-top:16px">'
-      + '<div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:4px">▶ Run this report</div>'
-      + '<div style="color:#ccfbf1;font-size:12px;line-height:1.55;margin-bottom:14px">Copies a full execution script: navigate, filter, download every report above, then analyse and draft. Paste it into <b>Cowork</b> with <b>Claude in Chrome</b> connected and it runs end to end.</div>'
-      + '<button id="rbRunBtn" class="btn" style="background:#fff;color:#0d5c6b;font-size:14px;padding:12px 20px;width:100%;font-weight:800" onclick="rbRunInClaude()">\u25b6 Run in Claude</button>'
-      + '<button id="rbCopyOnlyBtn" class="btn" style="background:rgba(255,255,255,.15);color:#fff;margin-top:8px;width:100%" onclick="rbCopyScript()">Copy script instead</button>'
-      + '<div style="margin-top:12px;color:#a7f3d0;font-size:11px;line-height:1.6">'
-      + 'Run opens <b>Claude Desktop</b> with the script already loaded, and copies it to your clipboard as backup. Review it, hit enter, and Claude in Chrome does the pulling.'
-      + '<br><br>The script ends with <b>END OF RUN SCRIPT</b>. If Claude says it cannot see that line, the text got cut off in transit, so just paste from your clipboard instead.'
-      + (rbUrlTooLong() ? '<br><br>\u26a0\ufe0f This script is long, so it opens a blank Claude window instead of prefilling. It is already on your clipboard, just paste.' : '')
-      + '<br><br><b>Why not fully automatic:</b> the Hub is a web page, so it cannot use your Funnel login or save files to your computer. Claude in Chrome can, because it drives the real browser you are already signed into.'
-      + '</div>'
-      + (sp.both ? '<div style="margin-top:10px;background:rgba(255,255,255,.15);border-radius:8px;padding:9px 11px;color:#fff;font-size:11.5px;line-height:1.5">⚠️ Two Funnels this run, so expect <b>two Connect prompts</b>, one per window. That is the safety gate working, not an error.</div>' : '')
-      + '<button class="btn" style="background:rgba(255,255,255,.15);color:#fff;margin-top:12px;width:100%" onclick="rbToggleScript()">'+(rbState.showScript?'Hide the script':'Preview the script')+'</button>'
-      + '</div>';
-
-    if(rbState.showScript){
-      h += '<pre style="background:#0f172a;border-radius:12px;padding:14px;font-size:10.5px;line-height:1.65;color:#e2e8f0;white-space:pre-wrap;word-break:break-word;margin:10px 0 0;max-height:440px;overflow:auto">'+rbEsc(rbAgentScript())+'</pre>';
-    }
-
-    // MANUAL FALLBACK
-    h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:14px">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'
-      + '<label class="eod-label" style="margin:0">Doing it by hand instead?</label>'
-      + '<button id="rbCopyBtn" class="btn" style="background:#f1f5f9;color:#475569" onclick="rbCopyBrief()">Copy brief</button></div>'
-      + '<div style="font-size:11.5px;color:#64748b;line-height:1.5">Pull the files yourself using the checklist above, then paste this shorter brief into Claude with the files attached. Same rules, no agent needed.</div>'
-      + '</div>';
-  } else {
-    h += '<div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;padding:22px;text-align:center;color:#64748b;font-size:13px">'
-      + 'Pick at least one report above and the pull checklist appears here.</div>';
-  }
-
-  // BROWSER PROFILES
-  const pf = function(eco, label){
-    const p = rbState.profiles[eco];
-    return '<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:11px;margin-bottom:8px">'
-      + '<div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:7px">'+label+'</div>'
-      + '<input class="eod-select" style="margin-bottom:7px" placeholder="Chrome profile name, e.g. Work" value="'+rbEsc(p.name)+'" onchange="rbSetProfile(\''+eco+'\',\'name\',this.value)">'
-      + '<input class="eod-select" style="margin-bottom:0" placeholder="Funnel URL for this profile" value="'+rbEsc(p.url)+'" onchange="rbSetProfile(\''+eco+'\',\'url\',this.value)">'
-      + '</div>';
-  };
-  const anyProfile = rbState.profiles.original.name || rbState.profiles.pilot.name;
-  h += '<div style="background:#fff;border:1.5px solid '+(anyProfile?'#e2e8f0':'#fde68a')+';border-radius:14px;padding:16px;margin-top:14px">'
-    + '<label class="eod-label">Browser profiles</label>'
-    + '<div style="font-size:11.5px;color:#64748b;margin-bottom:11px;line-height:1.55">Name the Chrome profile each Funnel is signed into. The run script tells Claude which browser to select, so it never pulls from the wrong ecosystem. Install Claude in Chrome in both profiles and sign in on each.</div>'
-    + pf('original','Original Funnel')
-    + pf('pilot','Denver Pilot Funnel')
-    + (anyProfile ? '' : '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 11px;font-size:11px;color:#92400e;line-height:1.5">Not set yet. Until you fill these in, the script just says "the profile signed into this Funnel" and leaves the choice to you.</div>')
-    + '</div>';
-
-  // RECIPIENTS
-  h += '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:14px">'
-    + '<label class="eod-label">Recipients</label>'
-    + '<div style="font-size:11.5px;color:#64748b;margin-bottom:10px">Editable list. Add a name and their job function, it flows into the run brief.</div>'
-    + (rbState.recipients.length
-        ? rbState.recipients.map(function(r,i){
-            return '<div style="display:flex;align-items:center;gap:10px;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:9px;margin-bottom:6px">'
-              + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#0f172a">'+rbEsc(r.name)+'</div>'
-              + '<div style="font-size:11px;color:#64748b">'+rbEsc(r.title||'')+(r.email?' · '+rbEsc(r.email):'')+'</div></div>'
-              + '<button class="btn" style="background:#fef2f2;color:#991b1b" onclick="rbRemoveRecipient('+i+')">Remove</button></div>';
-          }).join('')
-        : '<div style="font-size:12px;color:#94a3b8;padding:6px 0 10px">No recipients yet.</div>')
-    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'
-    + '<input id="rbRecName" class="eod-select" style="flex:1;min-width:120px;margin:0" placeholder="Name">'
-    + '<input id="rbRecTitle" class="eod-select" style="flex:1;min-width:120px;margin:0" placeholder="Title or job function">'
-    + '<input id="rbRecEmail" class="eod-select" style="flex:1;min-width:140px;margin:0" placeholder="Email">'
-    + '<button class="btn" style="background:#0d9488;color:#fff" onclick="rbAddRecipient()">Add</button></div>'
-    + '</div>';
-
-  h += '</div>';
-  return h;
-}
-
 function renderPage(){
   // Defense in depth: even if state.page somehow got set to a
   // guest-blocked tab (stale state, direct call, etc.), bounce back home.
@@ -6955,7 +6127,6 @@ function renderPage(){
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
     case 'offerletter': html=state.manager?renderOfferLetter():renderLogin();break;
     case 'cards':     html=state.manager?renderCardStudio():renderLogin();break;
-    case 'reports':   html=state.manager?renderReportBuilder():renderLogin();break;
     default:          html=renderHome();
   }
   document.getElementById('pageContent').innerHTML=html;
