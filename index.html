@@ -1819,6 +1819,7 @@ const SIMPLE_CALLER_TAGS = {
     {tag:'Applicant - Asking for Application Update', handling:'special', specialId:'appUpdate'},
     {tag:'Applicant - Denied Application Inquiry', handling:'special', specialId:'appDenied'},
     {tag:'Applicant - Deposit Refund Inquiry', handling:'special', specialId:'appRefund'},
+    {tag:'Applicant - Application Process Question', handling:'special', specialId:'appProcess'},
   ],
   resident: [
     {tag:'Resident - Maintenance Request', handling:'transfer-res'},
@@ -1894,12 +1895,11 @@ const TRANSFER_CONFIGS = {
 };
 
 const PROSPECT_BRANCHES = [
-  {id:'tour', emoji:'📅', label:'Tour', desc:'Request, confirm, reschedule, or cancel'},
+  {id:'tour', emoji:'📅', label:'Tour', desc:'Confirm, reschedule, or cancel'},
   {id:'inquiry', emoji:'💬', label:'Inquiry', desc:'Questions about the community'},
 ];
 
 const TOUR_TOPICS = [
-  {id:'tour_request', label:'Tour Request'},
   {id:'tour_confirm', label:'Confirmation'},
   {id:'tour_reschedule', label:'Rescheduling'},
   {id:'tour_cancel', label:'Cancel Tour'},
@@ -2187,9 +2187,9 @@ function renderBreadcrumb(){
     }
     if(cgState.branch){
       const b = PROSPECT_BRANCHES.find(b=>b.id===cgState.branch);
-      trail.push({label:b.label, screen:'topicList'});
+      trail.push({label:b.label, screen: cgState.branch==='inquiry' ? 'topicGuide' : 'topicList'});
     }
-    if(cgState.topic){
+    if(cgState.topic && cgState.branch!=='inquiry'){
       const list = cgState.branch==='tour' ? TOUR_TOPICS : INQUIRY_TOPICS;
       const t = list.find(t=>t.id===cgState.topic);
       const guideScreen = cgState.branch==='tour' ? 'tourGuide' : (cgState.topic==='qualification' ? 'qualificationGuide' : 'topicGuide');
@@ -2234,7 +2234,7 @@ function goTo(screen){
 function renderDirectionScreen(){
   return `
     <div class="page-header">
-      <h1>📞 Call Guide &amp; Notes</h1>
+      <h1>😊 Call Guide &amp; Notes</h1>
       <p>First things first — is this call coming in, or are you making it?</p>
     </div>
     <div class="content">
@@ -2311,6 +2311,7 @@ function screenForTag(handling, specialId){
   if(specialId==='appUpdate') return 'appUpdateGuide';
   if(specialId==='appDenied') return 'appDeniedGuide';
   if(specialId==='appRefund') return 'appRefundGuide';
+  if(specialId==='appProcess') return 'appProcessGuide';
   return 'simpleTagList';
 }
 function selectSimpleTag(tagObj){
@@ -2595,7 +2596,21 @@ function renderBranchScreen(){
       </div>
     </div>`;
 }
-function selectBranch(id){ cgState.branch=id; cgState.screen='topicList'; renderCallGuideView(); }
+function selectBranch(id){
+  cgState.branch = id;
+  if(id === 'inquiry'){
+    // Rental Criteria & Qualification is reachable from inside Availability
+    // via "If They Ask About...", so Inquiry skips the topic-list step
+    // entirely and goes straight into the Availability guide.
+    cgState.topic = 'availability';
+    if(!cgState.discoveryChecked.length) cgState.discoveryChecked = new Array(DISCOVERY.length).fill(false);
+    resetAvailabilityState();
+    cgState.screen = 'topicGuide';
+  } else {
+    cgState.screen = 'topicList';
+  }
+  renderCallGuideView();
+}
 
 // ── SCREEN: TOPIC LIST ───────────────────────────────────────────
 function renderTopicListScreen(){
@@ -2692,7 +2707,7 @@ function updateTourNote(){
 }
 
 // ── SCREEN: AVAILABILITY (Inquiry topic — unchanged content) ────
-const OPENING_LINE = "Hey, thanks so much for reaching out! I'd love to help you find your perfect fit — in order to do that, mind if I ask you a few quick questions first?";
+const OPENING_LINE = "Hey [Prospect Name], good morning/afternoon! Appreciate you calling [Community Name]. It would be my pleasure to check if our community would be a perfect fit for you!";
 const DISCOVERY = [
   {label:'Reason for Move', question:"I'm curious — what's bringing you into the market for a new place right now?", tip:null},
   {label:'Move-in Date', question:"What's your ideal move-in date?", tip:"Is this something you're looking to do right away, or are you planning a bit further out?"},
@@ -2801,9 +2816,10 @@ function renderQuickAnswerList(){
   document.getElementById('quickAnswerList').innerHTML = QUICK_ANSWER_TOPICS.map(topic=>{
     const isTopicOpen = cgState.quickAnswerOpenTopic===topic.id;
     const usedCount = cgState.quickAnswersUsed.filter(u=>u.topicId===topic.id).length;
+    const highlightBg = topic.id==='qualification' ? '#fee2e2' : topic.id==='pets' ? '#dbeafe' : '';
     return `
       <div class="aaa-scenario">
-        <div class="aaa-scenario-header" onclick="toggleQuickAnswerTopic('${topic.id}')">
+        <div class="aaa-scenario-header" onclick="toggleQuickAnswerTopic('${topic.id}')" style="${highlightBg?`background:${highlightBg}`:''}">
           <span class="title">${usedCount?'✅ ':''}${topic.label}${topic.draft?' <span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;margin-left:6px">Draft</span>':''}</span>
           <span class="chev${isTopicOpen?' open':''}">▾</span>
         </div>
@@ -3285,6 +3301,44 @@ function updateAppUpdateNote(){
   document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
 }
 
+// ── APPLICANT: APPLICATION PROCESS QUESTION (real documented process) ──
+function renderAppProcessScreen(){
+  return `
+    <div class="page-header"><h1>${cgState.simpleTag}</h1><p>General process walkthrough, plus quick reference for common situations</p></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-title">🗣️ Suggested Response</div>
+        <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">Happy to walk you through where things stand in the process!</span></div>
+        <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">After you submit your application, here's what happens: first we verify your identity digitally. Next, we verify your income and assets — this can be done through a linked bank account, recent paystubs, or accepted tax documents. From there, we run a credit, criminal, and rental history screening. Once that's complete, you'll be approved, conditionally approved, or in some cases denied. If approved, we prepare your lease — which includes a few final checks like pet screening, if applicable — and then send it over for signature.</span></div>
+        <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">Is there a specific part of the process you have questions about, or would you like me to check your specific application status?</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 Common Situations — Quick Reference</div>
+        <div class="guide-only-tag">👁️ For your reference, not meant to be read verbatim</div>
+        <div class="stub-note" style="margin-bottom:8px"><strong>Income name mismatch:</strong> if paystubs don't match the Plaid-verified name on the application, the fix is a tax form or a directly linked bank account — not an employer letter or future paystubs.</div>
+        <div class="stub-note" style="margin-bottom:8px"><strong>Deposits:</strong> always collected to the exact cent — never rounded.</div>
+        <div class="stub-note" style="margin-bottom:8px"><strong>Paper applications:</strong> not offered by default — only as a personal-circumstances accommodation, since paper bypasses our standard identity and income verification.</div>
+        <div class="stub-note" style="margin-bottom:8px"><strong>Offer letters:</strong> some employers (e.g. Amazon) are on our "cannot confirm future employment" list — an offer letter from these isn't accepted as income proof. The applicant needs current income proof or a guarantor instead.</div>
+        <div class="stub-note" style="margin-bottom:8px"><strong>Pet screening timing:</strong> household pets can often clear within an hour with current vaccination records. Service/support animal requests can take several days to a week or more for documentation review. The lease isn't sent and payment isn't requested until screening is complete and approved.</div>
+        <div class="stub-note"><strong>Roommate transfers:</strong> when one roommate transfers to a new unit while the other vacates, it's processed as a standard transfer — the departing roommate signs a Notice to Vacate, and the transferring roommate signs both the Notice to Vacate and the new lease.</div>
+      </div>
+      <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="simpleDetailsBox" placeholder="What specifically did they ask, and how did it go?">${cgState.simpleTagDetails||''}</textarea></div>
+    </div>
+    <div class="note-panel">
+      <div class="note-panel-title"><span>Your Note So Far</span><span id="noteCharCount" style="color:#64748b;font-weight:600">0 items</span></div>
+      <div class="note-preview" id="notePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyNote()">📋 Copy Note</button>
+    </div>`;
+}
+function updateAppProcessNote(){
+  cgState.simpleTagDetails = document.getElementById('simpleDetailsBox')?.value || cgState.simpleTagDetails || '';
+  let story = 'Applicant called in with a question about the application process.';
+  if(cgState.simpleTagDetails.trim()) story += ` ${cgState.simpleTagDetails.trim()}`;
+  document.getElementById('notePreview').textContent = story;
+  const itemCount = 1 + (cgState.simpleTagDetails.trim()?1:0);
+  document.getElementById('noteCharCount').textContent = itemCount + (itemCount===1?' item':' items');
+}
+
 // ── APPLICANT: DENIED APPLICATION INQUIRY (real SOP) ────────────
 function renderAppDeniedScreen(){
   return `
@@ -3389,6 +3443,7 @@ function renderCallGuideView(){
   else if(cgState.screen==='appUpdateGuide') content.innerHTML = renderAppUpdateScreen();
   else if(cgState.screen==='appDeniedGuide') content.innerHTML = renderAppDeniedScreen();
   else if(cgState.screen==='appRefundGuide') content.innerHTML = renderAppRefundScreen();
+  else if(cgState.screen==='appProcessGuide') content.innerHTML = renderAppProcessScreen();
   else if(cgState.screen==='branch') content.innerHTML = renderBranchScreen();
   else if(cgState.screen==='topicList') content.innerHTML = renderTopicListScreen();
   else if(cgState.screen==='topicStub') content.innerHTML = renderTopicStubScreen();
@@ -3429,6 +3484,10 @@ function renderCallGuideView(){
   if(cgState.screen==='appRefundGuide'){
     updateAppRefundNote();
     document.getElementById('simpleDetailsBox').addEventListener('input', updateAppRefundNote);
+  }
+  if(cgState.screen==='appProcessGuide'){
+    updateAppProcessNote();
+    document.getElementById('simpleDetailsBox').addEventListener('input', updateAppProcessNote);
   }
   if(cgState.screen==='tourGuide'){
     updateTourNote();
