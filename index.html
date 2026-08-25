@@ -4700,31 +4700,131 @@ function rbTogglePicked(id){
 function rbSetScope(type){ rbState.scopeType = type; render(); }
 function rbSet(key, val){ rbState[key] = val; render(); }
 
-// ── RUN BRIEF ─────────────────────────────────────────────────────
-function rbBrief(){
-  const {label} = rbResolveDates();
-  const scope = rbScopeLabel();
+// ── AGENT SCRIPT ─────────────────────────────────────────────────
+// The Hub cannot pull the files itself: a static page can't drive another
+// site's session or write to disk — browsers block that by design. Claude
+// in Chrome can, because it's a browser agent using your real logins. So
+// the Run button assembles a click-by-click execution script the agent
+// runs end to end, ending with a sentinel line so a truncated hand-off
+// can never pass silently as a complete one.
+function rbAgentScript(){
+  const p = rbResolveDates();
+  const communities = rbScopeCommunities();
   const picked = RB_REPORTS.filter(r=>rbState.picked[r.id]);
   const fmt = RB_FORMATS.find(f=>f.id===rbState.format);
-  const lines = [];
-  lines.push(`PEC Hub Report Run`);
-  lines.push(`Scope: ${scope}`);
-  lines.push(`Period: ${label}`);
-  lines.push(`Snapshot Status filter: ${rbSnapshotStatuses()}`);
-  lines.push(`Team filter: ${rbTeamFilter()}`);
-  lines.push(`Reports to attach (${picked.length}): ${picked.map(r=>r.name).join(', ') || '— none picked yet —'}`);
-  lines.push(`Output format: ${fmt.label} — ${fmt.desc}`);
-  if(rbEcosystemsInScope().length > 1){
-    lines.push(`⚠️ Methodology note: this scope spans both the Denver Pilot and Original Funnel ecosystems. State this in the narrative — Applicant-inclusive Snapshot Status only applies to the Pilot portion, so a combined missed-call or activity rate mixes two different populations.`);
+  const L = [];
+  let n = 0;
+  const step = (t) => { n++; L.push(n+'. '+t); };
+
+  L.push('RUN THE PEC REPORT — '+rbScopeLabel()+' — '+p.label);
+  L.push('');
+  L.push('You are pulling Funnel reports in the browser, then writing the report.');
+  L.push('Use Claude in Chrome. I am already logged in. Do not ask me to log in again.');
+  L.push('If you hit a login screen or a CAPTCHA, stop and tell me instead of guessing.');
+  L.push('');
+  L.push('PERIOD: '+p.label);
+  L.push('Set every date filter to this exact range. Do not use the preset names,');
+  L.push('they resolve differently depending on the day.');
+  L.push('');
+
+  const pilotComms = communities.filter(c=>rbEcosystem(c.id)==='pilot');
+  const origComms = communities.filter(c=>rbEcosystem(c.id)==='original');
+  const ecoGroups = [];
+  if(origComms.length) ecoGroups.push({key:'original', label:'Original Funnel', comms:origComms});
+  if(pilotComms.length) ecoGroups.push({key:'pilot', label:'Denver Pilot Funnel', comms:pilotComms});
+  const spansBoth = ecoGroups.length > 1;
+
+  if(spansBoth){
+    L.push('⚠️ THIS RUN SPANS BOTH FUNNELS. They are separate systems in separate');
+    L.push('Chrome profiles. Finish one completely, then switch profiles and do the other.');
+    L.push('');
   }
-  lines.push(`\nAttach the downloaded exports below and ask Claude to build the ${fmt.label} report from them for the period above.`);
-  return lines.join('\n');
-}
-function rbCopyBrief(btn){
-  const text = rbBrief();
-  navigator.clipboard.writeText(text).then(()=>{
-    if(btn){ const orig = btn.textContent; btn.textContent = '✓ Copied!'; setTimeout(()=>{btn.textContent=orig;}, 1500); }
+
+  L.push('=== PART 1: DOWNLOAD ===');
+  L.push('');
+
+  if(!picked.length){
+    L.push('(No reports picked yet — go back and check at least one in Report Set.)');
+    L.push('');
+  }
+
+  ecoGroups.forEach(e=>{
+    const relevant = picked.filter(r=>{
+      if(r.external) return e.key === ecoGroups[0].key;
+      if(!(r.splitPath || r.snapshot)) return e.key === ecoGroups[0].key;
+      return true;
+    });
+    if(!relevant.length) return;
+    if(spansBoth){
+      L.push('--- '+e.label+' ('+e.comms.length+' communities) ---');
+      L.push('Switch to the Chrome profile signed into this Funnel first.');
+      L.push('');
+    }
+    relevant.forEach(r=>{
+      const path = (r.splitPath && e.key==='pilot') ? r.pilotPath : r.path;
+      step(`Go to ${r.external ? r.path : path}.`);
+      if(r.extra) r.extra.forEach(x => L.push('   Filter: '+x));
+      if(!r.external){
+        const teamNote = (rbState.scopeType==='portfolio' || rbState.scopeType==='ecosystem')
+          ? 'leave the Team filter empty (already scoped)'
+          : 'Team filter → ' + e.comms.map(c=>c.name).join(', ');
+        L.push('   '+teamNote+'.');
+      }
+      if(r.snapshot) L.push('   Snapshot Status: '+rbSnapshotStatuses());
+      if(r.note) L.push('   Note: '+r.note);
+      L.push('   '+r.download+'.');
+      L.push('');
+    });
   });
+
+  L.push('=== PART 2: ANALYZE & DRAFT ===');
+  L.push('');
+  step(`Once every file above is downloaded, analyze them together for the period ${p.label}.`);
+  step(`Build the report in ${fmt.label} format: ${fmt.desc}`);
+  if(spansBoth){
+    step('Since this run spans both Funnel ecosystems, state that methodology explicitly — Applicant-inclusive Snapshot Status only applies to the Pilot portion, so combined rates mix two populations.');
+  }
+  step('Name which reports were pulled and the exact resolved date range in the final output.');
+  L.push('');
+  L.push('END OF RUN SCRIPT');
+
+  return L.join('\n');
+}
+
+// Deep link into Claude Desktop with the script prefilled. Anthropic
+// documents claude://claude.ai/new?q=... — the app launches if it isn't
+// running, and the prompt lands in the composer for review rather than
+// auto-sending. We always copy to the clipboard first, because custom
+// protocol URLs have length limits that vary by OS, and a truncated run
+// script handed to an agent is worse than no run script at all.
+const RB_URL_SAFE = 7000;
+function rbRunUrl(){ return 'claude://claude.ai/new?q=' + encodeURIComponent(rbAgentScript()); }
+function rbUrlTooLong(){ return rbRunUrl().length > RB_URL_SAFE; }
+function rbFlash(id, msg, ms){
+  const b = document.getElementById(id);
+  if(!b) return;
+  const o = b.innerHTML;
+  b.innerHTML = msg;
+  setTimeout(()=>{ b.innerHTML = o; }, ms || 2600);
+}
+function rbCopyScript(){
+  navigator.clipboard.writeText(rbAgentScript()).then(()=>{
+    rbFlash('rbCopyOnlyBtn', '✓ Copied');
+  }, ()=>{ alert('Copy failed. Open the preview below and copy manually.'); });
+}
+// Primary action: clipboard first (always works), then hand off to the app.
+function rbRunInClaude(){
+  const script = rbAgentScript();
+  const finish = ()=>{
+    if(rbUrlTooLong()){
+      rbFlash('rbRunBtn', '✓ Copied. Opening Claude, paste it there', 3600);
+      window.location.href = 'claude://claude.ai/new';
+    } else {
+      rbFlash('rbRunBtn', '✓ Sent to Claude Desktop', 3600);
+      window.location.href = rbRunUrl();
+    }
+  };
+  navigator.clipboard.writeText(script).then(finish, finish);
 }
 
 // ── RECIPIENTS (Firestore-backed, editable list) ──────────────────
@@ -5189,7 +5289,7 @@ function renderReportBuilder(){
               <div style="font-size:12.5px;font-weight:700;color:#fff;margin-bottom:4px">${r.name}</div>
               <div style="font-size:11px;color:#cbd5e1;line-height:1.6">
                 <strong>Path:</strong> ${r.splitPath ? (rbState.eco==='pilot' || (rbEcosystemsInScope().includes('pilot') && !rbEcosystemsInScope().includes('original')) ? r.pilotPath : r.path) : r.path}<br/>
-                <strong>Date field:</strong> ${r.dateField}<br/>
+                ${r.dateField?`<strong>Date field:</strong> ${r.dateField}<br/>`:''}
                 ${r.extra?`<strong>Filters:</strong> ${r.extra.join(' · ')}<br/>`:''}
                 ${r.note?`<em>${r.note}</em><br/>`:''}
                 <strong>Download:</strong> ${r.download}
@@ -5200,11 +5300,16 @@ function renderReportBuilder(){
       </div>
 
       <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em">📋 Run Brief — paste into a new Claude chat with your downloads</div>
-          <button onclick="rbCopyBrief(this)" style="padding:7px 14px;background:#4338ca;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer">📋 Copy Brief</button>
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">▶️ Run</div>
+        <div style="font-size:12px;color:#475569;line-height:1.6;margin-bottom:12px">The Hub can't pull the files itself — a static page can't drive another site's session or save to your desktop. <strong>Run</strong> opens <strong>Claude Desktop</strong> with the entire script already loaded, and copies it to your clipboard as backup. Review it, hit enter, and Claude in Chrome does the pulling.<br/><br/>The script ends with <strong>END OF RUN SCRIPT</strong>. If Claude says it can't see that line, the text got cut off in transit — paste from your clipboard instead.</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button id="rbRunBtn" onclick="rbRunInClaude()" style="flex:1;padding:12px;background:#4338ca;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">▶ Run in Claude</button>
+          <button id="rbCopyOnlyBtn" onclick="rbCopyScript()" style="padding:12px 18px;background:#fff;color:#4338ca;border:1.5px solid #4338ca;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap">Copy Only</button>
         </div>
-        <pre style="white-space:pre-wrap;font-family:inherit;font-size:11.5px;color:#334155;background:#f8fafc;border-radius:8px;padding:12px;line-height:1.6;margin:0">${rbBrief()}</pre>
+        <details>
+          <summary style="font-size:11px;color:#94a3b8;cursor:pointer;margin-bottom:8px">Preview the script</summary>
+          <pre style="white-space:pre-wrap;font-family:inherit;font-size:11px;color:#334155;background:#f8fafc;border-radius:8px;padding:12px;line-height:1.6;margin:0">${rbAgentScript()}</pre>
+        </details>
       </div>
 
       <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px">
