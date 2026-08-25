@@ -581,6 +581,9 @@ async function hydrateFromFirestore(){
   if(remote.applicant_tracker && Array.isArray(remote.applicant_tracker.items)){
     state.applicantEntries = remote.applicant_tracker.items;
   }
+  if(remote.report_builder && Array.isArray(remote.report_builder.recipients)){
+    rbState.recipients = remote.report_builder.recipients;
+  }
   if(remote.scorecard_period_history){
     if(Array.isArray(remote.scorecard_period_history.monthendHistory) && remote.scorecard_period_history.monthendHistory.length){
       state.monthendHistory = remote.scorecard_period_history.monthendHistory;
@@ -1042,6 +1045,7 @@ const NAV = [
   {id:'checklist', label:'Application Checklist', icon:'✅'},
   {id:'applicants', label:'Applicant Status', icon:'🗂️', guestBlocked:true},
   {id:'communities', label:'Communities Map', icon:'🗺️', guestBlocked:true},
+  {id:'reports', label:'Report Builder', icon:'📊', managerOnly:true},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
   {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
@@ -4428,6 +4432,317 @@ const cmMarketsData = {
   }
 };
 
+// ══════════════════════════════════════════════════════════════════
+// REPORT BUILDER — manager-only. Four selections (Scope, Date Preset,
+// Report Set, Output Format) produce an exact pull checklist with every
+// filter pre-resolved, plus a run brief to paste into Claude.
+//
+// Community, market, and ecosystem all read from cmMarketsData above —
+// there is only ever one community list in the Hub. Denver Pilot
+// membership is its own RB_PILOT_IDS array because it does NOT match
+// the market grouping: Mountain Village sits in the Springs market but
+// pulls from the Denver Pilot Funnel. Picking "Denver Metro market"
+// would return 9 communities and quietly miss it — that's what the
+// "By Funnel" scope option exists to fix.
+//
+// Firestore doc: pechub/report_builder { recipients: [...] } — text
+// only, a few KB. Raw CSVs stay on the desktop, never uploaded.
+// ══════════════════════════════════════════════════════════════════
+
+const RB_PILOT_IDS = ['29x','beacon','centrecourt','copperridge','forumfitz',
+                      'sunsetpeak','economist','heightshuron','overland','mountainvillage'];
+
+// Service model drives the Snapshot Status filter, not the ecosystem.
+// PEC    = agents handle Prospects AND Applicants (Prospect Experience Crew)
+// Legacy = Prospects only, Applications handled by a separate team
+function rbServiceModel(id){ return RB_PILOT_IDS.includes(id) ? 'PEC' : 'Legacy'; }
+function rbEcosystem(id){ return RB_PILOT_IDS.includes(id) ? 'pilot' : 'original'; }
+
+const RB_PRESETS = [
+  {id:'today',    label:'Today'},
+  {id:'prevweek', label:'Previous week'},
+  {id:'prevmonth',label:'Previous month'},
+  {id:'prevqtr',  label:'Previous quarter'},
+  {id:'mtd',      label:'Month to date'},
+  {id:'qtd',      label:'Quarter to date'},
+  {id:'ytd',      label:'Year to date'},
+  {id:'custom',   label:'Custom range'},
+];
+
+const RB_REPORTS = [
+  {id:'attribution', name:'Marketing Attribution', kind:'Cohort',
+   set:['leadership','community'],
+   path:"Reports > Attributions > Marketing Attribution",
+   dateField:'Lead Created Date',
+   download:'Click the total number of leads to load the detail view, then download',
+   purpose:'The new lead cohort and its conversion. Source of truth for Total Leads.'},
+
+  {id:'tours', name:'Tour Report', kind:'Activity',
+   set:['leadership','community'],
+   path:"Reports > Tours",
+   dateField:'Tour Scheduled For Date',
+   download:'Click the total number of tours to load the detail view, then download',
+   purpose:'The real tour board, PEC booking impact, and show-up performance.'},
+
+  {id:'loss', name:'Loss Reason', kind:'Cohort',
+   set:['leadership','community'],
+   path:"Reports > Loss Reasons",
+   dateField:'Lost Date',
+   download:'Click the total number to load the detail view, then download',
+   purpose:'Why we are losing prospects, and whether it is follow-up or inventory/pricing.'},
+
+  {id:'status', name:'Prospect Status', kind:'Activity',
+   set:['community'],
+   path:"Reports > Prospect Status",
+   dateField:'Date',
+   download:'⚠️ No drill-in. Click the THREE DOTS in the upper right corner, then download',
+   purpose:'Current pipeline, ownership, who is still being worked.'},
+
+  {id:'warmhandoff', name:'Warm Handoff', kind:'Task',
+   set:['leadership'],
+   path:"Reports > Tasks",
+   dateField:'Date',
+   extra:['More > Automarketing Trigger = "Warm handoff call"'],
+   note:'Wait for the Automarketing Trigger list to finish loading. Warm handoff call sits at the bottom.',
+   download:'Download the task detail',
+   purpose:'How actively onsite connects with the prospect before the tour.'},
+
+  {id:'phone', name:'Phone (Missed Calls)', kind:'Activity',
+   set:['leadership'],
+   splitPath:true,
+   path:"Reports > Communication > Phone",
+   pilotPath:"Reports > Contact Center > Phones",
+   dateField:'Date',
+   extra:['During Business Hours = Yes'],
+   snapshot:true,
+   download:'Export the report',
+   purpose:'Answer rate. Goal is 10% missed or lower.'},
+
+  {id:'agentactivity', name:'Agent Activity (Scores)', kind:'Activity',
+   set:['leadership'],
+   path:"Reports > Activity > Agent Activity",
+   dateField:'Date',
+   snapshot:true,
+   agentFilter:true,
+   download:'Export the report',
+   purpose:'Lead Engagement and Task Management. Goal is 9 for both.'},
+
+  {id:'engagement', name:'Engagement Volume', kind:'Activity',
+   set:['leadership'],
+   path:"Reports > Communication > Engagement",
+   dateField:'Date',
+   extra:['Level of Detail = Summary','Snapshot Status = Prospect, Applicant','Heatmap Detail = Incoming and Outgoing'],
+   agentFilter:true,
+   download:'Export the report',
+   purpose:'Emails, calls out and in, SMS. Shows the work behind the numbers.'},
+
+  {id:'fenix', name:'Fenix (Call Quality)', kind:'External',
+   set:['leadership'],
+   external:true,
+   path:"LeaseHawk > Fenix > Agent Insights > Agent Ranking (Centralized Scorecard Filter)",
+   url:'https://my.leasehawk.com/reporting/Leasehawk%20Application/Fenix/Agent%20Insights/Agent%20Ranking%20-%20Centralized%20%5BScorecard%20Filter%5D',
+   download:'Export icon in the UPPER LEFT corner. Excel or CSV',
+   purpose:'Call quality. PEC standard is 90% and above.'},
+];
+
+const RB_FORMATS = [
+  {id:'A', label:'Email + PDF', desc:'Email body max 6 sentences in 2 paragraphs, plus a full PDF under 5 pages with tables, bullets and highlights.'},
+  {id:'B', label:'Email only',  desc:'The entire narrative lives in the email body. No attachment. Tables allowed.'},
+  {id:'C', label:'At a Glance', desc:'Dashboard style. Tables and graphs, raw numbers and percentages paired, green on goal, orange below goal with a short why line.'},
+];
+
+// Named recipes — one click loads the report set + format Olga's team
+// actually runs on a recurring basis. Scope and date still need picking.
+const RB_RECIPES = [
+  {id:'weekly', label:'Weekly Insight', desc:'Olga, VP Ops, VP Revenue, Rev Mgr, EVP, RD, RAA',
+   reports:['attribution','tours','loss','warmhandoff','phone','fenix'], preset:'prevweek', format:'C'},
+  {id:'monthly', label:'Monthly Insight', desc:'Olga + executives / RD — LMS + PEC combined',
+   reports:['attribution','tours','loss','warmhandoff','phone','agentactivity','engagement','fenix'], preset:'prevmonth', format:'A'},
+  {id:'quarterly', label:'Quarterly Insight', desc:'Same as Monthly — both Funnel ecosystems combined',
+   reports:['attribution','tours','loss','warmhandoff','phone','agentactivity','engagement','fenix'], preset:'prevqtr', format:'A'},
+  {id:'community', label:'Community-Level Insight', desc:'Onsite RD/CT — the 4 Funnel exports',
+   reports:['attribution','tours','loss','status'], preset:'prevmonth', format:'A'},
+  {id:'adhoc', label:'Ad-hoc / Defense', desc:'Fast turnaround, whatever Olga names',
+   reports:['attribution','tours','loss'], preset:'prevweek', format:'B'},
+];
+
+let rbState = {
+  scopeType:'portfolio', // 'community' | 'market' | 'ecosystem' | 'portfolio'
+  community:null, market:null, eco:'pilot',
+  preset:'prevmonth', from:'', to:'',
+  picked:{}, // {reportId: true}
+  format:'A',
+  recipients:[], // [{name, role, email}]
+};
+
+// ── DATE RESOLUTION — always against today's ACTUAL date, US local time ──
+function rbResolveDates(today){
+  today = today || new Date();
+  const y = today.getFullYear(), m = today.getMonth(), d = today.getDate();
+  const disp = (dt) => dt.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+
+  let from, to, label;
+  switch(rbState.preset){
+    case 'today':
+      from = new Date(y,m,d); to = new Date(y,m,d);
+      label = disp(from);
+      break;
+    case 'prevweek': {
+      // Previous full Sun–Sat week before the current one
+      const dow = today.getDay(); // 0=Sun
+      const thisWeekStart = new Date(y,m,d-dow);
+      to = new Date(thisWeekStart); to.setDate(to.getDate()-1); // last Saturday
+      from = new Date(to); from.setDate(from.getDate()-6); // the Sunday before that
+      label = `${disp(from)} to ${disp(to)}`;
+      break;
+    }
+    case 'prevmonth': {
+      from = new Date(y, m-1, 1);
+      to = new Date(y, m, 0); // day 0 of this month = last day of prev month
+      label = `${from.toLocaleDateString('en-US',{month:'long',year:'numeric'})} (${disp(from)} to ${disp(to)})`;
+      break;
+    }
+    case 'prevqtr': {
+      const q = Math.floor(m/3); // current quarter 0-3
+      const prevQStartMonth = ((q-1+4)%4) * 3;
+      const prevQYear = q===0 ? y-1 : y;
+      from = new Date(prevQYear, prevQStartMonth, 1);
+      to = new Date(prevQYear, prevQStartMonth+3, 0);
+      label = `Q${((q-1+4)%4)+1} ${prevQYear} (${disp(from)} to ${disp(to)})`;
+      break;
+    }
+    case 'mtd':
+      from = new Date(y,m,1); to = new Date(y,m,d);
+      label = `Month to date (${disp(from)} to ${disp(to)})`;
+      break;
+    case 'qtd': {
+      const q = Math.floor(m/3);
+      from = new Date(y, q*3, 1); to = new Date(y,m,d);
+      label = `Q${q+1} ${y} (${disp(from)} to ${disp(to)})`;
+      break;
+    }
+    case 'ytd':
+      from = new Date(y,0,1); to = new Date(y,m,d);
+      label = `Year to date (${disp(from)} to ${disp(to)})`;
+      break;
+    case 'custom':
+      from = rbState.from ? new Date(rbState.from+'T00:00:00') : null;
+      to = rbState.to ? new Date(rbState.to+'T00:00:00') : null;
+      label = (from && to) ? `${disp(from)} to ${disp(to)}` : 'Custom range — pick both dates';
+      break;
+  }
+  return {from, to, label};
+}
+
+// ── SCOPE RESOLUTION ─────────────────────────────────────────────
+function rbAllCommunities(){
+  const all = [];
+  for(const key in cmMarketsData) all.push.apply(all, cmMarketsData[key].communities);
+  return all;
+}
+function rbScopeCommunities(){
+  if(rbState.scopeType==='community'){
+    const c = rbAllCommunities().find(c=>c.id===rbState.community);
+    return c ? [c] : [];
+  }
+  if(rbState.scopeType==='market'){
+    return (rbState.market && cmMarketsData[rbState.market]) ? cmMarketsData[rbState.market].communities : [];
+  }
+  if(rbState.scopeType==='ecosystem'){
+    return rbAllCommunities().filter(c => rbEcosystem(c.id) === rbState.eco);
+  }
+  return rbAllCommunities(); // portfolio
+}
+function rbScopeLabel(){
+  if(rbState.scopeType==='community'){
+    const c = rbAllCommunities().find(c=>c.id===rbState.community);
+    return c ? c.name : 'Select a community';
+  }
+  if(rbState.scopeType==='market') return rbState.market ? cmMarketsData[rbState.market].label : 'Select a market';
+  if(rbState.scopeType==='ecosystem'){
+    const n = rbScopeCommunities().length;
+    return (rbState.eco==='pilot' ? 'Denver Pilot Funnel' : 'Original Funnel') + ` (all ${n} communities)`;
+  }
+  return `Entire portfolio (${rbAllCommunities().length} communities)`;
+}
+function rbEcosystemsInScope(){
+  const ecos = new Set(rbScopeCommunities().map(c=>rbEcosystem(c.id)));
+  return [...ecos];
+}
+function rbTeamFilter(){
+  if(rbState.scopeType==='portfolio' || rbState.scopeType==='ecosystem'){
+    return `Leave the Team filter empty — this scope already pulls everything in ${rbScopeLabel()}.`;
+  }
+  const names = rbScopeCommunities().map(c=>c.name);
+  if(!names.length) return 'Pick a community or market above first.';
+  return `Select: ${names.join(', ')}`;
+}
+function rbSnapshotStatuses(){
+  const ecos = rbEcosystemsInScope();
+  const hasPilot = ecos.includes('pilot');
+  return hasPilot ? 'Prospect, Did Not Rent, Applicant' : 'Prospect, Did Not Rent';
+}
+
+// ── RECIPE / REPORT PICKING ──────────────────────────────────────
+function rbApplyRecipe(id){
+  const recipe = RB_RECIPES.find(r=>r.id===id);
+  if(!recipe) return;
+  rbState.picked = {};
+  recipe.reports.forEach(rid => { rbState.picked[rid] = true; });
+  rbState.preset = recipe.preset;
+  rbState.format = recipe.format;
+  render();
+}
+function rbTogglePicked(id){
+  rbState.picked[id] = !rbState.picked[id];
+  render();
+}
+function rbSetScope(type){ rbState.scopeType = type; render(); }
+function rbSet(key, val){ rbState[key] = val; render(); }
+
+// ── RUN BRIEF ─────────────────────────────────────────────────────
+function rbBrief(){
+  const {label} = rbResolveDates();
+  const scope = rbScopeLabel();
+  const picked = RB_REPORTS.filter(r=>rbState.picked[r.id]);
+  const fmt = RB_FORMATS.find(f=>f.id===rbState.format);
+  const lines = [];
+  lines.push(`PEC Hub Report Run`);
+  lines.push(`Scope: ${scope}`);
+  lines.push(`Period: ${label}`);
+  lines.push(`Snapshot Status filter: ${rbSnapshotStatuses()}`);
+  lines.push(`Team filter: ${rbTeamFilter()}`);
+  lines.push(`Reports to attach (${picked.length}): ${picked.map(r=>r.name).join(', ') || '— none picked yet —'}`);
+  lines.push(`Output format: ${fmt.label} — ${fmt.desc}`);
+  if(rbEcosystemsInScope().length > 1){
+    lines.push(`⚠️ Methodology note: this scope spans both the Denver Pilot and Original Funnel ecosystems. State this in the narrative — Applicant-inclusive Snapshot Status only applies to the Pilot portion, so a combined missed-call or activity rate mixes two different populations.`);
+  }
+  lines.push(`\nAttach the downloaded exports below and ask Claude to build the ${fmt.label} report from them for the period above.`);
+  return lines.join('\n');
+}
+function rbCopyBrief(btn){
+  const text = rbBrief();
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btn){ const orig = btn.textContent; btn.textContent = '✓ Copied!'; setTimeout(()=>{btn.textContent=orig;}, 1500); }
+  });
+}
+
+// ── RECIPIENTS (Firestore-backed, editable list) ──────────────────
+function rbAddRecipient(){
+  const name = (document.getElementById('rbRecipName')?.value || '').trim();
+  const role = (document.getElementById('rbRecipRole')?.value || '').trim();
+  const email = (document.getElementById('rbRecipEmail')?.value || '').trim();
+  if(!name || !email) return;
+  rbState.recipients.push({name, role, email});
+  render();
+  saveToFirestore('report_builder', {recipients: rbState.recipients});
+}
+function rbRemoveRecipient(i){
+  rbState.recipients.splice(i,1);
+  render();
+  saveToFirestore('report_builder', {recipients: rbState.recipients});
+}
+
 // Persistent module-level state — survives incidental re-renders of the page
 // (e.g. Firestore hydration finishing while someone's browsing this tab)
 // without resetting their selected market or home community.
@@ -4761,6 +5076,156 @@ function destroyCmMap(){
   if(cmMapInstance){ cmMapInstance.remove(); cmMapInstance = null; }
   cmMarkers = {};
   cmLines = [];
+}
+
+function renderReportBuilder(){
+  const {label:dateLabel} = rbResolveDates();
+  const picked = RB_REPORTS.filter(r=>rbState.picked[r.id]);
+  const ecosInScope = rbEcosystemsInScope();
+  const spansBoth = ecosInScope.length > 1;
+  const marketKeys = Object.keys(cmMarketsData);
+  const allComms = rbAllCommunities().slice().sort((a,b)=>a.name.localeCompare(b.name));
+
+  const scopeBtn = (type, label) => `<button onclick="rbSetScope('${type}')" style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${rbState.scopeType===type?'#4338ca':'#e2e8f0'};background:${rbState.scopeType===type?'#4338ca':'#fff'};color:${rbState.scopeType===type?'#fff':'#334155'}">${label}</button>`;
+  const presetBtn = (id, label) => `<button onclick="rbSet('preset','${id}')" style="padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${rbState.preset===id?'#4338ca':'#e2e8f0'};background:${rbState.preset===id?'#4338ca':'#fff'};color:${rbState.preset===id?'#fff':'#334155'}">${label}</button>`;
+  const formatBtn = (f) => `<button onclick="rbSet('format','${f.id}')" style="flex:1;text-align:left;padding:10px 14px;border-radius:10px;cursor:pointer;border:1.5px solid ${rbState.format===f.id?'#4338ca':'#e2e8f0'};background:${rbState.format===f.id?'#eef2ff':'#fff'}">
+    <div style="font-size:12.5px;font-weight:800;color:${rbState.format===f.id?'#4338ca':'#0f172a'}">${f.label}</div>
+    <div style="font-size:10.5px;color:#64748b;margin-top:2px;line-height:1.4">${f.desc}</div>
+  </button>`;
+
+  return `
+    <div class="page-header" style="background:linear-gradient(135deg,#312e81 0%,#4338ca 100%)">
+      <div class="page-header-inner"><span style="font-size:22px">📊</span><h1>Report Builder</h1></div>
+      <p>Pick Scope, Period, Reports, Format — get an exact pull checklist and a run brief for Claude</p>
+    </div>
+    <div class="content" style="padding:20px 24px">
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">⚡ Quick Recipes — one click loads reports, period, and format</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${RB_RECIPES.map(r=>`
+            <button onclick="rbApplyRecipe('${r.id}')" style="padding:8px 14px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;cursor:pointer;text-align:left">
+              <div style="font-size:12px;font-weight:700;color:#0f172a">${r.label}</div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:1px">${r.desc}</div>
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">1️⃣ Scope</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          ${scopeBtn('community','Single Community')}
+          ${scopeBtn('market','By Market')}
+          ${scopeBtn('ecosystem','By Funnel')}
+          ${scopeBtn('portfolio','Entire Portfolio')}
+        </div>
+        ${rbState.scopeType==='community'?`
+          <select onchange="rbSet('community', this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12.5px">
+            <option value="">Select a community...</option>
+            ${allComms.map(c=>`<option value="${c.id}" ${rbState.community===c.id?'selected':''}>${c.name} (${rbEcosystem(c.id)==='pilot'?'Pilot':'Original'})</option>`).join('')}
+          </select>`:''}
+        ${rbState.scopeType==='market'?`
+          <select onchange="rbSet('market', this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12.5px">
+            <option value="">Select a market...</option>
+            ${marketKeys.map(k=>`<option value="${k}" ${rbState.market===k?'selected':''}>${cmMarketsData[k].label}</option>`).join('')}
+          </select>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:8px;line-height:1.5">📌 Use <strong>By Funnel</strong> instead when you want one full Funnel ecosystem — Pilot membership doesn't follow market grouping (Mountain Village pulls from Denver Pilot despite being filed under Springs).</div>`:''}
+        ${rbState.scopeType==='ecosystem'?`
+          <div style="display:flex;gap:8px">
+            <button onclick="rbSet('eco','pilot')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${rbState.eco==='pilot'?'#4338ca':'#e2e8f0'};background:${rbState.eco==='pilot'?'#4338ca':'#fff'};color:${rbState.eco==='pilot'?'#fff':'#334155'}">Denver Pilot Funnel</button>
+            <button onclick="rbSet('eco','original')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${rbState.eco==='original'?'#4338ca':'#e2e8f0'};background:${rbState.eco==='original'?'#4338ca':'#fff'};color:${rbState.eco==='original'?'#fff':'#334155'}">Original Funnel</button>
+          </div>`:''}
+        <div style="margin-top:10px;font-size:12px;color:#334155;background:#f8fafc;border-radius:8px;padding:8px 12px">📍 Resolved: <strong>${rbScopeLabel()}</strong></div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">2️⃣ Date Preset</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+          ${RB_PRESETS.map(p=>presetBtn(p.id,p.label)).join('')}
+        </div>
+        ${rbState.preset==='custom'?`
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input type="date" value="${rbState.from}" onchange="rbSet('from', this.value)" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px"/>
+            <input type="date" value="${rbState.to}" onchange="rbSet('to', this.value)" style="flex:1;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px"/>
+          </div>`:''}
+        <div style="font-size:12px;color:#334155;background:#f8fafc;border-radius:8px;padding:8px 12px">📅 Resolved: <strong>${dateLabel}</strong></div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">3️⃣ Report Set (${picked.length} picked)</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${RB_REPORTS.map(r=>`
+            <label style="display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border:1px solid #f1f5f9;border-radius:8px;cursor:pointer;background:${rbState.picked[r.id]?'#eef2ff':'#fff'}">
+              <input type="checkbox" ${rbState.picked[r.id]?'checked':''} onchange="rbTogglePicked('${r.id}')" style="width:15px;height:15px;margin-top:1px;accent-color:#4338ca;cursor:pointer"/>
+              <span style="flex:1">
+                <span style="font-size:12.5px;font-weight:700;color:#0f172a">${r.name}</span>
+                <span style="font-size:10px;color:#94a3b8;margin-left:6px">${r.kind}${r.external?' · External':''}</span>
+                <div style="font-size:11px;color:#64748b;margin-top:2px">${r.purpose}</div>
+              </span>
+            </label>`).join('')}
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">4️⃣ Output Format</div>
+        <div style="display:flex;gap:8px">
+          ${RB_FORMATS.map(f=>formatBtn(f)).join('')}
+        </div>
+      </div>
+
+      ${spansBoth?`
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+          <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:4px">⚠️ This scope spans both Funnel ecosystems</div>
+          <div style="font-size:11.5px;color:#92400e;line-height:1.5">Applicant-inclusive Snapshot Status only applies to the Denver Pilot portion. A combined missed-call or activity rate mixes two different populations — state this methodology note in the narrative.</div>
+        </div>`:''}
+
+      <div style="background:#0f172a;border-radius:14px;padding:18px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:800;color:#a5b4fc;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">✅ Pull Checklist</div>
+        <div style="font-size:12px;color:#e2e8f0;margin-bottom:6px"><strong>Team filter:</strong> ${rbTeamFilter()}</div>
+        <div style="font-size:12px;color:#e2e8f0;margin-bottom:12px"><strong>Snapshot Status:</strong> ${rbSnapshotStatuses()}</div>
+        ${picked.length===0?`<div style="font-size:12px;color:#94a3b8;font-style:italic">Pick at least one report above to see pull steps.</div>`:
+          picked.map(r=>`
+            <div style="background:#1e293b;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+              <div style="font-size:12.5px;font-weight:700;color:#fff;margin-bottom:4px">${r.name}</div>
+              <div style="font-size:11px;color:#cbd5e1;line-height:1.6">
+                <strong>Path:</strong> ${r.splitPath ? (rbState.eco==='pilot' || (rbEcosystemsInScope().includes('pilot') && !rbEcosystemsInScope().includes('original')) ? r.pilotPath : r.path) : r.path}<br/>
+                <strong>Date field:</strong> ${r.dateField}<br/>
+                ${r.extra?`<strong>Filters:</strong> ${r.extra.join(' · ')}<br/>`:''}
+                ${r.note?`<em>${r.note}</em><br/>`:''}
+                <strong>Download:</strong> ${r.download}
+                ${r.url?`<br/><a href="${r.url}" target="_blank" style="color:#a5b4fc">Open Fenix →</a>`:''}
+              </div>
+            </div>`).join('')
+        }
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em">📋 Run Brief — paste into a new Claude chat with your downloads</div>
+          <button onclick="rbCopyBrief(this)" style="padding:7px 14px;background:#4338ca;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer">📋 Copy Brief</button>
+        </div>
+        <pre style="white-space:pre-wrap;font-family:inherit;font-size:11.5px;color:#334155;background:#f8fafc;border-radius:8px;padding:12px;line-height:1.6;margin:0">${rbBrief()}</pre>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px">
+        <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">👥 Recipients (editable — saved for next time)</div>
+        ${rbState.recipients.length?`
+          <div style="margin-bottom:10px">
+            ${rbState.recipients.map((r,i)=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px">
+                <div style="font-size:12px;color:#334155"><strong>${r.name}</strong>${r.role?` — ${r.role}`:''} · ${r.email}</div>
+                <button onclick="rbRemoveRecipient(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:11px;font-weight:700">Remove</button>
+              </div>`).join('')}
+          </div>`:''}
+        <div style="display:flex;gap:8px">
+          <input id="rbRecipName" placeholder="Name" style="flex:1;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px"/>
+          <input id="rbRecipRole" placeholder="Role (e.g. RD, Colorado Springs)" style="flex:1.5;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px"/>
+          <input id="rbRecipEmail" placeholder="Email" style="flex:1.5;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px"/>
+          <button onclick="rbAddRecipient()" style="padding:8px 16px;background:#4338ca;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Add</button>
+        </div>
+      </div>
+
+    </div>`;
 }
 
 function renderCommunitiesMap(){
@@ -6178,6 +6643,7 @@ function renderPage(){
     case 'checklist': html=renderChecklist();break;
     case 'applicants': html=renderApplicantStatus();break;
     case 'communities': html=renderCommunitiesMap();break;
+    case 'reports': html=renderReportBuilder();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
     case 'offerletter': html=state.manager?renderOfferLetter():renderLogin();break;
