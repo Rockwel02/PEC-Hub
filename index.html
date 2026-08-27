@@ -4584,16 +4584,16 @@ const RB_REPORTS = [
    dateField:'Call Start Time Local Date',
    extra:['Level of Detail = Community (this is already the default)','Qualified Status = is Qualified or Not Qualified (this is already the default)'],
    download:'⚠️ No single export. Click a PIE SLICE to drill (purple = Qualified, pink = Not Qualified), then download each slice separately',
-   note:'✅ Live-verified working 8/26/26 — renders in under 5 seconds. Confirmed both pie slices download to the exact same filename ("Qualified vs Not Qualified.csv" — it comes from the chart title, not the slice) — rename each on save (e.g. _Qualified / _NotQualified) before the second overwrites the first. The coaching value is in the free text: Qualified Status Justification, Unqualified Reason, Unqualified Reason Details — confirmed with a real example (a Not Qualified call where the caller\'s $1,300 budget didn\'t match the quoted $1,663–$1,667 2-bedroom rate, tagged "Price Constraints"). Most Not Qualified outcomes are inventory/pricing/policy, not agent misses — verified example: ~47 of 63 were price, availability, feature, or voucher. Always split controllable vs uncontrollable, never count these against a specialist. Default date range is Last 7 Days — change it per the run\'s actual period.',
+   note:'✅ Verified working 8/26/26, renders in ~5s. Both pie slices download to the same filename (from the chart title, not the slice) — rename on save before the second overwrites the first. Coaching value is in the free text: Qualified Status Justification, Unqualified Reason, Unqualified Reason Details. Most Not Qualified outcomes are inventory/pricing/policy, not agent misses (~47 of 63 in one verified sample) — always split controllable vs uncontrollable. Default range is Last 7 Days.',
    purpose:'Fit outcome and screening quality.'},
 
   {id:'scorecardqp', name:'Scorecard Question Performance', kind:'Content',
    set:['coaching'],
    path:"Reports > Insights > Insights - Scorecard Question Performance",
    dateField:'Call Start Time Local Date',
-   extra:['Level of Detail = Agent (defaults to Question Key — must be changed manually)','Scorecard Name = Avanti Residential - First Time Prospect (required — without it, results blend in the separate "Avanti - Resident" scorecard\'s questions)'],
-   download:"⚠️ No export on the summary. Click an agent's QUESTION COUNT number to drill into their graded questions, then download",
-   note:'✅ Live-verified working 8/26/26 — real per-agent Yes%/No%/N/A% table confirmed with the actual PEC roster. Confirmed the 5 sections exactly: Introduction, Qualifying Questions, Price, Caller Sentiment, Close — each drilled-in row shows View Conversation, Question Result, Justification, Section Name, Question Name, and Question Text. Read Yes% per question; pull the justification text on the No answers — that is the specific, teachable behavior, not "improve your calls."',
+   extra:['Level of Detail = Agent for a per-agent view, Question Key for the diagnostic drill-down (defaults to Question Key)','Scorecard Name = Avanti Residential - First Time Prospect (required — otherwise blends in the separate Resident scorecard)'],
+   download:"⚠️ No export on the summary. Click an agent's QUESTION COUNT number to drill into graded questions, then download",
+   note:'✅ Verified working 8/26/26. 5 sections confirmed: Introduction, Qualifying Questions, Price, Caller Sentiment, Close. See the Coaching Insight recipe\'s diagnosticMethod for the question-level drill-down technique.',
    purpose:'Behavior-level coaching. Works team-wide or per specialist.'},
 ];
 
@@ -4620,7 +4620,7 @@ const RB_RECIPES = [
    reports:['contactreasons','qualbreakdown','scorecardqp','fenix'], preset:'prevmonth', format:'C',
    deliverable:'Always output as a PDF or DOCX file, not just chat text — this is a real leave-behind, not a conversational answer.',
    narrativeSpec:'Exactly two labeled sections, in this order: (1) Wins / Strengths — what the data shows we are doing well, named specifically. (2) Challenges / Where We Can Improve — one or two growth areas, framed as specific and teachable, controllable items only. Use tables, color-coded highlights (🟢🟠🔴), and bullets throughout — never a wall of prose. Keep it short and scannable.',
-   diagnosticMethod:'This is where Fenix ties directly to Insights: Fenix gives one call-quality number, but the Scorecard\'s 5 sections (Introduction, Qualifying Questions, Price, Caller Sentiment, Close) tell you WHICH specific behavior needs coaching — is it tone, is it creating genuine connection, is it highlighting the community. To find out: pull Scorecard Question Performance with Level of Detail = Question Key (not Agent), filtered to User Full Name = the specific agent, same period as the rest of the report. Compare each question\'s Yes% against the others — the standout low performer(s) name the actual gap. Two Caller Sentiment questions are the most direct read on "tone vs. connection vs. community presentation": MotivatedToVisit-Subjective ("Based on the Leasing Professional\'s presentation, were you motivated to visit the community?") measures community-selling specifically; AgentBuildConnection measures rapport. A low score with high N/A on either usually means calls are ending early (immediate tour booked, or disqualified) before the behavior gets a chance to show up — check the N/A rate before concluding it\'s a real gap. Once a weak question is identified, click its Question Count to drill into real per-call justification text — quote one real example verbatim in the report as the concrete evidence, not just the percentage.'},
+   diagnosticMethod:'Fenix gives one call-quality number; the Scorecard\'s 5 sections (Introduction, Qualifying Questions, Price, Caller Sentiment, Close) show WHICH behavior needs coaching. Pull Scorecard Question Performance at Level of Detail = Question Key (not Agent), filtered to the specific agent, same period. Compare each question\'s Yes% — the standout low performer names the gap. Two Caller Sentiment questions read "tone vs. connection vs. community presentation" directly: MotivatedToVisit-Subjective (community-selling) and AgentBuildConnection (rapport). Check the N/A rate first — high N/A with low Yes often just means calls ended early, not a real gap. Once a weak question is confirmed, click its Question Count and quote one real justification verbatim as evidence.'},
 ];
 
 let rbState = {
@@ -4910,16 +4910,23 @@ function rbCopyScript(){
 // Primary action: clipboard first (always works), then hand off to the app.
 function rbRunInClaude(){
   const script = rbAgentScript();
-  const finish = ()=>{
-    if(rbUrlTooLong()){
-      rbFlash('rbRunBtn', '✓ Copied. Opening Claude, paste it there', 3600);
-      window.location.href = 'claude://claude.ai/new';
-    } else {
-      rbFlash('rbRunBtn', '✓ Sent to Claude Desktop', 3600);
-      window.location.href = rbRunUrl();
-    }
-  };
-  navigator.clipboard.writeText(script).then(finish, finish);
+  // Navigate immediately, synchronously, in direct response to the click.
+  // This must never wait on the clipboard promise — in some browser/permission
+  // configurations that promise can hang indefinitely with no prompt and no
+  // error, which would silently block the whole Run action. Firing the
+  // navigation synchronously also keeps it recognized as a genuine
+  // user-initiated action, which some browsers require to allow a custom
+  // protocol handoff like claude:// at all.
+  if(rbUrlTooLong()){
+    rbFlash('rbRunBtn', '✓ Copied. Opening Claude, paste it there', 3600);
+    window.location.href = 'claude://claude.ai/new';
+  } else {
+    rbFlash('rbRunBtn', '✓ Sent to Claude Desktop', 3600);
+    window.location.href = rbRunUrl();
+  }
+  // Clipboard write is a best-effort backup copy — fire-and-forget, never
+  // lets a permission issue here take down the primary Run action above.
+  navigator.clipboard.writeText(script).catch(()=>{});
 }
 
 // ── RECIPIENTS (Firestore-backed, editable list) ──────────────────
