@@ -562,6 +562,9 @@ async function hydrateFromFirestore(){
     attendanceRecords = remote.attendance_tracker.items;
     if(remote.attendance_tracker.lastSynced) state.attendanceLastSynced = remote.attendance_tracker.lastSynced;
   }
+  if(remote.contact_details && remote.contact_details.records){
+    contactDetails = {...contactDetails, ...remote.contact_details.records};
+  }
   if(remote.kpi_dashboard && remote.kpi_dashboard.teamScores){
     state.teamScores = {...state.teamScores, ...remote.kpi_dashboard.teamScores};
     if(remote.kpi_dashboard.lastSynced) state.lastSynced = remote.kpi_dashboard.lastSynced;
@@ -616,19 +619,19 @@ async function hydrateFromFirestore(){
 
 const TEAM = [
   {id:1,name:'Rowel De La Trinidad',role:'Lead Management Manager',emoji:'👑',color:'#1a2f55',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Rowel.jpg',funFact:'Over a decade in customer service and still loves a good call.',quote:'Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go. — Joshua 1:9',isSolo:true},
-  {id:2,name:'Beverlyn Domingo',role:'Prospect Experience Coordinator',emoji:'🌟',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Beverlyn.png',funFact:'Fun fact coming soon!',quote:'Have more than you show, speak less than you know. — William Shakespeare'},
-  {id:3,name:'Dianne Mercado',role:'Prospect Experience Coordinator',emoji:'🎯',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Dianne%20Mercado.jpeg',funFact:'Fun fact coming soon!',quote:'Grow through what you go through.'},
-  {id:4,name:'Quigly Arias',role:'Prospect Experience Coordinator',emoji:'🔥',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Quigly%20Arias%20New.png',funFact:'Fun fact coming soon!',quote:'Be kind, for everyone you meet is fighting a hard battle.'},
-  {id:5,name:'Russel Espaldon',role:'Prospect Experience Coordinator',emoji:'⚡',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Russel%20Espaldon.jpeg',funFact:'',quote:'Progress, not perfection.'},
-  {id:6,name:'Mary Panimbagon',role:'Prospect Experience Coordinator',emoji:'🌸',color:'#be185d',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Mary%20Panimbagon.jpeg',funFact:'',quote:'A beautiful life is built, not found.'},
-  {id:7,name:'Jeffrey Bolo',role:'Prospect Experience Coordinator',emoji:'🎵',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jeffrey%20Bolo.jpg',funFact:'',quote:'Good things happen when people help each other.'},
-  {id:8,name:'Juliet Elaco',role:'Prospect Experience Coordinator',emoji:'🌈',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Juliet%20Elaco.jpg',funFact:'',quote:'For we live by faith, not by sight.'},
-  {id:9,name:'Elhora Paule',role:'Prospect Experience Coordinator',emoji:'🏆',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/elhora%20Paule.jpg',funFact:'',quote:'You don\'t have to have it all figured out to move forward.'},
-  {id:10,name:'Charles Calidguid',role:'Prospect Experience Coordinator',emoji:'💡',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Charles%20Calidguid.jpg',funFact:'',quote:'Sapagkat gusto ko po sanang ireklamo si Sen. Pangilinan sa pagsigaw. Meron po ba sa rules natin na sinasabing pwede mong sigawan ang kapwa mo senador?'},
-  {id:11,name:'Carizza Estanislao',role:'Prospect Experience Coordinator',emoji:'🎨',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Carizza%20Estanislao.jpeg',funFact:'',quote:'With God, all things are possible. I work hard, trust deeply, and leave the results in His hands.'},
-  {id:12,name:'Jo-Ann Atadero',role:'Prospect Experience Coordinator',emoji:'🌙',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jo-ann%20Atadero.png',funFact:'',quote:'I can be changed by what happens to me. But I refuse to be reduced by it. — Maya Angelou'},
-  {id:13,name:'Kenneth Geronimo',role:'Prospect Experience Coordinator',emoji:'🦋',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Kenneth%20Geronimo.png',funFact:'',quote:'The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. — Brian Herbert'},
-  {id:14,name:'Daniel Gelvez',role:'Prospect Experience Coordinator',emoji:'🌱',color:'#059669',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Daniel%20Gelvez.jpg',funFact:'New to the team — training this week, first calls start Friday.',quote:'Pain and suffering are viewed as inherent to the material, conditioned existence.'},
+  {id:2,name:'Beverlyn Domingo',workStartDate:'2025-06-09',role:'Prospect Experience Coordinator',emoji:'🌟',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Beverlyn.png',funFact:'Fun fact coming soon!',quote:'Have more than you show, speak less than you know. — William Shakespeare'},
+  {id:3,name:'Dianne Mercado',workStartDate:'2025-04-28',role:'Prospect Experience Coordinator',emoji:'🎯',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Dianne%20Mercado.jpeg',funFact:'Fun fact coming soon!',quote:'Grow through what you go through.'},
+  {id:4,name:'Quigly Arias',workStartDate:'2025-04-28',role:'Prospect Experience Coordinator',emoji:'🔥',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Quigly%20Arias%20New.png',funFact:'Fun fact coming soon!',quote:'Be kind, for everyone you meet is fighting a hard battle.'},
+  {id:5,name:'Russel Espaldon',workStartDate:'2024-09-16',role:'Prospect Experience Coordinator',emoji:'⚡',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Russel%20Espaldon.jpeg',funFact:'',quote:'Progress, not perfection.'},
+  {id:6,name:'Mary Panimbagon',workStartDate:'2024-09-16',role:'Prospect Experience Coordinator',emoji:'🌸',color:'#be185d',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Mary%20Panimbagon.jpeg',funFact:'',quote:'A beautiful life is built, not found.'},
+  {id:7,name:'Jeffrey Bolo',workStartDate:'2025-03-03',role:'Prospect Experience Coordinator',emoji:'🎵',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jeffrey%20Bolo.jpg',funFact:'',quote:'Good things happen when people help each other.'},
+  {id:8,name:'Juliet Elaco',workStartDate:'2025-06-23',role:'Prospect Experience Coordinator',emoji:'🌈',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Juliet%20Elaco.jpg',funFact:'',quote:'For we live by faith, not by sight.'},
+  {id:9,name:'Elhora Paule',workStartDate:'2024-10-02',role:'Prospect Experience Coordinator',emoji:'🏆',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/elhora%20Paule.jpg',funFact:'',quote:'You don\'t have to have it all figured out to move forward.'},
+  {id:10,name:'Charles Calidguid',workStartDate:'2024-07-29',role:'Prospect Experience Coordinator',emoji:'💡',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Charles%20Calidguid.jpg',funFact:'',quote:'Sapagkat gusto ko po sanang ireklamo si Sen. Pangilinan sa pagsigaw. Meron po ba sa rules natin na sinasabing pwede mong sigawan ang kapwa mo senador?'},
+  {id:11,name:'Carizza Estanislao',workStartDate:'2025-08-18',role:'Prospect Experience Coordinator',emoji:'🎨',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Carizza%20Estanislao.jpeg',funFact:'',quote:'With God, all things are possible. I work hard, trust deeply, and leave the results in His hands.'},
+  {id:12,name:'Jo-Ann Atadero',workStartDate:'2025-03-03',role:'Prospect Experience Coordinator',emoji:'🌙',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jo-ann%20Atadero.png',funFact:'',quote:'I can be changed by what happens to me. But I refuse to be reduced by it. — Maya Angelou'},
+  {id:13,name:'Kenneth Geronimo',workStartDate:'2025-06-23',role:'Prospect Experience Coordinator',emoji:'🦋',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Kenneth%20Geronimo.png',funFact:'',quote:'The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. — Brian Herbert'},
+  {id:14,name:'Daniel Gelvez',workStartDate:'2026-08-31',role:'Prospect Experience Coordinator',emoji:'🌱',color:'#059669',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Daniel%20Gelvez.jpeg',funFact:'New to the team — training this week, first calls start Friday.',quote:'Pain and suffering are viewed as inherent to the material, conditioned existence.'},
 ];
 
 // Visitor sign-in roster: the PEC team plus leadership who may check in
@@ -1058,7 +1061,7 @@ const NAV = [
   {id:'notes',    label:'Call Guide and Notes', icon:'🗒️'},
   {id:'listening', label:'Call Listening', icon:'🎧'},
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
-  {id:'priorities', label:'Task Priorities', icon:'🎯'},
+  {id:'priorities', label:'Task Priorities', icon:'🎯', managerOnly:true},
   {id:'checklist', label:'Application Checklist', icon:'✅'},
   {id:'appguide', label:'Application Guide', icon:'📄'},
   {id:'applicants', label:'Applicant Status', icon:'🗂️', guestBlocked:true},
@@ -1175,27 +1178,6 @@ function renderHome(){
       <div class="manager-section">${flipCard(mgr)}</div>
       <div class="section-label">The Team <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">— hover to flip!</span></div>
       <div class="team-grid">${agents.map(flipCard).join('')}</div>
-      <div class="section-label">Quick Access</div>
-      <div class="quick-grid">
-        ${[
-          {id:'announcements',icon:'📣',label:'Announcements',desc:'Team updates and Grace Hill trainings',color:'#dc2626'},
-          {id:'kb',icon:'📚',label:'SOPs and Policies',desc:'SOPs and process guides',color:'#3b82f6'},
-          {id:'spiels',icon:'💬',label:'Spiels Library',desc:'Scripts and talking points',color:'#0d9488'},
-          {id:'notes',icon:'🗒️',label:'Call Guide and Notes',desc:'Prospect, Applicant & Resident notes',color:'#d97706'},
-          {id:'listening',icon:'🎧',label:'Call Listening',desc:'Weekly call recordings for review',color:'#9333ea'},
-          {id:'scorecard',icon:'📊',label:'Scorecard',desc:'MTD, month-end, quarterly',color:'#16a34a'},
-          {id:'communities',icon:'🗺️',label:'Communities Map',desc:'Distance & drive time by market',color:'#1d4ed8'},
-          {id:'eod',icon:'📝',label:'EOD Report',desc:'Submit your daily report',color:'#f59e0b'},
-          {id:'coaching',icon:'🔒',label:'Coaching Logs',desc:'Manager access only',color:'#7c3aed'},
-          {id:'offerletter',icon:'🔒',label:'Offer Letter Process',desc:'Manager access only',color:'#be185d'},
-        ].filter(c=>!state.isGuest || c.id!=='communities').map(c=>`
-          <button class="quick-card" onclick="showPage('${c.id}')"
-            onmouseover="this.style.borderColor='${c.color}';this.style.boxShadow='0 0 0 3px ${c.color}22'"
-            onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
-            <span style="font-size:18px;line-height:1">${c.icon}</span>
-            <div><h3>${c.label}</h3><p>${c.desc}</p></div>
-          </button>`).join('')}
-      </div>
       <div class="tagline">
         <div><div class="tagline-text">Progress, not Perfection.</div><div class="tagline-sub">PEC Team · Avanti Residential</div></div>
         <div style="font-size:24px">🌟</div>
@@ -6113,6 +6095,25 @@ function attendancePointsFor(name){
   return attendanceRecords.filter(r=>r.name===name).reduce((sum,r)=>sum+(r.points||0), 0);
 }
 
+// Self-service contact & emergency details — replaces the earlier Google
+// Sheet approach entirely. Keyed by name, one record per person. Only the
+// person themselves edits their own entry; managers/Olga/Ian view others'
+// read-only.
+let contactDetails = {};
+function emptyContactDetails(){
+  return {phone:'', email:'', facebook:'', emergencyName:'', emergencyRelationship:'', emergencyPhone:''};
+}
+async function saveContactDetails(){
+  const saved = await saveToFirestore('contact_details', {records: contactDetails});
+  if(!saved){
+    console.warn('Contact details saved locally but failed to sync to Firestore.');
+    flagSaveFailed('Contact details');
+  } else if(state.syncError){
+    clearSyncIssue();
+  }
+  return saved;
+}
+
 async function saveCoachingLogs(){
   const saved = await saveToFirestore('coaching_logs', {items: coachingLogs});
   if(!saved){
@@ -6140,11 +6141,27 @@ const CAT_BADGE = {
 // anyone's; everyone else only ever sees their own, regardless of what
 // profileTarget might be left over in state.
 // ══════════════════════════════════════════════════════════════════
+function tenureLabel(startDateStr){
+  const start = new Date(startDateStr+'T00:00:00');
+  const now = new Date();
+  let months = (now.getFullYear()-start.getFullYear())*12 + (now.getMonth()-start.getMonth());
+  if(now.getDate() < start.getDate()) months--;
+  if(months < 0) months = 0;
+  const years = Math.floor(months/12);
+  const remMonths = months%12;
+  if(years===0 && remMonths===0) return 'just started';
+  const parts = [];
+  if(years>0) parts.push(years+' yr'+(years>1?'s':''));
+  if(remMonths>0) parts.push(remMonths+' mo'+(remMonths>1?'s':''));
+  return parts.join(', ');
+}
+
 function renderProfile(){
   const canSeeAll = canSeeAllProfiles();
   const ownName = state.manager ? state.manager.name : getVisitorName();
   const targetName = canSeeAll ? (state.profileTarget || ownName) : ownName;
   const tab = state.profileTab || 'progress';
+  const person = TEAM.find(t=>t.name===targetName);
 
   const myCoaching = coachingLogs.filter(l=>l.coachee===targetName).sort((a,b)=>b.date.localeCompare(a.date));
   const myAttendance = attendanceRecords.filter(r=>r.name===targetName).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -6165,15 +6182,27 @@ function renderProfile(){
           </select>
         </div>` : ''}
 
+      ${person ? `
+        <div style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 20px;margin-bottom:20px">
+          <img src="${person.photo}" alt="${person.name}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid ${person.color}" onerror="this.style.display='none'"/>
+          <div>
+            <div style="font-size:16px;font-weight:800;color:#0f172a">${person.name}</div>
+            <div style="font-size:12.5px;color:#64748b">${person.role}</div>
+            ${person.workStartDate?`<div style="font-size:11.5px;color:#94a3b8;margin-top:2px">📅 With PEC since ${new Date(person.workStartDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})} (${tenureLabel(person.workStartDate)})</div>`:''}
+          </div>
+        </div>` : ''}
+
       <div style="display:flex;gap:8px;margin-bottom:20px">
         ${tabBtn('progress','📈 Progress')}
         ${tabBtn('coaching','📋 Coaching')}
         ${tabBtn('attendance','🗓️ Attendance')}
+        ${tabBtn('details','📇 Details')}
       </div>
 
       ${tab==='progress'   ? renderProfileProgress(myCoaching) : ''}
       ${tab==='coaching'   ? renderProfileCoaching(myCoaching, targetName) : ''}
       ${tab==='attendance' ? renderProfileAttendance(myAttendance, totalPoints) : ''}
+      ${tab==='details'    ? renderProfileDetails(targetName, targetName===ownName) : ''}
     </div>`;
 }
 
@@ -6198,6 +6227,7 @@ function renderProfileProgress(entries){
               <span style="font-size:11px;color:#94a3b8">${dayLabel}</span>
             </div>
             <div style="font-size:12.5px;color:#334155;line-height:1.6">${e.notes}</div>
+            ${e.driveUrl?`<a href="${e.driveUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:11.5px;font-weight:700;color:#4338ca;text-decoration:none">📎 ${e.fileName||'View coaching file'} →</a>`:''}
           </div>
         </div>`;
       }).join('')}
@@ -6219,7 +6249,10 @@ function renderProfileCoaching(entries, targetName){
           </div>
           <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${cc.bg};color:${cc.c}">${l.category}</span>
         </div>
-        <div class="card-body" style="display:block">${l.notes}</div>
+        <div class="card-body" style="display:block">
+          ${l.notes}
+          ${l.driveUrl?`<div style="margin-top:10px"><a href="${l.driveUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#4338ca;text-decoration:none">📎 ${l.fileName||'View coaching file'} →</a></div>`:''}
+        </div>
       </div>`;
   }).join('');
 }
@@ -6245,6 +6278,41 @@ function renderProfileAttendance(records, totalPoints){
           ${r.notes?`<div style="font-size:12px;color:#64748b">${r.notes}</div>`:''}
         </div>`).join('')
     }`;
+}
+
+function renderProfileDetails(targetName, isOwnProfile){
+  if(!contactDetails[targetName]) contactDetails[targetName] = emptyContactDetails();
+  const d = contactDetails[targetName];
+  const field = (label, key, type='text', placeholder='') => `
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11.5px;font-weight:700;color:#475569;margin-bottom:5px">${label}</label>
+      ${isOwnProfile
+        ? `<input type="${type}" value="${(d[key]||'').replace(/"/g,'&quot;')}" placeholder="${placeholder}" oninput="contactDetails['${targetName}']['${key}']=this.value" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"/>`
+        : `<div style="font-size:13px;color:${d[key]?'#0f172a':'#94a3b8'};padding:9px 0">${d[key]||'Not filled in yet'}</div>`
+      }
+    </div>`;
+
+  return `
+    ${!isOwnProfile?`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#64748b">👁️ Viewing ${targetName}'s details \u2014 read-only. Only they can edit their own information.</div>`:''}
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Contact Details</div>
+      ${field('Phone Number','phone','tel','(555) 123-4567')}
+      ${field('Personal Email','email','email','you@example.com')}
+      ${field('Facebook Link','facebook','url','https://facebook.com/...')}
+    </div>
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px">Emergency Contact</div>
+      ${field('Name','emergencyName','text','Full name')}
+      ${field('Relationship','emergencyRelationship','text','e.g. Spouse, Parent, Sibling')}
+      ${field('Phone Number','emergencyPhone','tel','(555) 123-4567')}
+    </div>
+
+    ${isOwnProfile?`
+      <button onclick="saveContactDetails();this.textContent='\u2713 Saved';setTimeout(()=>{this.textContent='Save Details';},1800)" style="width:100%;padding:12px;background:#4338ca;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Save Details</button>
+      <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:8px">Only visible to you, and to Rowel, Olga, and Ian.</div>`:''}
+    `;
 }
 
 function renderCoaching(){
@@ -7099,7 +7167,7 @@ function renderPage(){
     case 'notes':     html=renderCallNotes();break;
     case 'listening': html=renderCallListening();break;
     case 'scorecard': html=renderScorecard();break;
-    case 'priorities': html=renderPriorities();break;
+    case 'priorities': html=state.manager?renderPriorities():renderLogin();break;
     case 'checklist': html=renderChecklist();break;
     case 'appguide': html=renderApplicationGuide();break;
     case 'applicants': html=renderApplicantStatus();break;
