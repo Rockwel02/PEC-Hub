@@ -303,6 +303,16 @@ function setVisitorName(name){
   try{ localStorage.setItem(VISITOR_NAME_KEY, name); }catch(e){}
 }
 
+// Profile access: Rowel (as manager), Olga, and Ian can see everyone's
+// profile. Everyone else can only see their own — this is intentionally
+// its own check, separate from managerOnly nav gating, since Olga and Ian
+// aren't managers for anything else in the Hub, only for Profiles.
+function canSeeAllProfiles(){
+  if(state.manager) return true;
+  const v = getVisitorName();
+  return v === 'Olga Borges' || v === 'Ian Andrews';
+}
+
 async function sendPresenceHeartbeat(){
   const name = getVisitorName();
   if(!name) return;
@@ -548,6 +558,10 @@ async function hydrateFromFirestore(){
   if(remote.coaching_logs && Array.isArray(remote.coaching_logs.items) && remote.coaching_logs.items.length){
     coachingLogs = remote.coaching_logs.items;
   }
+  if(remote.attendance_tracker && Array.isArray(remote.attendance_tracker.items)){
+    attendanceRecords = remote.attendance_tracker.items;
+    if(remote.attendance_tracker.lastSynced) state.attendanceLastSynced = remote.attendance_tracker.lastSynced;
+  }
   if(remote.kpi_dashboard && remote.kpi_dashboard.teamScores){
     state.teamScores = {...state.teamScores, ...remote.kpi_dashboard.teamScores};
     if(remote.kpi_dashboard.lastSynced) state.lastSynced = remote.kpi_dashboard.lastSynced;
@@ -614,6 +628,7 @@ const TEAM = [
   {id:11,name:'Carizza Estanislao',role:'Prospect Experience Coordinator',emoji:'🎨',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Carizza%20Estanislao.jpeg',funFact:'',quote:'With God, all things are possible. I work hard, trust deeply, and leave the results in His hands.'},
   {id:12,name:'Jo-Ann Atadero',role:'Prospect Experience Coordinator',emoji:'🌙',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jo-ann%20Atadero.png',funFact:'',quote:'I can be changed by what happens to me. But I refuse to be reduced by it. — Maya Angelou'},
   {id:13,name:'Kenneth Geronimo',role:'Prospect Experience Coordinator',emoji:'🦋',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Kenneth%20Geronimo.png',funFact:'',quote:'The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. — Brian Herbert'},
+  {id:14,name:'Daniel Gelvez',role:'Prospect Experience Coordinator',emoji:'🌱',color:'#059669',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Daniel%20Gelvez.jpg',funFact:'New to the team — training this week, first calls start Friday.',quote:'Pain and suffering are viewed as inherent to the material, conditioned existence.'},
 ];
 
 // Visitor sign-in roster: the PEC team plus leadership who may check in
@@ -638,6 +653,7 @@ const VISITOR_PASSWORDS = {
   'Carizza Estanislao':   'Juniper10',
   'Jo-Ann Atadero':       'Cedar30',
   'Kenneth Geronimo':     'Comet99',
+  'Daniel Gelvez':        'Solace47',
   'Olga Borges':          'Delta64',
   'Ian Andrews':          'Maple53',
   // Guest intentionally has no password — it's meant to be quick, low-friction
@@ -1032,6 +1048,7 @@ let state = {
   eodCallsHandled:'', eodToursScheduled:'', eodToursCompleted:'', eodFollowUps:'',
   eodWins:'', eodChallenges:'',
   eodSubmitted:false,
+  profileTarget:null, profileTab:'progress',
 };
 
 const NAV = [
@@ -1043,11 +1060,13 @@ const NAV = [
   {id:'scorecard',label:'Scorecard',     icon:'📊'},
   {id:'priorities', label:'Task Priorities', icon:'🎯'},
   {id:'checklist', label:'Application Checklist', icon:'✅'},
+  {id:'appguide', label:'Application Guide', icon:'📄'},
   {id:'applicants', label:'Applicant Status', icon:'🗂️', guestBlocked:true},
   {id:'communities', label:'Communities Map', icon:'🗺️', guestBlocked:true},
   {id:'reports', label:'Report Builder', icon:'📊', managerOnly:true},
   {id:'eod',      label:'EOD Report',    icon:'📝'},
   {id:'coaching', label:'Coaching Logs', icon:'🔒'},
+  {id:'profile', label:'My Profile', icon:'👤', guestBlocked:true},
   {id:'offerletter', label:'Offer Letter Process', icon:'🔒'},
   {id:'cards', label:'Welcome Cards', icon:'🔒', managerOnly:true},
 ];
@@ -1584,6 +1603,89 @@ function parseGraceHillXLS(input){
   };
   reader.readAsArrayBuffer(file);
   input.value='';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// APPLICATION GUIDE — real documented process cases, logic only, no
+// applicant names. Organized into two sections: what comes up during
+// the application itself, and what comes up after — transfers, added
+// household members, and lease changes.
+// ══════════════════════════════════════════════════════════════════
+const APPLICATION_GUIDE_SECTIONS = [
+  {
+    id: 'application',
+    title: 'Application and Verification',
+    desc: 'Cases that come up while an application is being submitted and verified',
+    cases: [
+      {id:1, title:'Income verification — name mismatch',
+       body:'The Plaid-verified name must match the name on the submitted paystubs. If they don\'t match, the fix is a tax form or a directly linked bank account — not an employer letter or future paystubs, since neither resolves a name mismatch.'},
+      {id:2, title:'Deposits — always the exact cent',
+       body:'Deposits are never rounded. Collect the exact cent amount shown, every time.'},
+      {id:3, title:'Paper applications — accommodation only',
+       body:'Paper applications are not offered by default. They\'re only used as a disability accommodation. For anyone else asking for one, offer a live walkthrough of the online application instead.'},
+      {id:4, title:'Offer letters — check the employer sheet first',
+       body:'Some employers cannot confirm future employment, so an offer letter from them isn\'t accepted as income proof — always check the employer sheet before promising an offer letter will work. Example: Amazon is on that list. In those cases, the applicant needs current income proof or a guarantor instead.'},
+      {id:5, title:'Pet screening — set the timeline expectation early',
+       body:'The lease isn\'t sent and payment isn\'t requested until pet screening is complete and approved. Household pets can often clear within an hour with current vaccination records. Service/support animal (ESA) requests typically take several days to a week or longer for documentation review. Set this timeline expectation at first touch, before it becomes a surprise later.'},
+    ],
+  },
+  {
+    id: 'transfers',
+    title: 'Transfers and Resident Changes',
+    desc: 'Cases that come up after the application — roommates, household members, and lease changes',
+    cases: [
+      {id:6, title:'Roommate transfer, one leaving',
+       body:'When one roommate transfers to a new unit while the other vacates, it\'s processed as a standard transfer. The departing roommate signs a Notice to Vacate (NTV). The transferring roommate signs both the Notice to Vacate and the new lease.'},
+      {id:7, title:'Adding household members — Dependent vs. Roommate',
+       body:'Avanti does not use the term "occupant." Everyone added to a household is either a Dependent or a Roommate: a Dependent is under 18 — birthdate required, no email needed, no application link sent. A Roommate is 18+ — email required so the application link can be sent. When someone asks to add "occupants," clarify ages first before doing anything else. Never ask a family to create an email address for a minor child.'},
+      {id:8, title:'Lease change process — decision tree',
+       body:'Which system you update depends on lease status and what\'s changing:',
+       tree: [
+         {label:'Lease not yet sent', action:'Update normally in Funnel.'},
+         {label:'Lease sent but not countersigned — any change', action:'Void the lease and update in Funnel.'},
+         {label:'Lease countersigned, AND the change involves Unit, Move-in Date (MID), or Lease Terms', action:'Void the lease and update in Funnel.'},
+         {label:'Lease countersigned, change does NOT involve Unit/MID/Lease Terms', action:'Revise the lease and update in Yardi.'},
+         {label:'Applicant has already moved in', action:'Always Yardi, regardless of what\'s changing — never void in Funnel once someone has moved in.'},
+       ],
+       note:'CT memo requirement (Case 8a): a memo from the CT is required for every lease change, except when the lease hasn\'t been sent yet. If the change involves Unit, MID, or Lease Terms, a CT memo is required no matter what the lease status is. Example: removing parking or a pet before the lease is sent can be done right away. Example: changing the MID or unit means creating a task to inform the CT and waiting for the CT memo before making any changes.'},
+    ],
+  },
+];
+
+function renderApplicationGuide(){
+  const expanded = state.expandedAppGuideCase || null;
+  return `
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:22px">📄</span><h1>Application Guide</h1></div>
+      <p>Real documented process cases — logic only, no applicant names</p>
+    </div>
+    <div class="content">
+      ${APPLICATION_GUIDE_SECTIONS.map(section => `
+        <div style="margin-bottom:28px">
+          <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:2px">${section.title}</div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:14px">${section.desc}</div>
+          ${section.cases.map(c => `
+            <div class="card${expanded===c.id?' open':''}" onclick="state.expandedAppGuideCase=state.expandedAppGuideCase===${c.id}?null:${c.id};renderPage()" style="margin-bottom:10px">
+              <div class="card-header">
+                <div class="card-left"><span style="font-size:10px;font-weight:800;color:#94a3b8;margin-right:8px">CASE ${c.id}</span><span class="card-title">${c.title}</span></div>
+                <span class="chevron${expanded===c.id?' open':''}">▾</span>
+              </div>
+              ${expanded===c.id?`
+                <div class="card-body">
+                  <p>${c.body}</p>
+                  ${c.tree?`
+                    <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+                      ${c.tree.map((row,i)=>`
+                        <div style="display:flex;padding:10px 14px;${i<c.tree.length-1?'border-bottom:1px solid #f1f5f9;':''}background:${i%2===0?'#fff':'#f8fafc'}">
+                          <div style="flex:1;font-size:12.5px;color:#0f172a;font-weight:600;padding-right:12px">${row.label}</div>
+                          <div style="flex:1;font-size:12.5px;color:#334155">→ ${row.action}</div>
+                        </div>`).join('')}
+                    </div>`:''}
+                  ${c.note?`<div style="margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;line-height:1.6">📌 ${c.note}</div>`:''}
+                </div>`:''}
+            </div>`).join('')}
+        </div>`).join('')}
+    </div>`;
 }
 
 function renderKB(){
@@ -4471,7 +4573,6 @@ const RB_TEAM = [
   {name:'Jo-Ann',   markets:['Florida','Tennessee','Kansas','Missouri'], ecosystem:'original'},
   {name:'Kenneth',  markets:['Florida','Tennessee','Kansas','Missouri'], ecosystem:'original'},
   {name:'Carizza',  markets:['Florida','Tennessee','Kansas','Missouri'], ecosystem:'original'},
-  {name:'Jeffrey',  markets:['Arizona'], ecosystem:'original'},
   {name:'Juliet',   markets:['Arizona'], ecosystem:'original'},
   {name:'Russel',   markets:['Denver Pilot'], ecosystem:'pilot'},
   {name:'Mary',     markets:['Denver Pilot'], ecosystem:'pilot'},
@@ -5985,6 +6086,33 @@ let coachingLogs = [
   {id:3, coachee:'Dianne Mercado',   date:'2026-05-27', category:'Process',    notes:'Confidence building on cold re-engagements. Reviewed voicemail script delivery. Action: listen to 3 own call recordings before next session.', fileName:'', driveUrl:''},
   {id:4, coachee:'Kenneth Geronimo', date:'2026-05-22', category:'Process',    notes:'Addressed scheduling errors. SOPs reviewed together. Action: double-check confirmation texts against template before sending.', fileName:'', driveUrl:''},
 ];
+// Seeded from the real Attendance Tracker sheet (8/29/26 pull). Name spelling
+// here is normalized to match the Hub's TEAM roster — the sheet itself has
+// some variants (e.g. "Precioua Dianne Mercado") that the sync script needs
+// to map to canonical names. Axel Somoza appears in the sheet but is not
+// currently on the Hub's TEAM roster.
+let attendanceRecords = [
+  {name:'Charles Calidguid', date:'2026-02-05', pod:'POD 3', status:'Late',   infraction:'Late (beyond 15 mins)', points:0.5, notes:''},
+  {name:'Dianne Mercado',    date:'2026-02-17', pod:'POD 1', status:'Absent', infraction:'Absent (Excused)',      points:0.5, notes:'Medical issue'},
+  {name:'Dianne Mercado',    date:'2026-02-18', pod:'POD 1', status:'Absent', infraction:'Absent (Excused)',      points:0.5, notes:'Medical issue'},
+  {name:'Jo-Ann Atadero',    date:'',           pod:'POD 3', status:'Late',   infraction:'Late (beyond 15 mins)', points:0.5, notes:''},
+  {name:'Elhora Paule',      date:'2026-06-30', pod:'POD 2', status:'Absent', infraction:'Absent (Unexcused)',    points:1,   notes:'Personal matter (stuck in traffic), informed via messenger. Pay already deducted.'},
+  {name:'Charles Calidguid', date:'2026-08-29', pod:'POD 3', status:'Late',   infraction:'Late (beyond 15 mins)', points:0.5, notes:'1 hour late from login. Not deducted yet.'},
+];
+async function saveAttendanceRecords(){
+  const saved = await saveToFirestore('attendance_tracker', {items: attendanceRecords, lastSynced: new Date().toISOString()});
+  if(!saved){
+    console.warn('Attendance record saved locally but failed to sync to Firestore.');
+    flagSaveFailed('Attendance record');
+  } else if(state.syncError){
+    clearSyncIssue();
+  }
+  return saved;
+}
+function attendancePointsFor(name){
+  return attendanceRecords.filter(r=>r.name===name).reduce((sum,r)=>sum+(r.points||0), 0);
+}
+
 async function saveCoachingLogs(){
   const saved = await saveToFirestore('coaching_logs', {items: coachingLogs});
   if(!saved){
@@ -6005,6 +6133,119 @@ const CAT_BADGE = {
   'Attendance': {bg:'#fef3c7',c:'#92400e'},
   'General':    {bg:'#f1f5f9',c:'#475569'},
 };
+
+// ══════════════════════════════════════════════════════════════════
+// PROFILE — per-person view of Progress (coaching timeline), Coaching
+// (same entries, detail view), and Attendance. Rowel/Olga/Ian can view
+// anyone's; everyone else only ever sees their own, regardless of what
+// profileTarget might be left over in state.
+// ══════════════════════════════════════════════════════════════════
+function renderProfile(){
+  const canSeeAll = canSeeAllProfiles();
+  const ownName = state.manager ? state.manager.name : getVisitorName();
+  const targetName = canSeeAll ? (state.profileTarget || ownName) : ownName;
+  const tab = state.profileTab || 'progress';
+
+  const myCoaching = coachingLogs.filter(l=>l.coachee===targetName).sort((a,b)=>b.date.localeCompare(a.date));
+  const myAttendance = attendanceRecords.filter(r=>r.name===targetName).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const totalPoints = attendancePointsFor(targetName);
+
+  const tabBtn = (id, label) => `<button onclick="state.profileTab='${id}';renderPage()" style="padding:9px 18px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1.5px solid ${tab===id?'#4338ca':'#e2e8f0'};background:${tab===id?'#4338ca':'#fff'};color:${tab===id?'#fff':'#334155'}">${label}</button>`;
+
+  return `
+    <div class="page-header">
+      <div class="page-header-inner"><span style="font-size:22px">👤</span><h1>${canSeeAll && targetName!==ownName ? targetName + '\u2019s Profile' : 'My Profile'}</h1></div>
+      <p>Progress, coaching history, and attendance</p>
+    </div>
+    <div class="content">
+      ${canSeeAll ? `
+        <div style="margin-bottom:16px">
+          <select onchange="state.profileTarget=this.value;renderPage()" style="padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12.5px">
+            ${TEAM.filter(t=>!t.isSolo).map(t=>`<option value="${t.name}" ${targetName===t.name?'selected':''}>${t.name}</option>`).join('')}
+          </select>
+        </div>` : ''}
+
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        ${tabBtn('progress','📈 Progress')}
+        ${tabBtn('coaching','📋 Coaching')}
+        ${tabBtn('attendance','🗓️ Attendance')}
+      </div>
+
+      ${tab==='progress'   ? renderProfileProgress(myCoaching) : ''}
+      ${tab==='coaching'   ? renderProfileCoaching(myCoaching, targetName) : ''}
+      ${tab==='attendance' ? renderProfileAttendance(myAttendance, totalPoints) : ''}
+    </div>`;
+}
+
+function renderProfileProgress(entries){
+  if(!entries.length){
+    return `<div style="text-align:center;padding:48px 20px;color:#94a3b8;font-size:13px;line-height:1.6">No coaching entries yet.<br/>Monthly coaching starts September 2026 \u2014 progress builds here month over month.</div>`;
+  }
+  return `
+    <div style="position:relative;padding-left:26px">
+      <div style="position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:#e2e8f0"></div>
+      ${entries.map(e=>{
+        const cc = CAT_BADGE[e.category] || {bg:'#f1f5f9',c:'#475569'};
+        const monthLabel = new Date(e.date+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+        const dayLabel = new Date(e.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        return `
+        <div style="position:relative;margin-bottom:22px">
+          <div style="position:absolute;left:-26px;top:4px;width:14px;height:14px;border-radius:50%;background:#4338ca;border:3px solid #fff;box-shadow:0 0 0 2px #e2e8f0"></div>
+          <div style="font-size:11px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">${monthLabel}</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${cc.bg};color:${cc.c}">${e.category}</span>
+              <span style="font-size:11px;color:#94a3b8">${dayLabel}</span>
+            </div>
+            <div style="font-size:12.5px;color:#334155;line-height:1.6">${e.notes}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderProfileCoaching(entries, targetName){
+  if(!entries.length) return `<div style="text-align:center;padding:36px 0;color:#64748b;font-size:13px">No coaching logs for ${targetName} yet.</div>`;
+  return entries.map(l=>{
+    const cc = CAT_BADGE[l.category] || {bg:'#f1f5f9',c:'#475569'};
+    const dateFormatted = new Date(l.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    return `
+      <div class="card" style="margin-bottom:10px">
+        <div class="card-header" style="cursor:default">
+          <div class="card-left">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#0f172a">${dateFormatted}</div>
+            </div>
+          </div>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${cc.bg};color:${cc.c}">${l.category}</span>
+        </div>
+        <div class="card-body" style="display:block">${l.notes}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderProfileAttendance(records, totalPoints){
+  const statusColor = totalPoints===0 ? {bg:'#dcfce7',c:'#15803d',label:'Clean record'} : totalPoints<2 ? {bg:'#fef3c7',c:'#92400e',label:'Minor points'} : {bg:'#fee2e2',c:'#dc2626',label:'Needs attention'};
+  return `
+    <div style="background:${statusColor.bg};border-radius:12px;padding:18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:800;color:${statusColor.c};text-transform:uppercase;letter-spacing:.04em">Total Points</div>
+        <div style="font-size:28px;font-weight:800;color:${statusColor.c}">${totalPoints}</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:${statusColor.c}">${statusColor.label}</div>
+    </div>
+    ${records.length===0?`<div style="text-align:center;padding:24px 0;color:#94a3b8;font-size:13px">No infractions on record.</div>`:
+      records.map(r=>`
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12.5px;font-weight:700;color:#0f172a">${r.infraction}</span>
+            <span style="font-size:12px;font-weight:700;color:#dc2626">+${r.points} pts</span>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:${r.notes?'4px':'0'}">${r.date||'Date not recorded'} \u00b7 ${r.pod||''}</div>
+          ${r.notes?`<div style="font-size:12px;color:#64748b">${r.notes}</div>`:''}
+        </div>`).join('')
+    }`;
+}
 
 function renderCoaching(){
   const showForm  = state.showCoachingForm;
@@ -6860,11 +7101,13 @@ function renderPage(){
     case 'scorecard': html=renderScorecard();break;
     case 'priorities': html=renderPriorities();break;
     case 'checklist': html=renderChecklist();break;
+    case 'appguide': html=renderApplicationGuide();break;
     case 'applicants': html=renderApplicantStatus();break;
     case 'communities': html=renderCommunitiesMap();break;
     case 'reports': html=renderReportBuilder();break;
     case 'eod':       html=renderEOD();break;
     case 'coaching':  html=state.manager?renderCoaching():renderLogin();break;
+    case 'profile':   html=renderProfile();break;
     case 'offerletter': html=state.manager?renderOfferLetter():renderLogin();break;
     case 'cards':     html=state.manager?renderCardStudio():renderLogin();break;
     default:          html=renderHome();
