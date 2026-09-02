@@ -4610,8 +4610,8 @@ const RB_REPORTS = [
    download:'Download the task detail',
    purpose:'How actively onsite connects with the prospect before the tour.'},
 
-  {id:'phone', name:'Phone (Missed Calls)', kind:'Activity',
-   set:['leadership'],
+  {id:'phone', name:'Phone (Missed Calls + Talk Time)', kind:'Activity',
+   set:['leadership','monthly'],
    splitPath:true,
    path:"Reports > Communication > Phone",
    pilotPath:"Reports > Contact Center > Phones",
@@ -4619,7 +4619,8 @@ const RB_REPORTS = [
    extra:['During Business Hours = Yes'],
    snapshot:true,
    download:'Export the report',
-   purpose:'Answer rate. Goal is 10% missed or lower.'},
+   note:'📞 This report also carries total talk-time minutes (inbound + outbound) — the real, defensible source for the "hours PEC saved onsite via pre-tour engagement" story in the Monthly Executive report. Every minute PEC spent on the phone with a prospect before a tour is a minute the onsite team did not have to. Don\'t invent a per-tour multiplier; sum the actual minutes.',
+   purpose:'Answer rate (goal 10% missed or lower) AND total prospect talk-time minutes for the time-savings story.'},
 
   {id:'agentactivity', name:'Agent Activity (Scores)', kind:'Activity',
    set:['leadership'],
@@ -4704,6 +4705,33 @@ const RB_RECIPES = [
    deliverable:'Always output as a PDF or DOCX file, not just chat text — this is a real leave-behind, not a conversational answer.',
    narrativeSpec:'Exactly two labeled sections, in this order: (1) Wins / Strengths — what the data shows we are doing well, named specifically. (2) Challenges / Where We Can Improve — one or two growth areas, framed as specific and teachable, controllable items only. Use tables, color-coded highlights (🟢🟠🔴), and bullets throughout — never a wall of prose. Keep it short and scannable.',
    diagnosticMethod:'Fenix gives one call-quality number; the Scorecard\'s 5 sections (Introduction, Qualifying Questions, Price, Caller Sentiment, Close) show WHICH behavior needs coaching. Pull Scorecard Question Performance at Level of Detail = Question Key (not Agent), filtered to the specific agent, same period. Compare each question\'s Yes% — the standout low performer names the gap. Two Caller Sentiment questions read "tone vs. connection vs. community presentation" directly: MotivatedToVisit-Subjective (community-selling) and AgentBuildConnection (rapport). Check the N/A rate first — high N/A with low Yes often just means calls ended early, not a real gap. Once a weak question is confirmed, click its Question Count and quote one real justification verbatim as evidence.'},
+
+  // ── MONTHLY REPORTING SUITE — download ALL reports once, then generate
+  // three separate deliverables from the same set of files. Each carries
+  // its own audience, format, and strict accuracy/narrative rules.
+  {id:'mo_download_all', label:'⬇️ Download ALL (Monthly)', desc:'One pull of every report — feeds all three monthly deliverables below', monthly:true,
+   reports:'ALL', preset:'prevmonth', format:'A',
+   deliverable:'This recipe downloads nothing on its own — it produces the master pull checklist for EVERY report (LMS + PEC, both Funnel ecosystems). Download everything once, keep the files together, then run the three monthly report recipes below against them. Do NOT re-download per report.'},
+
+  {id:'mo_executive', label:'📊 Monthly Executive (LMS + PEC)', desc:'To Olga FIRST as a draft for approval → then executives', monthly:true,
+   reports:['attribution','tours','loss','warmhandoff','phone','agentactivity','engagement','fenix'], preset:'prevmonth', format:'A',
+   deliverable:'Output as PDF + email draft (Format A). Accuracy is everything — every number traces to a real downloaded report, never estimated. Turn data into a 2-4 sentence narrative per section that shows how impactful the team is.',
+   audienceFlow:'DRAFT TO OLGA FIRST. The email must open by telling Olga plainly: this is a DRAFT for her review and approval before it goes to any executive. She is always the first and only recipient of the draft. Only after she approves does it go to the executive distribution.',
+   narrativeSpec:'Connect ALL KPIs into one story, not siloed metrics: Total Leads → Scheduled/Completed Tours → Lead-to-Tour% and Lead-to-Scheduled% → Agent Scores (LMS and PEC split) → Fenix call quality → Engagement volume → Missed-call answer rate. Use tables, bullets, color highlights (🟢 on goal / 🟠 below), percentages, and at least one simple graph (trend or comparison). Lead with the headline win.',
+   timeSavingsRule:'The pre-tour time-savings story uses REAL talk-time minutes from the Phone report (inbound + outbound), never an invented multiplier. Sum the actual minutes PEC spent on the phone with prospects for the month, convert to hours, and frame it as: every one of those hours is time the onsite team did not spend on pre-tour prospect engagement because PEC handled it first. State the raw minutes/hours figure and cite the Phone report as the source.'},
+
+  {id:'mo_community', label:'🏘️ Community Report (individual + market)', desc:'To Olga FIRST with a favorable/not-favorable decision table', monthly:true,
+   reports:['attribution','tours','loss','status','phone','fenix'], preset:'prevmonth', format:'A',
+   deliverable:'Output as PDF (Format A). Individual community scores AND market-wise rollups. Markets: Arizona, Colorado Springs, Denver Pilot, Utah, Florida, Tennessee, Kansas, Missouri (Denver Pilot is its own market, separate from CO Springs).',
+   audienceFlow:'DRAFT TO OLGA FIRST, clearly marked as a draft for her approval. The point of her review is to decide WHICH individual community reports are safe to send to onsite partners. Onsite reports are sent personally via a Teams link Rowel sets up — not mass-emailed.',
+   decisionTable:'Lead with a decision table, one row per community, with a clear FAVORABLE / NOT FAVORABLE / NEEDS REVIEW flag (🟢 / 🔴 / 🟠) based on whether that community\'s numbers make PEC look good to onsite. Olga scans this table to approve or hold each community\'s individual report at a glance. Include the key drivers (lead volume, tour conversion, answer rate) in each row so the flag is justified, not arbitrary.',
+   fallbackRule:'If a community\'s numbers are NOT favorable, do not force a positive spin. Flag it NOT FAVORABLE, hold that community\'s individual report, and note that the Tour Survey Report (which Rowel pulls separately) and other supporting reports are the pending fallback to tell that community\'s story better. Never send an unfavorable individual report without Olga\'s explicit call.'},
+
+  {id:'mo_coaching', label:'👤 Monthly Coaching (per agent)', desc:'Reuses the Coaching Insight template automatically', monthly:true,
+   reports:['contactreasons','qualbreakdown','scorecardqp','fenix'], preset:'prevmonth', format:'C',
+   deliverable:'Reuse the exact Coaching Insight template already built (Snapshot table + 5-section Scorecard diagnostic + Wins/Challenges + one real verbatim justification quote), output as PDF/DOCX, one per agent.',
+   narrativeSpec:'Identical to the Coaching Insight recipe: two sections (Wins/Strengths, then Challenges/Where We Can Improve), tables + highlights + bullets, short and scannable. Cross-reference the call calibration feedback on each agent\'s profile with the Insight scorecard data for a more accurate, structured read.',
+   diagnosticMethod:'Same as Coaching Insight: Scorecard Question Performance at Question Key level, filtered per agent, find the standout low question, check N/A rate, quote a real justification. MotivatedToVisit-Subjective and AgentBuildConnection are the tone/connection/community-selling reads.'},
 ];
 
 let rbState = {
@@ -4845,7 +4873,8 @@ function rbApplyRecipe(id){
   const recipe = RB_RECIPES.find(r=>r.id===id);
   if(!recipe) return;
   rbState.picked = {};
-  recipe.reports.forEach(rid => { rbState.picked[rid] = true; });
+  const reportList = recipe.reports === 'ALL' ? RB_REPORTS.map(r=>r.id) : recipe.reports;
+  reportList.forEach(rid => { rbState.picked[rid] = true; });
   rbState.preset = recipe.preset;
   rbState.format = recipe.format;
   rbState.activeRecipe = id;
@@ -4950,18 +4979,31 @@ function rbAgentScript(){
   step(`Once every file above is downloaded, analyze them together for the period ${p.label}.`);
   step(`Build the report in ${fmt.label} format: ${fmt.desc}`);
   const activeRecipe = rbState.activeRecipe ? RB_RECIPES.find(r=>r.id===rbState.activeRecipe) : null;
+  if(activeRecipe && activeRecipe.deliverable){
+    step(`Deliverable: ${activeRecipe.deliverable}`);
+  }
+  if(activeRecipe && activeRecipe.audienceFlow){
+    step(`⚠️ AUDIENCE / APPROVAL FLOW: ${activeRecipe.audienceFlow}`);
+  }
   if(activeRecipe && activeRecipe.narrativeSpec){
     step(`${activeRecipe.label} narrative structure: ${activeRecipe.narrativeSpec}`);
   }
   if(activeRecipe && activeRecipe.diagnosticMethod){
     step(`Diagnostic method: ${activeRecipe.diagnosticMethod}`);
   }
-  if(activeRecipe && activeRecipe.deliverable){
-    step(`Deliverable: ${activeRecipe.deliverable}`);
+  if(activeRecipe && activeRecipe.timeSavingsRule){
+    step(`Time-savings story (accuracy-critical): ${activeRecipe.timeSavingsRule}`);
+  }
+  if(activeRecipe && activeRecipe.decisionTable){
+    step(`Decision table: ${activeRecipe.decisionTable}`);
+  }
+  if(activeRecipe && activeRecipe.fallbackRule){
+    step(`Fallback rule for weak communities: ${activeRecipe.fallbackRule}`);
   }
   if(spansBoth){
     step('Since this run spans both Funnel ecosystems, state that methodology explicitly — Applicant-inclusive Snapshot Status only applies to the Pilot portion, so combined rates mix two populations.');
   }
+  step('ACCURACY IS EVERYTHING: every number in the final report must trace to a real downloaded file. Never estimate, round loosely, or invent a figure. If a number is not in the data, say so rather than filling it in.');
   step('Name which reports were pulled and the exact resolved date range in the final output.');
   L.push('');
   L.push('END OF RUN SCRIPT');
@@ -5388,10 +5430,20 @@ function renderReportBuilder(){
       <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:16px">
         <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">⚡ Quick Recipes — one click loads reports, period, and format</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${RB_RECIPES.map(r=>`
-            <button onclick="rbApplyRecipe('${r.id}')" style="padding:8px 14px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;cursor:pointer;text-align:left">
+          ${RB_RECIPES.filter(r=>!r.monthly).map(r=>`
+            <button onclick="rbApplyRecipe('${r.id}')" style="padding:8px 14px;border-radius:10px;border:1.5px solid ${rbState.activeRecipe===r.id?'#4338ca':'#e2e8f0'};background:${rbState.activeRecipe===r.id?'#eef2ff':'#f8fafc'};cursor:pointer;text-align:left">
               <div style="font-size:12px;font-weight:700;color:#0f172a">${r.label}</div>
               <div style="font-size:10px;color:#94a3b8;margin-top:1px">${r.desc}</div>
+            </button>`).join('')}
+        </div>
+
+        <div style="font-size:11px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 10px;padding-top:14px;border-top:1px solid #f1f5f9">📅 Monthly Reporting Suite — download once, build all three</div>
+        <div style="font-size:11px;color:#64748b;line-height:1.5;margin-bottom:10px">Run <strong>Download ALL</strong> first for one master pull, then use those same files for the Executive, Community, and Coaching reports. All three go to Olga first as drafts for approval.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${RB_RECIPES.filter(r=>r.monthly).map(r=>`
+            <button onclick="rbApplyRecipe('${r.id}')" style="padding:8px 14px;border-radius:10px;border:1.5px solid ${rbState.activeRecipe===r.id?'#4338ca':(r.id==='mo_download_all'?'#a5b4fc':'#ddd6fe')};background:${rbState.activeRecipe===r.id?'#4338ca':(r.id==='mo_download_all'?'#eef2ff':'#f5f3ff')};cursor:pointer;text-align:left">
+              <div style="font-size:12px;font-weight:700;color:${rbState.activeRecipe===r.id?'#fff':'#4338ca'}">${r.label}</div>
+              <div style="font-size:10px;color:${rbState.activeRecipe===r.id?'#c7d2fe':'#8b8b9e'};margin-top:1px">${r.desc}</div>
             </button>`).join('')}
         </div>
       </div>
