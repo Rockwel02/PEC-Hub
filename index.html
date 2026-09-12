@@ -2208,9 +2208,40 @@ const REALTOR_SCENARIOS = [
   }},
 ];
 
+// Rental / Application Process — objection handling for credit, eviction,
+// and "will I get approved" questions. Language drawn from the team's real
+// role-play calibration (Sept 11, 2026) — the answers Rowel and the team
+// praised for being warm, concise, and easy to digest. The core rule: we
+// never pre-qualify or pre-screen anyone outside the formal application;
+// acknowledge warmly, explain the process simply, then offer the rental
+// criteria. Never promise approval.
+const RENTAL_PROCESS_SCENARIOS = [
+  {id:'bad_credit', title:'"My credit isn\'t great, is that a problem?"', aaa:{
+    acknowledge:"Thank you so much for being open and honest with me, that really helps me give you the clearest answer.",
+    answer:"We don't have a strict minimum credit score requirement. We look at your application as a whole, so aside from credit we also consider your income, rental history, and criminal background. The screening is done by a third-party company called TransUnion, and the results are communicated to you directly by them. Because of that, we're not able to pre-qualify anyone outside of the formal application process.",
+    ask:"Would it help if I send you a copy of our rental criteria so you can see exactly how everything is weighed before you decide whether to apply? What's the best email for you?"
+  }},
+  {id:'eviction', title:'"I had an eviction, is that a deal breaker?"', aaa:{
+    acknowledge:"I really appreciate you being upfront about that, it helps me point you in the right direction. And please know, you're not alone. A lot of people have worked through the same thing.",
+    answer:"We welcome anyone who applies and meets our qualifications. Rental history, including eviction, is part of the screening process handled by TransUnion, and it's reviewed alongside your credit, income, and background. So it's one factor considered as a whole, not an automatic no.",
+    ask:"Would you like me to share our rental criteria so you can review the full details and decide if you'd like to apply? I just need your email to send it over."
+  }},
+  {id:'will_i_get_approved', title:'"Do you think I\'ll get approved?" / "What score do you need?"', aaa:{
+    acknowledge:"That's a great question, and I can tell how interested you are, I love that.",
+    answer:"I want to be honest with you rather than give you a number I'm not 100% sure of. We don't publish an exact score, because credit is just one part of a bigger picture that TransUnion screens. And there are cases where someone with a lower score is still approved with conditions, like an additional deposit or a guarantor. The screening result is what determines whether you're approved, conditionally approved, or denied.",
+    ask:"Would it help if I send over the rental criteria so you can see exactly how it's weighed before deciding whether to apply? What email should I use?"
+  }},
+  {id:'read_criteria', title:'Reading the credit excerpt from the criteria (if they ask)', aaa:{
+    acknowledge:"Of course, I'm happy to read you the part that speaks to that directly.",
+    answer:"Our criteria states: applicants who receive an unsatisfactory credit report may be required to provide an additional security deposit, the commitment of a guarantor, or their application may be denied. An unsatisfactory credit report means one that shows an absence of established credit, or contains current or recent bad debts (excluding student loans and medical debt), late payments, liens, judgments, foreclosures, or bankruptcies.",
+    ask:"Would you like me to email you the full copy so you have it for your records? I'll just need your email address."
+  }},
+];
+
 const QUICK_ANSWER_TOPICS = [
   {id:'pricing', label:'Pricing & Specials', scenarios: PRICING_SCENARIOS, draft:false},
   {id:'qualification', label:'Rental Criteria & Qualification', scenarios: QUALIFICATION_SCENARIOS, draft:false},
+  {id:'rentalprocess', label:'Credit / Eviction / Approval', scenarios: RENTAL_PROCESS_SCENARIOS, draft:false},
   {id:'pets', label:'Pet Policy', scenarios: PET_POLICY_SCENARIOS, draft:false},
   {id:'fees', label:'Fees & Deposit', scenarios: FEES_SCENARIOS, draft:true},
   {id:'realtor', label:'Realtor Calling on Behalf of a Client', scenarios: REALTOR_SCENARIOS, draft:false},
@@ -2885,9 +2916,16 @@ function renderTopicGuideScreen(){
         <div id="discoveryList"></div>
       </div>
       <div class="section">
-        <div class="section-title">💰 Ask Permission to Discuss Pricing</div>
-        <div class="spiel-box" style="margin-bottom:8px">Would it be helpful if we discuss pricing now?</div>
-        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:10px">Other ways to ask: "Would now be a good time to go over pricing?" or "Mind if I share some pricing details with you?"</div>
+        <div class="section-title">💛 Value Proposition — Do This Before Pricing</div>
+        <div class="guide-only-tag">🗣️ Say this warmly and conversationally, not as a checklist. Connect what they told you to what we offer, THEN ask about pricing.</div>
+        <div class="spiel-box" style="margin-bottom:8px" id="valuePropBox">With everything you've shared with me, I truly believe our community is a great fit for what you're looking for! [Weave in the amenities that match what they mentioned — say it like you're excited to tell a friend, not reading a list.]</div>
+        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:6px">The amenities you check off in the Discovery Checklist above will show up here automatically as talking points — turn them into a warm, flowing sentence.</div>
+        <div id="valuePropAmenities" style="font-size:12px;color:#334155;margin-bottom:4px"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">💰 Then Ask About Pricing</div>
+        <div class="spiel-box" style="margin-bottom:8px">Would it be helpful if I discuss the pricing with you on the phone in detail, or are you more comfortable doing that while you're on site during an exclusive tour?</div>
+        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:10px">This gives them a graceful choice and plants the tour. Older soft-permission phrasings still work: "Would now be a good time to go over pricing?" or "Mind if I share some pricing details with you?"</div>
         <div id="pricingPermissionButtons"></div>
       </div>
       <div class="section">
@@ -2904,64 +2942,71 @@ function renderTopicGuideScreen(){
     </div>`;
 }
 function renderQuickAnswerList(){
-  document.getElementById('quickAnswerList').innerHTML = QUICK_ANSWER_TOPICS.map(topic=>{
-    const isTopicOpen = cgState.quickAnswerOpenTopic===topic.id;
+  const openTopic = QUICK_ANSWER_TOPICS.find(t=>t.id===cgState.quickAnswerOpenTopic);
+  // Compact pill grid — topics collapse into small tappable chips to save
+  // space. Only the selected topic expands into a full panel below.
+  const pills = QUICK_ANSWER_TOPICS.map(topic=>{
+    const isOpen = cgState.quickAnswerOpenTopic===topic.id;
     const usedCount = cgState.quickAnswersUsed.filter(u=>u.topicId===topic.id).length;
-    const highlightBg = topic.id==='qualification' ? '#fee2e2' : topic.id==='pets' ? '#dbeafe' : '';
-    return `
-      <div class="aaa-scenario">
-        <div class="aaa-scenario-header" onclick="toggleQuickAnswerTopic('${topic.id}')" style="${highlightBg?`background:${highlightBg}`:''}">
-          <span class="title">${usedCount?'✅ ':''}${topic.label}${topic.draft?' <span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;margin-left:6px">Draft</span>':''}</span>
-          <span class="chev${isTopicOpen?' open':''}">▾</span>
-        </div>
-        ${isTopicOpen?`
-          <div class="aaa-scenario-body">
-            ${(topic.id==='qualification' || topic.id==='pets')?`
-              <div style="margin-bottom:10px">
-                <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">📍 Market (for verbatim wording)</div>
-                <div style="display:flex;flex-wrap:wrap;gap:5px">
-                  ${QUAL_MARKETS.map(m=>`<div class="tone-tab" style="flex:0 0 auto;padding:5px 10px;font-size:10px;${cgState.qualMarket===m.id?'background:#7c3aed;border-color:#7c3aed;color:#fff':''}" onclick="event.stopPropagation();setQualMarketInline('${m.id}')">${m.label}</div>`).join('')}
-                </div>
-                ${renderQualDocLinkHtml()}
-              </div>
-            `:''}
-            ${topic.scenarios.map(s=>{
-              const isScenarioOpen = cgState.quickAnswerOpenScenario===s.id;
-              const wasUsed = cgState.quickAnswersUsed.some(u=>u.scenarioId===s.id);
-              const marketPicked = !!cgState.qualMarket;
-              const answerText = s.verbatim ? (marketPicked ? s.aaa.answerByMarket[cgState.qualMarket] : null) : s.aaa.answer;
-              const specialNote = s.verbatim && marketPicked ? (s.aaa.specialNoteByMarket && s.aaa.specialNoteByMarket[cgState.qualMarket]) : null;
-              return `
-                <div class="aaa-scenario" style="margin-top:8px">
-                  <div class="aaa-scenario-header" onclick="event.stopPropagation();toggleQuickAnswerScenario('${s.id}')">
-                    <span class="title" style="font-size:12px">${wasUsed?'✅ ':''}${s.title}${s.verbatim?' <span style="font-size:9px;font-weight:800;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:1px 6px;border-radius:20px;text-transform:uppercase;margin-left:4px">Verbatim</span>':''}</span>
-                    <span class="chev${isScenarioOpen?' open':''}">▾</span>
-                  </div>
-                  ${isScenarioOpen?`
-                    <div class="aaa-scenario-body">
-                      <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
-                      ${answerText?`
-                        <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.verbatim?`<span style="font-style:italic;border-left:3px solid #7c3aed;padding-left:8px;display:block">"${answerText}"</span><div style="font-size:10px;color:#94a3b8;margin-top:4px">— read exactly as written, word for word.</div>`:answerText}</span></div>
-                        ${specialNote?`<div class="stub-note" style="margin:8px 0">${specialNote}</div>`:''}
-                      `:`<div class="stub-note" style="margin:10px 0">📍 Select the market above first.</div>`}
-                      <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
-                      ${s.id==='realtor_represented'?`
-                        <div class="tone-tabs" style="margin-bottom:8px">
-                          <div class="tone-tab${cgState.realtorClientProvided==='yes'?' active':''}" onclick="event.stopPropagation();setRealtorClientProvided('yes')">Client Name Provided</div>
-                          <div class="tone-tab${cgState.realtorClientProvided==='no'?' active':''}" onclick="event.stopPropagation();setRealtorClientProvided('no')">Not Provided</div>
-                        </div>
-                        ${cgState.realtorClientProvided==='yes'?`<input class="other-input" id="realtorClientNameInput" placeholder="Client's name" value="${cgState.realtorClientName}" style="margin-bottom:8px" onclick="event.stopPropagation()"/>`:''}
-                        <div class="stub-note" style="margin-bottom:8px">📌 Keep the lead active as a Prospect — do not change status to Vendor. Use DNR instead if needed, so the client's future calls still come through. Document the lead as "realtor-represented."</div>
-                      `:''}
-                      <button class="use-scenario-btn" onclick="event.stopPropagation();useQuickAnswer('${topic.id}','${topic.label.replace(/'/g,"\\'")}','${s.id}','${s.title.replace(/'/g,"\\'")}')" ${s.verbatim && !marketPicked?'disabled style="opacity:.5;cursor:not-allowed"':''}>${wasUsed?'✓ Logged to note':'✅ Used This — Log to Note'}</button>
-                    </div>`:''
-                  }
-                </div>`;
-            }).join('')}
-          </div>`:''
-        }
-      </div>`;
+    const highlightBg = topic.id==='qualification' ? '#fee2e2' : topic.id==='pets' ? '#dbeafe' : '#f8fafc';
+    const highlightBorder = topic.id==='qualification' ? '#fca5a5' : topic.id==='pets' ? '#93c5fd' : '#e2e8f0';
+    return `<div onclick="toggleQuickAnswerTopic('${topic.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid ${isOpen?'#4338ca':highlightBorder};background:${isOpen?'#4338ca':highlightBg};color:${isOpen?'#fff':'#334155'};transition:all .1s">
+      ${usedCount?'✅':''}${topic.label}${topic.draft?' <span style="font-size:8px;opacity:.7">DRAFT</span>':''}
+      <span style="font-size:9px;opacity:.6">${isOpen?'▲':'▾'}</span>
+    </div>`;
   }).join('');
+
+  let expandedPanel = '';
+  if(openTopic){
+    const topic = openTopic;
+    expandedPanel = `
+      <div class="aaa-scenario-body" style="margin-top:12px;border:1.5px solid #4338ca;border-radius:12px;padding:14px">
+        ${(topic.id==='qualification' || topic.id==='pets')?`
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px">📍 Market (for verbatim wording)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              ${QUAL_MARKETS.map(m=>`<div class="tone-tab" style="flex:0 0 auto;padding:5px 10px;font-size:10px;${cgState.qualMarket===m.id?'background:#7c3aed;border-color:#7c3aed;color:#fff':''}" onclick="event.stopPropagation();setQualMarketInline('${m.id}')">${m.label}</div>`).join('')}
+            </div>
+            ${renderQualDocLinkHtml()}
+          </div>
+        `:''}
+        ${topic.scenarios.map(s=>{
+          const isScenarioOpen = cgState.quickAnswerOpenScenario===s.id;
+          const wasUsed = cgState.quickAnswersUsed.some(u=>u.scenarioId===s.id);
+          const marketPicked = !!cgState.qualMarket;
+          const answerText = s.verbatim ? (marketPicked ? s.aaa.answerByMarket[cgState.qualMarket] : null) : s.aaa.answer;
+          const specialNote = s.verbatim && marketPicked ? (s.aaa.specialNoteByMarket && s.aaa.specialNoteByMarket[cgState.qualMarket]) : null;
+          return `
+            <div class="aaa-scenario" style="margin-top:8px">
+              <div class="aaa-scenario-header" onclick="event.stopPropagation();toggleQuickAnswerScenario('${s.id}')">
+                <span class="title" style="font-size:12px">${wasUsed?'✅ ':''}${s.title}${s.verbatim?' <span style="font-size:9px;font-weight:800;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;padding:1px 6px;border-radius:20px;text-transform:uppercase;margin-left:4px">Verbatim</span>':''}</span>
+                <span class="chev${isScenarioOpen?' open':''}">▾</span>
+              </div>
+              ${isScenarioOpen?`
+                <div class="aaa-scenario-body">
+                  <div class="aaa-line"><span class="aaa-tag ack">ACK</span><span class="aaa-text">${s.aaa.acknowledge}</span></div>
+                  ${answerText?`
+                    <div class="aaa-line"><span class="aaa-tag ans">ANSWER</span><span class="aaa-text">${s.verbatim?`<span style="font-style:italic;border-left:3px solid #7c3aed;padding-left:8px;display:block">"${answerText}"</span><div style="font-size:10px;color:#94a3b8;margin-top:4px">Read exactly as written, word for word.</div>`:answerText}</span></div>
+                    ${specialNote?`<div class="stub-note" style="margin:8px 0">${specialNote}</div>`:''}
+                  `:`<div class="stub-note" style="margin:10px 0">📍 Select the market above first.</div>`}
+                  <div class="aaa-line"><span class="aaa-tag ask">ASK</span><span class="aaa-text">${s.aaa.ask}</span></div>
+                  ${s.id==='realtor_represented'?`
+                    <div class="tone-tabs" style="margin-bottom:8px">
+                      <div class="tone-tab${cgState.realtorClientProvided==='yes'?' active':''}" onclick="event.stopPropagation();setRealtorClientProvided('yes')">Client Name Provided</div>
+                      <div class="tone-tab${cgState.realtorClientProvided==='no'?' active':''}" onclick="event.stopPropagation();setRealtorClientProvided('no')">Not Provided</div>
+                    </div>
+                    ${cgState.realtorClientProvided==='yes'?`<input class="other-input" id="realtorClientNameInput" placeholder="Client's name" value="${cgState.realtorClientName}" style="margin-bottom:8px" onclick="event.stopPropagation()"/>`:''}
+                    <div class="stub-note" style="margin-bottom:8px">📌 Keep the lead active as a Prospect — do not change status to Vendor. Use DNR instead if needed, so the client's future calls still come through. Document the lead as "realtor-represented."</div>
+                  `:''}
+                  <button class="use-scenario-btn" onclick="event.stopPropagation();useQuickAnswer('${topic.id}','${topic.label.replace(/'/g,"\\'")}','${s.id}','${s.title.replace(/'/g,"\\'")}')" ${s.verbatim && !marketPicked?'disabled style="opacity:.5;cursor:not-allowed"':''}>${wasUsed?'✓ Logged to note':'✅ Used This — Log to Note'}</button>
+                </div>`:''
+              }
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  document.getElementById('quickAnswerList').innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:7px">${pills}</div>${expandedPanel}`;
 }
 function toggleQuickAnswerTopic(id){
   cgState.quickAnswerOpenTopic = cgState.quickAnswerOpenTopic===id ? null : id;
@@ -3087,6 +3132,17 @@ function renderAmenities(){
     <div class="amenity-chip${cgState.amenitiesChecked[i]?' active':''}" onclick="toggleAmenity(${i})">
       <span class="pseudo-check${cgState.amenitiesChecked[i]?' on':''}">${cgState.amenitiesChecked[i]?'✓':''}</span>${a}
     </div>`).join('');
+  renderValuePropAmenities();
+}
+function renderValuePropAmenities(){
+  const box = document.getElementById('valuePropAmenities');
+  if(!box) return;
+  const picked = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
+  if(!picked.length){
+    box.innerHTML = '<span style="color:#94a3b8;font-style:italic">Check amenities in the Discovery Checklist above and they\'ll appear here as talking points to weave in.</span>';
+    return;
+  }
+  box.innerHTML = '💛 <strong>Weave these in warmly:</strong> ' + picked.map(a=>`<span style="display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px 2px 0 0">${a}</span>`).join('');
 }
 function toggleAmenity(i){
   cgState.amenitiesChecked[i]=!cgState.amenitiesChecked[i];
