@@ -2860,7 +2860,7 @@ const REASONS_FOR_MOVE = [
   "First Apartment / Moving Out on Own","Current Place Too Expensive","Safety/Neighborhood Concerns","Life Change",
 ];
 const PITCH_LINES = {
-  "In-Unit Washer/Dryer": "you won't have to worry about laundromats — every home comes with its own in-unit washer and dryer",
+  "In-Unit Washer/Dryer": "you won't have to worry about laundromats, since every home comes with its own in-unit washer and dryer",
   "Swimming Pool": "our resort-style pool is the perfect spot to relax and unwind",
   "Fitness Center": "you can get a full workout in without ever leaving home, thanks to our fitness center",
   "Pet-Friendly": "and since you've got a furry friend, you'll be happy to know we're a pet-friendly community",
@@ -2882,20 +2882,20 @@ const PITCH_LINES = {
   "Job Relocation / New Job": "since you're relocating for work, we'll make sure your move-in is as smooth and quick as possible",
   "Need More Space": "and since you're needing more room, our larger floor plans give you exactly the space to breathe you're looking for",
   "Downsizing": "since you're looking to downsize, we've got layouts that feel just right without any wasted space",
-  "Lease Ending / Not Renewing": "and since your lease is wrapping up, the timing works out perfectly — we can line up your move-in right when you need it",
+  "Lease Ending / Not Renewing": "and since your lease is wrapping up, the timing works out perfectly, so we can line up your move-in right when you need it",
   "Closer to Work": "being closer to work is going to save you so much time back in your day",
   "Better School District": "and being in a great school district is going to make such a difference for your family",
-  "Wants a Nicer Community": "you're going to notice the difference the moment you walk in — this community was built with exactly that upgrade in mind",
-  "Moving In with Partner/Roommate": "that's an exciting next step — we'll make sure you find a layout that works great for both of you",
+  "Wants a Nicer Community": "you're going to notice the difference the moment you walk in, because this community was built with exactly that upgrade in mind",
+  "Moving In with Partner/Roommate": "that's an exciting next step, and we'll make sure you find a layout that works great for both of you",
   "First Apartment / Moving Out on Own": "congrats on this next chapter! We'll make sure you feel right at home from day one",
   "Current Place Too Expensive": "and I think you'll be pleasantly surprised by the value you get here for the price",
-  "Safety/Neighborhood Concerns": "you'll have real peace of mind here — safety is something we take seriously",
+  "Safety/Neighborhood Concerns": "you'll have real peace of mind here, because safety is something we take seriously",
   "Life Change": "whatever's bringing about this change, we want to make sure this next chapter starts off on the right foot",
 };
 const TONES = [
-  {id:'warm', label:'😊 Warm & Friendly', opener:"Honestly, I think this could be such a great fit for you!", connector:"And on top of that,", closer:"I really think you're going to love it here — want to grab a time to come see it in person?"},
-  {id:'upbeat', label:'🔥 Confident & Upbeat', opener:"Okay, I'm genuinely excited about this one for you!", connector:"Plus, get this —", closer:"I've got a really good feeling about this one — let's get you on the calendar to see it!"},
-  {id:'polished', label:'✨ Polished & Professional', opener:"Based on everything you've shared, I believe this community would be an excellent match for your needs.", connector:"In addition,", closer:"I'd welcome the opportunity to show you the community in person — shall we schedule a convenient time?"},
+  {id:'warm', label:'😊 Warm & Friendly', opener:"Honestly, I think this could be such a great fit for you!", connector:"And on top of that,", closer:"I really think you're going to love it here. Want to grab a time to come see it in person?"},
+  {id:'upbeat', label:'🔥 Confident & Upbeat', opener:"Okay, I'm genuinely excited about this one for you!", connector:"Plus, get this,", closer:"I've got a really good feeling about this one. Let's get you on the calendar to see it!"},
+  {id:'polished', label:'✨ Polished & Professional', opener:"Let me share why.", connector:"In addition,", closer:"I'd welcome the opportunity to show you the community in person. Shall we schedule a convenient time?"},
 ];
 
 function renderTopicGuideScreen(){
@@ -2916,22 +2916,18 @@ function renderTopicGuideScreen(){
         <div id="discoveryList"></div>
       </div>
       <div class="section">
-        <div class="section-title">💛 Value Proposition — Do This Before Pricing</div>
-        <div class="guide-only-tag">🗣️ Say this warmly and conversationally, not as a checklist. Connect what they told you to what we offer, THEN ask about pricing.</div>
-        <div class="spiel-box" style="margin-bottom:8px" id="valuePropBox">With everything you've shared with me, I truly believe our community is a great fit for what you're looking for! [Weave in the amenities that match what they mentioned — say it like you're excited to tell a friend, not reading a list.]</div>
-        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:6px">The amenities you check off in the Discovery Checklist above will show up here automatically as talking points — turn them into a warm, flowing sentence.</div>
-        <div id="valuePropAmenities" style="font-size:12px;color:#334155;margin-bottom:4px"></div>
+        <div class="section-title">💛 Value Proposition — Say This With Energy!</div>
+        <div class="guide-only-tag">🗣️ Lead with value before pricing. Connect what they told you to what we offer, warmly and conversationally, like you're excited to tell a friend. Pick a tone, and your personalized pitch builds below from what they mentioned.</div>
+        <div class="tone-tabs" id="toneTabs"></div>
+        <div class="pitch-box" id="pitchBox"></div>
+        <div id="valuePropAmenities" style="font-size:12px;color:#334155;margin-top:8px"></div>
       </div>
       <div class="section">
         <div class="section-title">💰 Then Ask About Pricing</div>
+        <div class="guide-only-tag">💡 After the value proposition, give them a graceful choice, which also plants the tour.</div>
         <div class="spiel-box" style="margin-bottom:8px">Would it be helpful if I discuss the pricing with you on the phone in detail, or are you more comfortable doing that while you're on site during an exclusive tour?</div>
-        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:10px">This gives them a graceful choice and plants the tour. Older soft-permission phrasings still work: "Would now be a good time to go over pricing?" or "Mind if I share some pricing details with you?"</div>
+        <div style="font-size:11px;color:#94a3b8;font-style:italic;margin-bottom:10px">Other conversational ways to ask: "Want me to run through the pricing now, or save it for when you're here in person?" · "I can go over numbers now, or we can look at them together during your tour, whatever's easier for you." · "Would now be a good time to go over pricing?"</div>
         <div id="pricingPermissionButtons"></div>
-      </div>
-      <div class="section">
-        <div class="section-title">🎯 Elevator Pitch — Say This With Energy!</div>
-        <div class="tone-tabs" id="toneTabs"></div>
-        <div class="pitch-box" id="pitchBox"></div>
       </div>
       <div class="section"><div class="section-title">📝 Additional Details</div><textarea class="details" id="detailsBox" placeholder="Anything specific worth noting...">${cgState.details}</textarea></div>
     </div>
@@ -3173,21 +3169,22 @@ function renderToneTabs(){
 function setTone(id){ cgState.activeTone=id; renderToneTabs(); updatePitch(); }
 function updatePitch(){
   const box = document.getElementById('pitchBox');
-  if(!box) return; // this screen (e.g. Pricing) has no Elevator Pitch section
+  if(!box) return; // this screen (e.g. Pricing) has no pitch section
   const checkedAmenities = AMENITIES.filter((a,i)=>cgState.amenitiesChecked[i]);
   const checkedReasons = REASONS_FOR_MOVE.filter((r,i)=>cgState.reasonsChecked[i]);
   const other = (document.getElementById('otherAmenities')?.value || cgState.otherAmenities || '').trim();
   const otherList = other ? other.split(',').map(s=>s.trim()).filter(Boolean) : [];
   const tone = TONES.find(t=>t.id===cgState.activeTone);
   if(checkedAmenities.length===0 && checkedReasons.length===0 && otherList.length===0){
-    box.innerHTML = '<span class="pitch-empty">Check off what the prospect mentioned above, and your personalized pitch appears here.</span>';
+    box.innerHTML = '<span class="pitch-empty">With everything you\'ve shared with me, I truly believe our community is a great fit for what you\'re looking for! ...Check off what the prospect mentioned above, and the rest of your personalized value proposition builds here.</span>';
     return;
   }
   // Reasons first (why they're moving), then amenities (what they want) —
   // reads more naturally as "since X, you'll love Y" than the reverse.
   let lines = [...checkedReasons, ...checkedAmenities].map(a=>PITCH_LINES[a]);
   otherList.forEach(o=>lines.push(`we've got you covered on ${o} too`));
-  let pitch = tone.opener + " ";
+  // Open with the value-proposition line, then the tone opener, then the woven amenities.
+  let pitch = "With everything you've shared with me, I truly believe our community is a great fit for what you're looking for! " + tone.opener + " ";
   if(lines.length===1){ pitch += lines[0].charAt(0).toUpperCase()+lines[0].slice(1)+'.'; }
   else { pitch += lines.slice(0,-1).map(l=>l.charAt(0).toUpperCase()+l.slice(1)).join('. ') + `. ${tone.connector} ${lines[lines.length-1]}.`; }
   if(cgState.pricingPermission==='yes') pitch += " And since this fits right within your budget, I really think this could be the perfect match!";
