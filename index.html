@@ -4331,6 +4331,26 @@ const CHECKLIST_SECTIONS = [
     {type:'simple', text:'Lease dates match Yardi'},
     {type:'simple', text:'Rate matches Yardi'},
   ]},
+  {key:'moveIn', title:'Move-In Processing (Yardi)', color:'#0f766e', bg:'#ccfbf1',
+    note:"📌 Escalation gates: STOP and set an AA:Yardi Move In task (description \"AM completion of move-in required\") for the Application Manager if ANY of these are true — this is a transfer, the applicant moved in before the 25th but you're processing after the 26th, or the Move-In button won't select even though there IS a signed lease (that means a sync error). Last revised 4/29/2026.",
+    items:[
+      {type:'simple', text:'Signed lease is on file (leases must be fully executed. If not, task the CT under Application Update and stop here)'},
+      {type:'simple', text:'Confirmed this is NOT a transfer (if it is, set AA:Yardi Move In task for the AM and stop)'},
+      {type:'simple', text:'Confirmed timing is fine, not a case of moved in before the 25th but processing after the 26th (if it is, set AA:Yardi Move In task and stop)'},
+      {type:'simple', text:'Opened Yardi, searched the resident by unit number, and confirmed the unit matches in Funnel and Yardi'},
+      {type:'branch', id:'miUnit', text:'Is the unit number correct?', options:['Correct','Needs fixing'],
+        subChecksByOption:{'Needs fixing':['Opened the resident by name, then Function > Assign Unit','Entered the unit number and corrected any wrong lease details','Selected Post, then continued with Function > Move-In']}},
+      {type:'branch', id:'miReady', text:'"Move in cannot be Posted, selected Unit is not ready" warning?', options:['No warning','Vacant Rented Not Ready','Notice Rented'],
+        subChecksByOption:{'Vacant Rented Not Ready':['Edit > check Rent Ready > Save','Edit again > set Date Ready to the move-in date > Save > Close'],'Notice Rented':['Tasked the CT to move out the previous resident, then Close']}},
+      {type:'simple', text:'Lease info matches between the Move-In page and Funnel: Move-in Date, Lease From, Term, Lease To, and lease fully signed in Funnel (if not, fix in Yardi under Lease Dates and Save after each change)'},
+      {type:'simple', text:'Rent amount matches in Funnel and Yardi (if not: open the resident > Edit > change Rent Amount > Save, then back on the Move-In page select Reset on the calculator)'},
+      {type:'simple', text:'Lease charges on the Move-In page match Yardi: deposits owed, pets, rentable items, and concessions all selected correctly'},
+      {type:'simple', text:'If move-in is on or after the 25th of the month, selected all the "Next Month\'s Charges"'},
+      {type:'simple', text:'Selected Save, then Post (this saves and takes you to the resident page)'},
+      {type:'branch', id:'miConcession', text:'Does the applicant have a concession?', options:['Yes','No'],
+        subChecksByOption:{'Yes':['Lease Charges > Add a New Lease Charge, Charge Code: conone','Entered the amount as a negative (e.g. $500 off = -500.00)','From Date = when the concession begins; To Date = end of that month','Selected Submit, and repeated for every concession on the lease']}},
+    ],
+  },
 ];
 function setChecklistRevision(val){
   state.checklistRevision = state.checklistRevision===val ? '' : val;
@@ -5929,7 +5949,7 @@ function renderCommunitiesMap(){
           </div>
           <div id="cmList" style="max-height:520px;overflow-y:auto;padding-right:2px"></div>
         </div>
-        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;min-width:0">
+        <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;min-width:0;position:relative;z-index:0">
           <div id="cmMap" style="height:520px;width:100%"></div>
         </div>
       </div>
