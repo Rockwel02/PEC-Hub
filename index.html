@@ -1062,141 +1062,189 @@ const COMMUNITY_WIKIS = {"AZ":[{"n":"Aura at Midtown","u":"","items":[{"c":"Spec
 // ══════════════════ COMMUNITY WIKI ══════════════════
 // Per-community Prospect FAQ, pulled from SharePoint (PEC HUB! > Community
 // Wikis) and baked in. On-demand refresh: re-export the folder, re-parse,
-// regenerate COMMUNITY_WIKIS above. Two views: a standalone page (browse by
-// market then community) and a quick-lookup panel inside the Call Guide.
+// regenerate COMMUNITY_WIKIS above. Two views: a standalone page (tile grid
+// then a category-tabbed community view) and a quick panel in the Call Guide.
 const WIKI_MARKET_ORDER = ['AZ','CO Springs','Denver, CO','FL & TN','KS & MO','UTAH'];
-let wikiState = { market:'AZ', community:null, search:'', cgCommunity:'', cgQuery:'' };
+let wikiState = { market:'AZ', community:null, cat:null, search:'', cgCommunity:'', cgCat:null, cgQuery:'' };
 
+const WIKI_CAT_ICON = [
+  [/special|floor/i,'🏷️'],[/leasing|fee/i,'📝'],[/pet/i,'🐾'],[/utilit/i,'💡'],
+  [/parking/i,'🚗'],[/washer|dryer|storage/i,'🧺'],[/amenit/i,'🏊'],[/neighbor/i,'📍'],[/mainten|safety/i,'🛠️'],
+];
+function wikiCatIcon(cat){ for(const [re,ic] of WIKI_CAT_ICON){ if(re.test(cat)) return ic; } return '•'; }
 function wikiEsc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function wikiFilledCount(c){ return c.items.filter(it=>it.a && String(it.a).trim()).length; }
+function wikiCats(c){ const seen=[]; c.items.forEach(it=>{ if(!seen.includes(it.c)) seen.push(it.c); }); return seen; }
 function wikiFindCommunity(name){
   for(const m of WIKI_MARKET_ORDER){ const hit=(COMMUNITY_WIKIS[m]||[]).find(c=>c.n===name); if(hit) return {market:m,c:hit}; }
   return null;
 }
-function wikiBadge(c){
-  const f=wikiFilledCount(c), t=c.items.length, pct=t?Math.round(f/t*100):0;
-  const col = pct>=80?{bg:'#dcfce7',fg:'#15803d'}: pct>=40?{bg:'#fef3c7',fg:'#b45309'}:{bg:'#fee2e2',fg:'#dc2626'};
-  return `<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;background:${col.bg};color:${col.fg};white-space:nowrap">${f}/${t} filled</span>`;
+function wikiPct(c){ const t=c.items.length; return t?Math.round(wikiFilledCount(c)/t*100):0; }
+function wikiColor(pct){ return pct>=80?'#15803d':pct>=40?'#d97706':'#dc2626'; }
+function wikiRing(c,size){
+  size=size||42; const inner=size-13; const pct=wikiPct(c); const col=wikiColor(pct);
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:conic-gradient(${col} ${pct*3.6}deg,#eef2f7 0);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+    <div style="width:${inner}px;height:${inner}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;color:${col}">${pct}%</div></div>`;
 }
 function wikiAnswerHtml(it){
   if(it.a && String(it.a).trim()){
     let h = `<div style="font-size:12.5px;color:#0f172a;line-height:1.55;white-space:pre-line">${wikiEsc(it.a)}</div>`;
-    if(it.m && String(it.m).trim()) h += `<div style="font-size:11.5px;color:#64748b;line-height:1.5;margin-top:5px;white-space:pre-line"><span style="font-weight:700">More: </span>${wikiEsc(it.m)}</div>`;
+    if(it.m && String(it.m).trim()) h += `<div style="font-size:11.5px;color:#64748b;line-height:1.5;margin-top:6px;white-space:pre-line;border-top:1px dashed #e8ecf3;padding-top:6px"><span style="font-weight:700">More detail: </span>${wikiEsc(it.m)}</div>`;
     return h;
   }
-  return `<div style="font-size:11.5px;color:#b45309;font-style:italic">Not filled in yet</div>`;
+  return `<div style="font-size:11.5px;color:#b45309;font-style:italic;display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Not filled in yet</div>`;
+}
+function wikiStyleBlock(){
+  return `<style>
+    .wiki-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px}
+    .wiki-tile{background:#fff;border:1px solid #e8ecf3;border-radius:15px;padding:15px;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;box-shadow:0 1px 2px rgba(15,30,61,.04)}
+    .wiki-tile:hover{transform:translateY(-3px);box-shadow:0 12px 24px -12px rgba(15,30,61,.28);border-color:#c7d2fe}
+    .wiki-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:11px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid #e8ecf3;background:#fff;color:#475569;transition:.1s;white-space:nowrap}
+    .wiki-chip:hover{border-color:#c7d2fe}
+    .wiki-chip.on{background:#4338ca;border-color:#4338ca;color:#fff}
+    .wiki-catscroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+    .wiki-catscroll::-webkit-scrollbar{height:5px}.wiki-catscroll::-webkit-scrollbar-thumb{background:#dbe1ea;border-radius:9px}
+  </style>`;
 }
 
 // ── Standalone page ──────────────────────────────────────────────
 function renderCommunityWiki(){
   if(wikiState.community){
     const found = wikiFindCommunity(wikiState.community);
-    if(found) return wikiCommunityDetailHtml(found.market, found.c);
+    if(found) return wikiStyleBlock()+wikiCommunityDetailHtml(found.market, found.c);
     wikiState.community = null;
   }
-  const pills = WIKI_MARKET_ORDER.map(m=>{
-    const on = wikiState.market===m;
+  const tabs = WIKI_MARKET_ORDER.map(m=>{
+    const on = wikiState.market===m && !(wikiState.search||'').trim();
     const n = (COMMUNITY_WIKIS[m]||[]).length;
-    return `<div onclick="wikiSetMarket('${m.replace(/'/g,"\\'")}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid ${on?'#4338ca':'#e2e8f0'};background:${on?'#4338ca':'#fff'};color:${on?'#fff':'#334155'}">${m} <span style="font-size:9px;opacity:.7">${n}</span></div>`;
+    return `<div onclick="wikiSetMarket('${m.replace(/'/g,"\\'")}')" class="wiki-chip${on?' on':''}">${wikiEsc(m)}<span style="font-size:9px;opacity:.65;font-weight:800">${n}</span></div>`;
   }).join('');
-  return `
+  return wikiStyleBlock()+`
     <div class="page-header">
       <div class="page-header-inner"><span style="font-size:22px">📖</span><h1>Community Wiki</h1></div>
-      <p>Prospect FAQ for every community, straight from the Community Wikis</p>
+      <p>Prospect FAQ for every community, at a glance</p>
     </div>
     <div class="content">
-      <input id="wikiCommunitySearch" value="${wikiEsc(wikiState.search)}" oninput="wikiOnSearch(this.value)" placeholder="🔍 Search all communities by name..." style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:14px"/>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px">${pills}</div>
+      <input id="wikiCommunitySearch" value="${wikiEsc(wikiState.search)}" oninput="wikiOnSearch(this.value)" placeholder="🔍 Search all 57 communities by name..." style="width:100%;padding:12px 16px;border:1.5px solid #e8ecf3;border-radius:12px;font-size:13.5px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,30,61,.03)"/>
+      <div class="wiki-catscroll" style="margin-bottom:18px">${tabs}</div>
       <div id="wikiBrowseList">${wikiBrowseListHtml()}</div>
     </div>`;
 }
 function wikiBrowseListHtml(){
   const q = (wikiState.search||'').toLowerCase().trim();
   let list;
-  if(q){
-    list = [];
-    WIKI_MARKET_ORDER.forEach(m=>(COMMUNITY_WIKIS[m]||[]).forEach(c=>{ if(c.n.toLowerCase().includes(q)) list.push({m,c}); }));
-  } else {
-    list = (COMMUNITY_WIKIS[wikiState.market]||[]).map(c=>({m:wikiState.market,c}));
-  }
-  if(!list.length) return `<div style="text-align:center;padding:36px 0;color:#94a3b8;font-size:13px">No communities match "${wikiEsc(wikiState.search)}".</div>`;
-  return `<div style="display:flex;flex-direction:column;gap:8px">` + list.map(({m,c})=>`
-    <div onclick="wikiOpenCommunity('${c.n.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:13px 16px;cursor:pointer">
-      <div>
-        <div style="font-size:13.5px;font-weight:700;color:#0f172a">${wikiEsc(c.n)}</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:1px">${wikiEsc(m)}${c.u?' · updated '+wikiEsc(String(c.u).split(' ')[0]):''}</div>
+  if(q){ list=[]; WIKI_MARKET_ORDER.forEach(m=>(COMMUNITY_WIKIS[m]||[]).forEach(c=>{ if(c.n.toLowerCase().includes(q)) list.push({m,c}); })); }
+  else { list=(COMMUNITY_WIKIS[wikiState.market]||[]).map(c=>({m:wikiState.market,c})); }
+  if(!list.length) return `<div style="text-align:center;padding:44px 0;color:#94a3b8;font-size:13px">No communities match "${wikiEsc(wikiState.search)}".</div>`;
+  return `<div class="wiki-grid">` + list.map(({m,c})=>{
+    const f=wikiFilledCount(c), t=c.items.length;
+    return `<div class="wiki-tile" onclick="wikiOpenCommunity('${c.n.replace(/'/g,"\\'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px">
+        <div style="font-size:13.5px;font-weight:800;color:#0f1e3d;line-height:1.25">${wikiEsc(c.n)}</div>
+        ${wikiRing(c,44)}
       </div>
-      <div style="display:flex;align-items:center;gap:10px">${wikiBadge(c)}<span style="color:#cbd5e1;font-size:18px">›</span></div>
-    </div>`).join('') + `</div>`;
+      <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;font-weight:800;margin-bottom:3px">${wikiEsc(m)}</div>
+      <div style="font-size:11px;color:${wikiColor(wikiPct(c))};font-weight:700">${f} of ${t} answered</div>
+    </div>`;
+  }).join('') + `</div>`;
 }
 function wikiCommunityDetailHtml(market, c){
-  const f=wikiFilledCount(c), t=c.items.length, pct=t?Math.round(f/t*100):0;
+  const cats = wikiCats(c);
+  const searching = !!(wikiState.search||'').trim();
+  const active = wikiState.cat && cats.includes(wikiState.cat) ? wikiState.cat : cats[0];
+  const chips = cats.map(cat=>{
+    const catItems=c.items.filter(i=>i.c===cat);
+    const done=catItems.filter(i=>i.a&&String(i.a).trim()).length;
+    const full=done===catItems.length;
+    const on = !searching && cat===active;
+    return `<div onclick="wikiSetCat('${cat.replace(/'/g,"\\'")}')" class="wiki-chip${on?' on':''}">${wikiCatIcon(cat)} ${wikiEsc(cat)} <span style="font-size:9px;font-weight:800;opacity:.7">${done}/${catItems.length}</span>${full?'':`<span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block"></span>`}</div>`;
+  }).join('');
   return `
     <div class="page-header">
       <div class="page-header-inner"><span style="font-size:22px">📖</span><h1>${wikiEsc(c.n)}</h1></div>
       <p>${wikiEsc(market)} · Prospect FAQ</p>
     </div>
     <div class="content">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <button onclick="wikiBackToBrowse()" style="font-size:12px;font-weight:700;color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:7px 13px;cursor:pointer">← All communities</button>
-        ${wikiBadge(c)}
-        ${c.u?`<span style="font-size:11px;color:#94a3b8">Updated ${wikiEsc(String(c.u).split(' ')[0])}</span>`:''}
+      <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #e8ecf3;border-radius:15px;padding:14px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,30,61,.04)">
+        ${wikiRing(c,52)}
+        <div style="flex:1">
+          <div style="font-size:12.5px;font-weight:800;color:#0f1e3d">${wikiFilledCount(c)} of ${c.items.length} questions answered</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:1px">${c.u?'Updated '+wikiEsc(String(c.u).split(' ')[0]):'Last updated date not set'}</div>
+        </div>
+        <button onclick="wikiBackToBrowse()" style="font-size:12px;font-weight:700;color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;border-radius:9px;padding:8px 14px;cursor:pointer">← All</button>
       </div>
-      <div style="background:#f1f5f9;border-radius:20px;height:7px;overflow:hidden;margin-bottom:16px"><div style="width:${pct}%;height:100%;background:${pct>=80?'#15803d':pct>=40?'#d97706':'#dc2626'}"></div></div>
-      <input id="wikiFaqSearch" value="${wikiEsc(wikiState.search)}" oninput="wikiOnFaqSearch(this.value)" placeholder="🔍 Search this community's FAQ..." style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:16px"/>
+      <input id="wikiFaqSearch" value="${wikiEsc(wikiState.search)}" oninput="wikiOnFaqSearch(this.value)" placeholder="🔍 Search this community's FAQ..." style="width:100%;padding:11px 15px;border:1.5px solid #e8ecf3;border-radius:12px;font-size:13px;margin-bottom:14px"/>
+      ${searching?'':`<div class="wiki-catscroll" style="margin-bottom:16px">${chips}</div>`}
       <div id="wikiFaqList">${wikiFaqListHtml(c)}</div>
     </div>`;
 }
 function wikiFaqListHtml(c){
   const q=(wikiState.search||'').toLowerCase().trim();
-  let items = c.items;
-  if(q) items = items.filter(it=> (it.q||'').toLowerCase().includes(q) || (it.a||'').toLowerCase().includes(q) || (it.c||'').toLowerCase().includes(q));
-  if(!items.length) return `<div style="text-align:center;padding:32px 0;color:#94a3b8;font-size:13px">Nothing in this community's FAQ matches "${wikiEsc(wikiState.search)}".</div>`;
+  const cats=wikiCats(c);
+  const active = wikiState.cat && cats.includes(wikiState.cat) ? wikiState.cat : cats[0];
+  let items, grouped;
+  if(q){ items=c.items.filter(it=> (it.q||'').toLowerCase().includes(q)||(it.a||'').toLowerCase().includes(q)||(it.c||'').toLowerCase().includes(q)); grouped=true; }
+  else { items=c.items.filter(it=>it.c===active); grouped=false; }
+  if(!items.length) return `<div style="text-align:center;padding:32px 0;color:#94a3b8;font-size:13px">${q?`Nothing matches "${wikiEsc(wikiState.search)}".`:'No questions in this category.'}</div>`;
   let html='', curCat=null;
+  if(!grouped) html+=`<div style="font-size:12px;font-weight:800;color:#4338ca;display:flex;align-items:center;gap:7px;margin-bottom:10px">${wikiCatIcon(active)} ${wikiEsc(active)}</div>`;
   items.forEach(it=>{
-    if(it.c!==curCat){ curCat=it.c; html+=`<div style="font-size:11px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px">${wikiEsc(curCat)}</div>`; }
-    html+=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px">
-      <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-bottom:5px">${wikiEsc(it.q)}</div>
+    if(grouped && it.c!==curCat){ curCat=it.c; html+=`<div style="font-size:11px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px">${wikiCatIcon(curCat)} ${wikiEsc(curCat)}</div>`; }
+    html+=`<div style="background:#fff;border:1px solid #e8ecf3;border-radius:12px;padding:13px 15px;margin-bottom:9px;box-shadow:0 1px 2px rgba(15,30,61,.03)">
+      <div style="font-size:12.5px;font-weight:700;color:#0f1e3d;margin-bottom:6px">${wikiEsc(it.q)}</div>
       ${wikiAnswerHtml(it)}
     </div>`;
   });
   return html;
 }
-function wikiSetMarket(m){ wikiState.market=m; wikiState.search=''; const el=document.getElementById('wikiBrowseList'); if(el) el.innerHTML=wikiBrowseListHtml(); const s=document.getElementById('wikiCommunitySearch'); if(s) s.value=''; }
+function wikiSetMarket(m){ wikiState.market=m; wikiState.search=''; const s=document.getElementById('wikiCommunitySearch'); if(s) s.value=''; renderPage(); }
 function wikiOnSearch(v){ wikiState.search=v; const el=document.getElementById('wikiBrowseList'); if(el) el.innerHTML=wikiBrowseListHtml(); }
-function wikiOpenCommunity(name){ wikiState.community=name; wikiState.search=''; renderPage(); }
+function wikiOpenCommunity(name){ wikiState.community=name; wikiState.search=''; wikiState.cat=null; renderPage(); }
 function wikiBackToBrowse(){ wikiState.community=null; wikiState.search=''; renderPage(); }
+function wikiSetCat(cat){ wikiState.cat=cat; const found=wikiFindCommunity(wikiState.community); const el=document.getElementById('wikiFaqList'); if(found&&el){ el.innerHTML=wikiFaqListHtml(found.c); } renderPage(); }
 function wikiOnFaqSearch(v){ wikiState.search=v; const found=wikiFindCommunity(wikiState.community); const el=document.getElementById('wikiFaqList'); if(found&&el) el.innerHTML=wikiFaqListHtml(found.c); }
 
 // ── Call Guide quick-lookup panel ────────────────────────────────
 function renderCgWiki(){
-  const host = document.getElementById('cgWikiPanel');
-  if(!host) return;
-  const opts = WIKI_MARKET_ORDER.map(m=>`<optgroup label="${wikiEsc(m)}">`+(COMMUNITY_WIKIS[m]||[]).map(c=>`<option value="${wikiEsc(c.n)}" ${wikiState.cgCommunity===c.n?'selected':''}>${wikiEsc(c.n)}</option>`).join('')+`</optgroup>`).join('');
-  host.innerHTML = `
-    <select onchange="wikiCgPick(this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12.5px;margin-bottom:8px">
-      <option value="">Select a community to see its FAQ...</option>${opts}
+  const host=document.getElementById('cgWikiPanel'); if(!host) return;
+  const opts=WIKI_MARKET_ORDER.map(m=>`<optgroup label="${wikiEsc(m)}">`+(COMMUNITY_WIKIS[m]||[]).map(c=>`<option value="${wikiEsc(c.n)}" ${wikiState.cgCommunity===c.n?'selected':''}>${wikiEsc(c.n)}</option>`).join('')+`</optgroup>`).join('');
+  const found = wikiState.cgCommunity?wikiFindCommunity(wikiState.cgCommunity):null;
+  let chipBar='';
+  if(found){
+    const cats=wikiCats(found.c);
+    const active=wikiState.cgCat&&cats.includes(wikiState.cgCat)?wikiState.cgCat:cats[0];
+    chipBar=`<div class="wiki-catscroll" style="margin:8px 0">`+cats.map(cat=>{
+      const on=!(wikiState.cgQuery||'').trim()&&cat===active;
+      return `<div onclick="wikiCgSetCat('${cat.replace(/'/g,"\\'")}')" class="wiki-chip${on?' on':''}" style="padding:5px 10px;font-size:11px">${wikiCatIcon(cat)} ${wikiEsc(cat)}</div>`;
+    }).join('')+`</div>`;
+  }
+  host.innerHTML=`${wikiStyleBlock()}
+    <select onchange="wikiCgPick(this.value)" style="width:100%;padding:10px 13px;border:1.5px solid #e8ecf3;border-radius:11px;font-size:12.5px;margin-bottom:8px;background:#fff">
+      <option value="">Select the community this prospect is calling about...</option>${opts}
     </select>
-    ${wikiState.cgCommunity?`<input id="cgWikiSearch" value="${wikiEsc(wikiState.cgQuery)}" oninput="wikiCgSearch(this.value)" placeholder="🔍 Search this FAQ..." style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px;margin-bottom:8px"/>`:''}
+    ${found?`<input id="cgWikiSearch" value="${wikiEsc(wikiState.cgQuery)}" oninput="wikiCgSearch(this.value)" placeholder="🔍 Search this FAQ..." style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf3;border-radius:10px;font-size:12px;margin-bottom:4px"/>`:''}
+    ${chipBar}
     <div id="cgWikiBody">${wikiCgBodyHtml()}</div>`;
 }
 function wikiCgBodyHtml(){
-  if(!wikiState.cgCommunity) return '';
-  const found=wikiFindCommunity(wikiState.cgCommunity);
+  const found = wikiState.cgCommunity?wikiFindCommunity(wikiState.cgCommunity):null;
   if(!found) return '';
   const c=found.c, q=(wikiState.cgQuery||'').toLowerCase().trim();
-  let items=c.items;
-  if(q) items=items.filter(it=> (it.q||'').toLowerCase().includes(q) || (it.a||'').toLowerCase().includes(q) || (it.c||'').toLowerCase().includes(q));
-  if(!items.length) return `<div style="font-size:12px;color:#94a3b8;padding:8px 0">Nothing matches "${wikiEsc(wikiState.cgQuery)}".</div>`;
+  const cats=wikiCats(c); const active=wikiState.cgCat&&cats.includes(wikiState.cgCat)?wikiState.cgCat:cats[0];
+  let items, grouped;
+  if(q){ items=c.items.filter(it=>(it.q||'').toLowerCase().includes(q)||(it.a||'').toLowerCase().includes(q)||(it.c||'').toLowerCase().includes(q)); grouped=true; }
+  else { items=c.items.filter(it=>it.c===active); grouped=false; }
+  if(!items.length) return `<div style="font-size:12px;color:#94a3b8;padding:8px 0">${q?`Nothing matches "${wikiEsc(wikiState.cgQuery)}".`:'No questions here.'}</div>`;
   let html='', curCat=null;
   items.forEach(it=>{
-    if(it.c!==curCat){ curCat=it.c; html+=`<div style="font-size:10px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${wikiEsc(curCat)}</div>`; }
-    html+=`<div style="border:1px solid #e2e8f0;border-radius:9px;padding:10px 12px;margin-bottom:6px;background:#fff">
-      <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:4px">${wikiEsc(it.q)}</div>${wikiAnswerHtml(it)}</div>`;
+    if(grouped && it.c!==curCat){ curCat=it.c; html+=`<div style="font-size:10px;font-weight:800;color:#4338ca;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${wikiCatIcon(curCat)} ${wikiEsc(curCat)}</div>`; }
+    html+=`<div style="border:1px solid #e8ecf3;border-radius:10px;padding:10px 12px;margin-bottom:6px;background:#fff">
+      <div style="font-size:12px;font-weight:700;color:#0f1e3d;margin-bottom:4px">${wikiEsc(it.q)}</div>${wikiAnswerHtml(it)}</div>`;
   });
   return html;
 }
-function wikiCgPick(name){ wikiState.cgCommunity=name; wikiState.cgQuery=''; renderCgWiki(); }
+function wikiCgPick(name){ wikiState.cgCommunity=name; wikiState.cgQuery=''; wikiState.cgCat=null; renderCgWiki(); }
+function wikiCgSetCat(cat){ wikiState.cgCat=cat; renderCgWiki(); }
 function wikiCgSearch(v){ wikiState.cgQuery=v; const el=document.getElementById('cgWikiBody'); if(el) el.innerHTML=wikiCgBodyHtml(); }
 // ══════════════════ END COMMUNITY WIKI ══════════════════
 
