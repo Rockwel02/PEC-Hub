@@ -571,6 +571,13 @@ async function hydrateFromFirestore(){
   if(remote.bonus_scores && remote.bonus_scores.records){
     bonusScores = {...bonusScores, ...remote.bonus_scores.records};
   }
+  if(remote.fenix_ranking){
+    state.fenixRanking = {
+      lms: Array.isArray(remote.fenix_ranking.lms) ? remote.fenix_ranking.lms : [],
+      pec: Array.isArray(remote.fenix_ranking.pec) ? remote.fenix_ranking.pec : [],
+      lastSynced: remote.fenix_ranking.lastSynced || ''
+    };
+  }
   if(remote.kpi_dashboard && remote.kpi_dashboard.teamScores){
     state.teamScores = {...state.teamScores, ...remote.kpi_dashboard.teamScores};
     if(remote.kpi_dashboard.lastSynced) state.lastSynced = remote.kpi_dashboard.lastSynced;
@@ -1029,6 +1036,7 @@ let state = {
   teamScores:{call_completion:0,lead_engagement:0,task_management:0,lead_to_scheduled:0,lead_to_tour:0,fenix_scored_calls:0},
   pecScores:{pec_phone_completion:0,pec_lead_engagement:0,pec_task_management:0,pec_lead_to_scheduled:0,pec_lead_to_tour:0},
   pecAgents:[],
+  fenixRanking:{lms:[],pec:[],lastSynced:''},
   agents:[
     {name:'Agent 1',lead_engagement:0,task_management:0,fenix_scored_calls:0},
     {name:'Agent 2',lead_engagement:0,task_management:0,fenix_scored_calls:0},
@@ -6234,6 +6242,56 @@ function renderCommunitiesMap(){
     </div>`;
 }
 
+function renderFenixRanking(){
+  const fr = state.fenixRanking || {lms:[],pec:[]};
+  const fCol = pct => pct>=90?'#15803d':pct>=80?'#d97706':'#dc2626';
+  const table = (rows, accent, label) => {
+    if(!rows || !rows.length) return `
+      <div style="margin-bottom:22px">
+        <div style="font-size:13px;font-weight:800;color:${accent};margin-bottom:8px">${label}</div>
+        <div style="text-align:center;padding:28px 0;color:#94a3b8;font-size:13px;background:#fff;border:1px solid #e8ecf3;border-radius:12px">No Fenix ranking data yet. It fills in on the next sync.</div>
+      </div>`;
+    const sorted = rows.slice().sort((a,b)=>(a.rank||999)-(b.rank||999));
+    const body = sorted.map((r,i)=>{
+      const overall = (r.overall!==undefined && r.overall!==null) ? Math.round(r.overall) : null;
+      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span style="color:#94a3b8">${r.rank||i+1}</span>`;
+      return `<tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#fff':'#f8fafc'}">
+        <td style="padding:9px 12px;text-align:center;font-size:14px;font-weight:800">${medal}</td>
+        <td style="padding:9px 12px;font-size:12.5px;font-weight:700;color:#0f1e3d">${escapeHtml(r.name||'')}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:14px;font-weight:800;color:${overall===null?'#cbd5e1':fCol(overall)}">${overall===null?'-':overall+'%'}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:12.5px;color:#475569">${r.scoredCalls||0}</td>
+        <td style="padding:9px 12px;font-size:11.5px;color:#b45309">${escapeHtml(r.weakest||'')}</td>
+      </tr>`;
+    }).join('');
+    return `
+      <div style="margin-bottom:22px">
+        <div style="font-size:13px;font-weight:800;color:${accent};margin-bottom:8px">${label}</div>
+        <div style="overflow-x:auto;border:1px solid #e8ecf3;border-radius:12px">
+          <table style="width:100%;border-collapse:collapse;min-width:520px">
+            <thead><tr style="background:${accent}">
+              <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">Rank</th>
+              <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:left">Agent</th>
+              <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">Overall Score</th>
+              <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">Scored Calls</th>
+              <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:left">Weakest Section</th>
+            </tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      </div>`;
+  };
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#0f1e3d">🏆 Fenix Performance Ranking</div>
+        <div style="font-size:11.5px;color:#64748b">Call-quality ranking from the Fenix reports. Goal is 90%+. Green 90+, amber 80-89, red below 80.</div>
+      </div>
+      ${fr.lastSynced?`<div style="font-size:11px;color:#94a3b8">Updated ${escapeHtml(fr.lastSynced)}</div>`:''}
+    </div>
+    ${table(fr.lms, '#0f1e3d', '📋 LMS')}
+    ${table(fr.pec, '#7c3aed', '🎯 PEC (Prospect Experience Crew)')}`;
+}
+
 function renderScorecard(){
   const tabColor=state.scTab==='mtd'?'#3b82f6':state.scTab==='monthend'?'#0d9488':'#7c3aed';
   return`
@@ -6251,14 +6309,14 @@ function renderScorecard(){
         </div>
       </div>
       <div class="sc-tabs">
-        ${[{id:'mtd',label:'Running (MTD)',icon:'🔄',color:'#3b82f6'},{id:'monthend',label:'Month-End',icon:'📅',color:'#0d9488'},{id:'quarterly',label:'Quarterly',icon:'📆',color:'#7c3aed'},...(state.manager?[{id:'bonus',label:'Bonus Tracker',icon:'💰',color:'#15803d'}]:[])].map(t=>`
+        ${[{id:'mtd',label:'Running (MTD)',icon:'🔄',color:'#3b82f6'},{id:'monthend',label:'Month-End',icon:'📅',color:'#0d9488'},{id:'quarterly',label:'Quarterly',icon:'📆',color:'#7c3aed'},{id:'fenixrank',label:'Fenix Ranking',icon:'🏆',color:'#d97706'},...(state.manager?[{id:'bonus',label:'Bonus Tracker',icon:'💰',color:'#15803d'}]:[])].map(t=>`
           <button class="sc-tab${state.scTab===t.id?' active':''}"
             style="${state.scTab===t.id?`border-bottom-color:${t.color}`:'border-bottom-color:transparent'}"
             onclick="state.scTab='${t.id}';state.expandedKpi=null;render()">${t.icon} ${t.label}</button>`).join('')}
       </div>
     </div>
     <div class="content">
-      ${state.scTab==='mtd'?renderMTD():state.scTab==='bonus'?renderBonusTracker():renderPeriodHistory(state.scTab,tabColor)}
+      ${state.scTab==='mtd'?renderMTD():state.scTab==='bonus'?renderBonusTracker():state.scTab==='fenixrank'?renderFenixRanking():renderPeriodHistory(state.scTab,tabColor)}
     </div>`;
 }
 function renderMTD(){
