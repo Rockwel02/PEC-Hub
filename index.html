@@ -6244,6 +6244,13 @@ function renderCommunitiesMap(){
 
 function renderFenixRanking(){
   const fr = state.fenixRanking || {lms:[],pec:[]};
+  // Your 12-person crew. The Fenix reports also score onsite agents, so we
+  // filter both lists down to just the team. Update this roster if the team changes.
+  const PEC_TEAM = ['daniel gelvez','juliet elaco','jo-ann atadero','carizza estanislao','charles calidguid','beverly domingo','kenneth geronimo','quigly arias','dianne mercado','russel espaldon','mary panimbagon','elhora paule'];
+  const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const onTeam = r => PEC_TEAM.includes(norm(r && r.name));
+  const lmsTeam = (fr.lms||[]).filter(onTeam);
+  const pecTeam = (fr.pec||[]).filter(onTeam);
   const fCol = pct => pct>=90?'#15803d':pct>=80?'#d97706':'#dc2626';
   const table = (rows, accent, label) => {
     if(!rows || !rows.length) return `
@@ -6251,10 +6258,10 @@ function renderFenixRanking(){
         <div style="font-size:13px;font-weight:800;color:${accent};margin-bottom:8px">${label}</div>
         <div style="text-align:center;padding:28px 0;color:#94a3b8;font-size:13px;background:#fff;border:1px solid #e8ecf3;border-radius:12px">No Fenix ranking data yet. It fills in on the next sync.</div>
       </div>`;
-    const sorted = rows.slice().sort((a,b)=>(a.rank||999)-(b.rank||999));
+    const sorted = rows.slice().sort((a,b)=>((b.overall==null?-1:b.overall)-(a.overall==null?-1:a.overall)));
     const body = sorted.map((r,i)=>{
       const overall = (r.overall!==undefined && r.overall!==null) ? Math.round(r.overall) : null;
-      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span style="color:#94a3b8">${r.rank||i+1}</span>`;
+      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span style="color:#94a3b8">${i+1}</span>`;
       return `<tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#fff':'#f8fafc'}">
         <td style="padding:9px 12px;text-align:center;font-size:14px;font-weight:800">${medal}</td>
         <td style="padding:9px 12px;font-size:12.5px;font-weight:700;color:#0f1e3d">${escapeHtml(r.name||'')}</td>
@@ -6284,12 +6291,12 @@ function renderFenixRanking(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
       <div>
         <div style="font-size:16px;font-weight:800;color:#0f1e3d">🏆 Fenix Performance Ranking</div>
-        <div style="font-size:11.5px;color:#64748b">Call-quality ranking from the Fenix reports. Goal is 90%+. Green 90+, amber 80-89, red below 80.</div>
+        <div style="font-size:11.5px;color:#64748b">Your team only, ranked by Overall Score. Goal is 90%+. Green 90+, amber 80-89, red below 80.</div>
       </div>
       ${fr.lastSynced?`<div style="font-size:11px;color:#94a3b8">Updated ${escapeHtml(fr.lastSynced)}</div>`:''}
     </div>
-    ${table(fr.lms, '#0f1e3d', '📋 LMS')}
-    ${table(fr.pec, '#7c3aed', '🎯 PEC (Prospect Experience Crew)')}`;
+    ${table(lmsTeam, '#0f1e3d', '📋 LMS Team')}
+    ${table(pecTeam, '#7c3aed', '🎯 PEC (Prospect Experience Crew)')}`;
 }
 
 function renderScorecard(){
