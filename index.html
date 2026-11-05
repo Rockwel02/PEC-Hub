@@ -1267,7 +1267,7 @@ function wikiCgSearch(v){ wikiState.cgQuery=v; const el=document.getElementById(
 // quarter. Manager-only input (Scorecard > Bonus Tracker); each agent sees
 // only their own on My Profile.
 const BONUS_MAX_QUARTER = 300;
-// Through Q3 2026: 5 weighted metrics out of 90 points.
+// Through 2026: 5 weighted metrics out of 90 points.
 const BONUS_METRICS_OLD = [
   {key:'fenix',    label:'Fenix LMS Call Score',   source:'Fenix',  scope:'User',     best:90, worst:70, weight:20, unit:'%'},
   {key:'lead_eng', label:'Lead Engagement Score',  source:'Funnel', scope:'User',     best:9,  worst:7,  weight:20, unit:''},
@@ -1275,7 +1275,7 @@ const BONUS_METRICS_OLD = [
   {key:'missed',   label:'Prospect Missed Calls',  source:'Funnel', scope:'Property', best:10, worst:30, weight:10, unit:'%'},
   {key:'task',     label:'Task Management',        source:'Funnel', scope:'User',     best:9,  worst:7,  weight:20, unit:''},
 ];
-// Q4 2026 onward: 7 equally weighted KPIs. best = full target, worst = minimum
+// From Jan 1, 2027: 7 equally weighted KPIs. best = full target, worst = minimum
 // threshold (all higher-is-better). Each KPI is worth $300/7 of the quarter.
 const BONUS_METRICS_NEW = [
   {key:'lead_eng', label:'Lead Engagement Score',     source:'Funnel', scope:'User',     best:8,  worst:6,  unit:''},
@@ -1294,8 +1294,9 @@ const BONUS_QUARTERS = [
 ];
 const BONUS_MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// The new per-KPI dollar model takes effect in Q4 2026 and every quarter after.
-function bonusIsNewModel(year, quarterId){ return (year>2026) || (year===2026 && quarterId==='Q4'); }
+// The new per-KPI dollar model takes effect Jan 1, 2027. All of 2026 (and
+// earlier) keeps the old 5-metric / tier model.
+function bonusIsNewModel(year, quarterId){ return year>=2027; }
 function bonusQuarterIdOfMonth(mm){ const q=BONUS_QUARTERS.find(x=>x.months.includes(mm)); return q?q.id:'Q1'; }
 function bonusMetricsFor(year, quarterId){ return bonusIsNewModel(year,quarterId)?BONUS_METRICS_NEW:BONUS_METRICS_OLD; }
 function bonusMetricsForMonth(year, mm){ return bonusMetricsFor(year, bonusQuarterIdOfMonth(mm)); }
@@ -1378,7 +1379,7 @@ function bonusTeamKicker(year,quarter){
   for(const a of agents){ const avg=bonusQuarterAvgOld(a.name,year,quarter); if(avg===null||avg<BONUS_KICKER_THRESHOLD) return false; }
   return agents.length>0;
 }
-// ── New-model payout (Q4 2026+): the three months added up, max $300. ──
+// ── New-model payout (2027+): the three months added up, max $300. ──
 function bonusQuarterEarnedNew(name,year,quarter){
   const q=BONUS_QUARTERS.find(x=>x.id===quarter); if(!q) return {dollars:0,months:[]};
   const months=q.months.map(mm=>bonusMonthEarned(bonusGet(name,year,mm),BONUS_METRICS_NEW));
@@ -1460,7 +1461,7 @@ function renderBonusTracker(){
         <select onchange="bonusState.month=this.value;render()" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12.5px">${monthOpts.join('')}</select>
       </div>
     </div>
-    ${isNew?`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:9px;padding:9px 13px;margin-bottom:12px;font-size:11.5px;color:#6d28d9;line-height:1.5">Q4 2026 model: 7 equally weighted KPIs, each worth $${perKpi.toFixed(2)} per month. A full month earns $100 and a full quarter earns the $${BONUS_MAX_QUARTER} maximum.</div>`:''}
+    ${isNew?`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:9px;padding:9px 13px;margin-bottom:12px;font-size:11.5px;color:#6d28d9;line-height:1.5">2027 incentive model: 7 equally weighted KPIs, each worth $${perKpi.toFixed(2)} per month. A full month earns $100 and a full quarter earns the $${BONUS_MAX_QUARTER} maximum.</div>`:''}
     ${legend}
     <div style="overflow-x:auto;border:1px solid #e8ecf3;border-radius:12px">
       <table style="width:100%;border-collapse:collapse;min-width:640px">
