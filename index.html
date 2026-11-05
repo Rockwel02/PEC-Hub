@@ -633,13 +633,13 @@ async function hydrateFromFirestore(){
 const TEAM = [
   {id:1,name:'Rowel De La Trinidad',role:'Lead Management Manager',emoji:'👑',color:'#1a2f55',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Rowel.jpg',funFact:'Over a decade in customer service and still loves a good call.',quote:'Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go. — Joshua 1:9',isSolo:true},
   {id:2,name:'Beverlyn Domingo',workStartDate:'2025-06-09',role:'Prospect Experience Coordinator',emoji:'🌟',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Beverlyn.png',funFact:'Fun fact coming soon!',quote:'Have more than you show, speak less than you know. — William Shakespeare'},
-  {id:3,name:'Dianne Mercado',workStartDate:'2025-04-28',role:'Prospect Experience Coordinator',emoji:'🎯',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Dianne%20Mercado.jpeg',funFact:'Fun fact coming soon!',quote:'Grow through what you go through.'},
+  {id:3,name:'Dianne Mercado',workStartDate:'2025-04-28',role:'Prospect Experience Coordinator',emoji:'🎯',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Dianne%20Mercado.jpeg',funFact:'Fun fact coming soon!',quote:'Grow through what you go through.',left:true},
   {id:4,name:'Quigly Arias',workStartDate:'2025-04-28',role:'Prospect Experience Coordinator',emoji:'🔥',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Quigly%20Arias%20New.png',funFact:'Fun fact coming soon!',quote:'Be kind, for everyone you meet is fighting a hard battle.'},
   {id:5,name:'Russel Espaldon',workStartDate:'2024-09-16',role:'Prospect Experience Coordinator',emoji:'⚡',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Russel%20Espaldon.jpeg',funFact:'',quote:'Progress, not perfection.'},
   {id:6,name:'Mary Panimbagon',workStartDate:'2024-09-16',role:'Prospect Experience Coordinator',emoji:'🌸',color:'#be185d',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Mary%20Panimbagon.jpeg',funFact:'',quote:'A beautiful life is built, not found.'},
   {id:7,name:'Jeffrey Bolo',workStartDate:'2025-03-03',role:'Prospect Experience Coordinator',emoji:'🎵',color:'#0d9488',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jeffrey%20Bolo.jpg',funFact:'',quote:'Good things happen when people help each other.'},
   {id:8,name:'Juliet Elaco',workStartDate:'2025-06-23',role:'Prospect Experience Coordinator',emoji:'🌈',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Juliet%20Elaco.jpg',funFact:'',quote:'For we live by faith, not by sight.'},
-  {id:9,name:'Elhora Paule',workStartDate:'2024-10-02',role:'Prospect Experience Coordinator',emoji:'🏆',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/elhora%20Paule.jpg',funFact:'',quote:'You don\'t have to have it all figured out to move forward.'},
+  {id:9,name:'Elhora Paule',workStartDate:'2024-10-02',role:'Prospect Experience Coordinator',emoji:'🏆',color:'#7c3aed',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Elhora%20Paule.png',funFact:'',quote:'You don\'t have to have it all figured out to move forward.'},
   {id:10,name:'Charles Calidguid',workStartDate:'2024-07-29',role:'Prospect Experience Coordinator',emoji:'💡',color:'#d97706',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Charles%20Calidguid.jpg',funFact:'',quote:'Sapagkat gusto ko po sanang ireklamo si Sen. Pangilinan sa pagsigaw. Meron po ba sa rules natin na sinasabing pwede mong sigawan ang kapwa mo senador?'},
   {id:11,name:'Carizza Estanislao',workStartDate:'2025-08-18',role:'Prospect Experience Coordinator',emoji:'🎨',color:'#3b82f6',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Carizza%20Estanislao.jpeg',funFact:'',quote:'With God, all things are possible. I work hard, trust deeply, and leave the results in His hands.'},
   {id:12,name:'Jo-Ann Atadero',workStartDate:'2025-03-03',role:'Prospect Experience Coordinator',emoji:'🌙',color:'#e05c45',photo:'https://raw.githubusercontent.com/Rockwel02/PEC-Hub/main/Jo-ann%20Atadero.png',funFact:'',quote:'I can be changed by what happens to me. But I refuse to be reduced by it. — Maya Angelou'},
@@ -1266,14 +1266,26 @@ function wikiCgSearch(v){ wikiState.cgQuery=v; const el=document.getElementById(
 // awards Percent x weight, totals out of 90, and averages 3 months for the
 // quarter. Manager-only input (Scorecard > Bonus Tracker); each agent sees
 // only their own on My Profile.
-const BONUS_METRICS = [
+const BONUS_MAX_QUARTER = 300;
+// Through Q3 2026: 5 weighted metrics out of 90 points.
+const BONUS_METRICS_OLD = [
   {key:'fenix',    label:'Fenix LMS Call Score',   source:'Fenix',  scope:'User',     best:90, worst:70, weight:20, unit:'%'},
   {key:'lead_eng', label:'Lead Engagement Score',  source:'Funnel', scope:'User',     best:9,  worst:7,  weight:20, unit:''},
   {key:'l2t',      label:'Lead to Tour Conversion',source:'Funnel', scope:'Property', best:20, worst:10, weight:20, unit:'%'},
   {key:'missed',   label:'Prospect Missed Calls',  source:'Funnel', scope:'Property', best:10, worst:30, weight:10, unit:'%'},
   {key:'task',     label:'Task Management',        source:'Funnel', scope:'User',     best:9,  worst:7,  weight:20, unit:''},
 ];
-const BONUS_TOTAL_POINTS = BONUS_METRICS.reduce((s,m)=>s+m.weight,0); // 90
+// Q4 2026 onward: 7 equally weighted KPIs. best = full target, worst = minimum
+// threshold (all higher-is-better). Each KPI is worth $300/7 of the quarter.
+const BONUS_METRICS_NEW = [
+  {key:'lead_eng', label:'Lead Engagement Score',     source:'Funnel', scope:'User',     best:8,  worst:6,  unit:''},
+  {key:'l2sched',  label:'Lead to Scheduled Tour',    source:'Funnel', scope:'Property', best:30, worst:10, unit:'%'},
+  {key:'l2comp',   label:'Lead to Completed Tour',    source:'Funnel', scope:'Property', best:20, worst:10, unit:'%'},
+  {key:'call_comp',label:'Call Completion',           source:'Funnel', scope:'Property', best:85, worst:70, unit:'%'},
+  {key:'callback', label:'Callback Rate',             source:'Funnel', scope:'Property', best:95, worst:80, unit:'%'},
+  {key:'task',     label:'Task Score',                source:'Funnel', scope:'User',     best:8,  worst:6,  unit:''},
+  {key:'fenix',    label:'Call Quality Score (Fenix)',source:'Fenix',  scope:'User',     best:90, worst:80, unit:'%'},
+];
 const BONUS_QUARTERS = [
   {id:'Q1', label:'Q1 (Jan-Mar)', months:['01','02','03']},
   {id:'Q2', label:'Q2 (Apr-Jun)', months:['04','05','06']},
@@ -1281,6 +1293,15 @@ const BONUS_QUARTERS = [
   {id:'Q4', label:'Q4 (Oct-Dec)', months:['10','11','12']},
 ];
 const BONUS_MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// The new per-KPI dollar model takes effect in Q4 2026 and every quarter after.
+function bonusIsNewModel(year, quarterId){ return (year>2026) || (year===2026 && quarterId==='Q4'); }
+function bonusQuarterIdOfMonth(mm){ const q=BONUS_QUARTERS.find(x=>x.months.includes(mm)); return q?q.id:'Q1'; }
+function bonusMetricsFor(year, quarterId){ return bonusIsNewModel(year,quarterId)?BONUS_METRICS_NEW:BONUS_METRICS_OLD; }
+function bonusMetricsForMonth(year, mm){ return bonusMetricsFor(year, bonusQuarterIdOfMonth(mm)); }
+function bonusTotalPoints(metrics){ return metrics.reduce((s,m)=>s+(m.weight||1),0); }
+// Dollars one KPI is worth in one month under the new model (each month = $100).
+function bonusPerKpiMonth(metrics){ return BONUS_MAX_QUARTER / metrics.length / 3; }
 
 let bonusScores = {}; // { "Agent Name": { "2026-09": {fenix:92.44, lead_eng:9.8, ...}, ... } }
 let bonusState = { month:null, quarter:null, year:null };
@@ -1291,28 +1312,54 @@ function bonusInit(){
   if(!bonusState.month) bonusState.month = String(now.getMonth()+1).padStart(2,'0');
   if(!bonusState.quarter) bonusState.quarter = BONUS_QUARTERS[Math.floor(now.getMonth()/3)].id;
 }
-function bonusAgents(){ return TEAM.filter(t=>!t.isSolo); }
+function bonusAgents(){ return TEAM.filter(t=>!t.isSolo && !t.left); }
 function bonusKey(year,mm){ return year+'-'+mm; }
 function bonusGet(name,year,mm){ const a=bonusScores[name]; return a?a[bonusKey(year,mm)]:null; }
+// Band position: how far the value sits from Worst/Minimum toward Best/Target
+// (0 at the minimum, 1 at the target). Used by the old model and as the base
+// for the new model's floored payout.
 function bonusMetricPct(m,value){
   if(value===''||value===null||value===undefined) return null;
   const v=parseFloat(value); if(isNaN(v)) return null;
   let p=(v-m.worst)/(m.best-m.worst);
   return Math.max(0,Math.min(1,p));
 }
-function bonusMonthOverall(data){
+// New model: hitting the minimum threshold still earns a low baseline (the
+// floor), scaling straight-line up to the full KPI value at the target. So the
+// payout runs from BONUS_FLOOR (at/below minimum) to 1 (at/above target).
+const BONUS_FLOOR = 0.25; // share of a KPI's value earned at the minimum threshold
+function bonusPayFraction(m,value){
+  const base = bonusMetricPct(m,value);
+  if(base===null) return null;
+  return BONUS_FLOOR + (1 - BONUS_FLOOR) * base;
+}
+// The right fraction function for a given metric set.
+function bonusFracFor(metrics){ return metrics===BONUS_METRICS_NEW ? bonusPayFraction : bonusMetricPct; }
+// Monthly overall %, period-aware (weighted for old model, floored-equal for new).
+function bonusMonthOverall(data, metrics){
   if(!data) return null;
+  metrics = metrics || BONUS_METRICS_OLD;
+  const frac = bonusFracFor(metrics);
+  const total = bonusTotalPoints(metrics);
   let awarded=0, entered=0;
-  BONUS_METRICS.forEach(m=>{ const p=bonusMetricPct(m,data[m.key]); if(p!==null){ awarded+=p*m.weight; entered++; } });
+  metrics.forEach(m=>{ const p=frac(m,data[m.key]); if(p!==null){ awarded+=p*(m.weight||1); entered++; } });
   if(entered===0) return null;
-  return { pct: Math.round(awarded/BONUS_TOTAL_POINTS*1000)/10, entered, complete: entered===BONUS_METRICS.length };
+  return { pct: Math.round(awarded/total*1000)/10, entered, complete: entered===metrics.length };
+}
+// Dollars earned in one month under the new model (max $100 per month).
+function bonusMonthEarned(data, metrics){
+  if(!data) return null;
+  const per = bonusPerKpiMonth(metrics);
+  let dollars=0, entered=0;
+  metrics.forEach(m=>{ const p=bonusPayFraction(m,data[m.key]); if(p!==null){ dollars+=p*per; entered++; } });
+  if(entered===0) return null;
+  return { dollars: Math.round(dollars*100)/100, entered, complete: entered===metrics.length };
 }
 function bonusColor(pct){ return pct>=90?'#15803d':pct>=75?'#d97706':'#dc2626'; }
 
-// Quarterly bonus payout. Tiers on the quarter average: 100% = $300, 90-99% =
-// $200, 85-89% = $100, below 85% = $0. Team kicker: +$100 to every agent if
-// ALL agents hit 95%+ for the quarter.
-const BONUS_BASE_MAX = 300, BONUS_KICKER = 100, BONUS_KICKER_THRESHOLD = 95;
+// ── Old-model payout (through Q3 2026): tiers on the quarter average, plus a
+// $100 all-team kicker at 95%+. ──
+const BONUS_KICKER = 100, BONUS_KICKER_THRESHOLD = 95;
 function bonusBasePayout(qpct){
   if(qpct===null||qpct===undefined) return 0;
   if(qpct>=100) return 300;
@@ -1320,16 +1367,23 @@ function bonusBasePayout(qpct){
   if(qpct>=85) return 100;
   return 0;
 }
-function bonusQuarterAvg(name,year,quarter){
+function bonusQuarterAvgOld(name,year,quarter){
   const q=BONUS_QUARTERS.find(x=>x.id===quarter); if(!q) return null;
-  const vals=q.months.map(mm=>bonusMonthOverall(bonusGet(name,year,mm))).filter(x=>x).map(x=>x.pct);
+  const vals=q.months.map(mm=>bonusMonthOverall(bonusGet(name,year,mm),BONUS_METRICS_OLD)).filter(x=>x).map(x=>x.pct);
   return vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10)/10:null;
 }
 // Kicker earned only when EVERY agent has a quarter score and all are >=95%.
 function bonusTeamKicker(year,quarter){
   const agents=bonusAgents();
-  for(const a of agents){ const avg=bonusQuarterAvg(a.name,year,quarter); if(avg===null||avg<BONUS_KICKER_THRESHOLD) return false; }
+  for(const a of agents){ const avg=bonusQuarterAvgOld(a.name,year,quarter); if(avg===null||avg<BONUS_KICKER_THRESHOLD) return false; }
   return agents.length>0;
+}
+// ── New-model payout (Q4 2026+): the three months added up, max $300. ──
+function bonusQuarterEarnedNew(name,year,quarter){
+  const q=BONUS_QUARTERS.find(x=>x.id===quarter); if(!q) return {dollars:0,months:[]};
+  const months=q.months.map(mm=>bonusMonthEarned(bonusGet(name,year,mm),BONUS_METRICS_NEW));
+  const dollars=months.reduce((s,e)=>s+(e?e.dollars:0),0);
+  return {dollars: Math.round(Math.min(dollars,BONUS_MAX_QUARTER)*100)/100, months};
 }
 
 async function saveBonusScores(){
@@ -1352,30 +1406,40 @@ function renderBonusTracker(){
   if(!state.manager) return renderLogin();
   bonusInit();
   const year=bonusState.year, mm=bonusState.month;
+  const isNew = bonusIsNewModel(year, bonusQuarterIdOfMonth(mm));
+  const metrics = bonusMetricsForMonth(year, mm);
+  const totalPts = bonusTotalPoints(metrics);
+  const perKpi = bonusPerKpiMonth(metrics);
   const monthOpts=[];
   for(let m=1;m<=12;m++){ const s=String(m).padStart(2,'0'); monthOpts.push(`<option value="${s}" ${s===mm?'selected':''}>${BONUS_MONTH_NAMES[m]} ${year}</option>`); }
   const yearOpts=[year-1,year,year+1].map(y=>`<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('');
 
-  const legend = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">`+BONUS_METRICS.map(m=>`
+  const legend = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">`+metrics.map(m=>`
     <div style="background:#f8fafc;border:1px solid #e8ecf3;border-radius:9px;padding:7px 11px;font-size:11px;color:#475569">
-      <span style="font-weight:800;color:#0f1e3d">${m.label}</span> <span style="color:#94a3b8">(${m.weight}pt)</span><br/>
-      <span style="font-size:10px">Best ${m.best}${m.unit} · Worst ${m.worst}${m.unit}${m.best<m.worst?' · lower is better':''}</span>
+      <span style="font-weight:800;color:#0f1e3d">${m.label}</span> ${isNew?`<span style="color:#94a3b8">(up to $${perKpi.toFixed(2)}/mo)</span>`:`<span style="color:#94a3b8">(${m.weight}pt)</span>`}<br/>
+      <span style="font-size:10px">${isNew?'Target':'Best'} ${m.best}${m.unit} · ${isNew?'Min':'Worst'} ${m.worst}${m.unit}${m.best<m.worst?' · lower is better':''}</span>
     </div>`).join('')+`</div>`;
 
   const rows = bonusAgents().map(a=>{
     const data=bonusGet(a.name,year,mm)||{};
-    const inputs=BONUS_METRICS.map(m=>{
+    const frac=isNew?bonusPayFraction:bonusMetricPct;
+    const inputs=metrics.map(m=>{
       const val=(data[m.key]!==undefined&&data[m.key]!==null)?data[m.key]:'';
-      const p=bonusMetricPct(m,val);
-      const awarded=p===null?'':(Math.round(p*m.weight*10)/10);
+      const p=frac(m,val);
       const cellColor=p===null?'#cbd5e1':bonusColor(p*100);
+      const sub=p===null?'-':(isNew?('$'+(p*perKpi).toFixed(2)):(Math.round(p*m.weight*10)/10)+'/'+m.weight);
       return `<td style="padding:6px 8px;text-align:center">
         <input type="number" step="0.01" value="${val}" onchange="setBonusValue('${a.name.replace(/'/g,"\\'")}','${year}','${mm}','${m.key}',this.value)" style="width:66px;padding:6px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;text-align:center"/>
-        <div style="font-size:9px;color:${cellColor};font-weight:700;margin-top:2px">${awarded===''?'-':awarded+'/'+m.weight}</div>
+        <div style="font-size:9px;color:${cellColor};font-weight:700;margin-top:2px">${sub}</div>
       </td>`;
     }).join('');
-    const overall=bonusMonthOverall(data);
-    const ov=overall?`<span style="color:${bonusColor(overall.pct)}">${overall.pct}%</span>${overall.complete?'':'<div style="font-size:9px;color:#d97706">'+overall.entered+'/5 entered</div>'}`:'<span style="color:#cbd5e1">-</span>';
+    const overall=bonusMonthOverall(data, metrics);
+    const earned=isNew?bonusMonthEarned(data, metrics):null;
+    const ov = overall
+      ? (isNew
+          ? `<span style="color:${bonusColor(overall.pct)}">$${earned.dollars.toFixed(2)}</span><div style="font-size:9px;color:#94a3b8">${overall.pct}%${overall.complete?'':' · '+overall.entered+'/'+metrics.length}</div>`
+          : `<span style="color:${bonusColor(overall.pct)}">${overall.pct}%</span>${overall.complete?'':'<div style="font-size:9px;color:#d97706">'+overall.entered+'/'+metrics.length+' entered</div>'}`)
+      : '<span style="color:#cbd5e1">-</span>';
     return `<tr style="border-bottom:1px solid #f1f5f9">
       <td style="padding:8px 10px;font-size:12.5px;font-weight:700;color:#0f1e3d;position:sticky;left:0;background:#fff">${a.name}</td>
       ${inputs}
@@ -1383,26 +1447,27 @@ function renderBonusTracker(){
     </tr>`;
   }).join('');
 
-  const headCells=BONUS_METRICS.map(m=>`<th style="padding:8px;font-size:10.5px;color:#fff;font-weight:700;text-align:center">${m.label.split(' ')[0]}<br/><span style="font-size:9px;opacity:.7">${m.unit||'#'} · ${m.weight}pt</span></th>`).join('');
+  const headCells=metrics.map(m=>`<th style="padding:8px;font-size:10.5px;color:#fff;font-weight:700;text-align:center">${m.label.split(' ')[0]}<br/><span style="font-size:9px;opacity:.7">${m.unit||'#'}${isNew?'':' · '+m.weight+'pt'}</span></th>`).join('');
 
   return `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
       <div>
         <div style="font-size:16px;font-weight:800;color:#0f1e3d">💰 Bonus Tracker</div>
-        <div style="font-size:11.5px;color:#64748b">Type each agent's actual score. Percent and points calculate automatically, out of ${BONUS_TOTAL_POINTS}. Manager-only.</div>
+        <div style="font-size:11.5px;color:#64748b">Type each agent's actual score. ${isNew?`Each KPI pays up to $${perKpi.toFixed(2)}/month; the month is worth up to $100.`:`Percent and points calculate automatically, out of ${totalPts}.`} Manager-only.</div>
       </div>
       <div style="display:flex;gap:8px">
         <select onchange="bonusState.year=parseInt(this.value);render()" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12.5px">${yearOpts}</select>
         <select onchange="bonusState.month=this.value;render()" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12.5px">${monthOpts.join('')}</select>
       </div>
     </div>
+    ${isNew?`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:9px;padding:9px 13px;margin-bottom:12px;font-size:11.5px;color:#6d28d9;line-height:1.5">Q4 2026 model: 7 equally weighted KPIs, each worth $${perKpi.toFixed(2)} per month. A full month earns $100 and a full quarter earns the $${BONUS_MAX_QUARTER} maximum.</div>`:''}
     ${legend}
     <div style="overflow-x:auto;border:1px solid #e8ecf3;border-radius:12px">
       <table style="width:100%;border-collapse:collapse;min-width:640px">
         <thead><tr style="background:#0f1e3d">
           <th style="padding:8px 10px;font-size:11px;color:#fff;font-weight:700;text-align:left;position:sticky;left:0;background:#0f1e3d">Agent</th>
           ${headCells}
-          <th style="padding:8px;font-size:10.5px;color:#fff;font-weight:700;text-align:center">Overall<br/><span style="font-size:9px;opacity:.7">/ ${BONUS_TOTAL_POINTS}</span></th>
+          <th style="padding:8px;font-size:10.5px;color:#fff;font-weight:700;text-align:center">${isNew?'Earned<br/><span style="font-size:9px;opacity:.7">/ $100</span>':'Overall<br/><span style="font-size:9px;opacity:.7">/ '+totalPts+'</span>'}</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -1413,10 +1478,25 @@ function renderBonusTracker(){
 function renderBonusQuarter(){
   const year=bonusState.year;
   const q=BONUS_QUARTERS.find(x=>x.id===bonusState.quarter)||BONUS_QUARTERS[0];
+  const isNew = bonusIsNewModel(year, q.id);
+  const metrics = bonusMetricsFor(year, q.id);
   const qTabs=BONUS_QUARTERS.map(x=>`<button onclick="bonusState.quarter='${x.id}';render()" style="padding:7px 13px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${x.id===q.id?'#7c3aed':'#e2e8f0'};background:${x.id===q.id?'#7c3aed':'#fff'};color:${x.id===q.id?'#fff':'#334155'}">${x.label}</button>`).join('');
-  const kicker=bonusTeamKicker(year,q.id);
+  const kicker = !isNew && bonusTeamKicker(year,q.id);
   const rows=bonusAgents().map(a=>{
-    const monthly=q.months.map(mm=>bonusMonthOverall(bonusGet(a.name,year,mm)));
+    if(isNew){
+      const qe=bonusQuarterEarnedNew(a.name,year,q.id);
+      const anyData=qe.months.some(x=>x);
+      const cells=q.months.map((mm,i)=>{
+        const e=qe.months[i];
+        return `<td style="padding:8px 10px;text-align:center;font-size:12.5px;font-weight:700;color:${e?'#15803d':'#cbd5e1'}">${e?'$'+e.dollars.toFixed(2):'-'}</td>`;
+      }).join('');
+      return `<tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:8px 10px;font-size:12.5px;font-weight:700;color:#0f1e3d">${a.name}</td>
+        ${cells}
+        <td style="padding:8px 10px;text-align:center;font-size:15px;font-weight:800;color:${anyData?'#15803d':'#cbd5e1'}">${anyData?'$'+qe.dollars.toFixed(2):'-'}</td>
+      </tr>`;
+    }
+    const monthly=q.months.map(mm=>bonusMonthOverall(bonusGet(a.name,year,mm),metrics));
     const vals=monthly.filter(x=>x).map(x=>x.pct);
     const qAvg=vals.length?Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10)/10:null;
     const base=bonusBasePayout(qAvg);
@@ -1432,9 +1512,12 @@ function renderBonusQuarter(){
       <td style="padding:8px 10px;text-align:center;font-size:14px;font-weight:800;color:${total>0?'#15803d':'#cbd5e1'}">${qAvg!==null?'$'+total:'-'}${kicker&&total>0?`<div style="font-size:9px;color:#7c3aed;font-weight:700">incl. +$${BONUS_KICKER}</div>`:''}</td>
     </tr>`;
   }).join('');
-  const kickerBanner=`<div style="background:${kicker?'#f0fdf4':'#fef2f2'};border:1px solid ${kicker?'#bbf7d0':'#fecaca'};border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:${kicker?'#15803d':'#b91c1c'};line-height:1.5">
+  const kickerBanner = isNew ? '' : `<div style="background:${kicker?'#f0fdf4':'#fef2f2'};border:1px solid ${kicker?'#bbf7d0':'#fecaca'};border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:${kicker?'#15803d':'#b91c1c'};line-height:1.5">
     ${kicker?`🎉 Team kicker EARNED: every agent is at ${BONUS_KICKER_THRESHOLD}%+ this quarter, so each gets an additional $${BONUS_KICKER}.`:`Team kicker not yet earned. It adds $${BONUS_KICKER} to every agent only when ALL agents reach ${BONUS_KICKER_THRESHOLD}%+ for the quarter.`}
   </div>`;
+  const footNote = isNew
+    ? `Each month is worth up to $100 (seven KPIs at $${bonusPerKpiMonth(metrics).toFixed(2)} each). The quarter bonus is the three months added together, up to the $${BONUS_MAX_QUARTER} maximum.`
+    : `Quarter average is the mean of the months with scores entered. Bonus tiers: 100% = $300, 90-99% = $200, 85-89% = $100, below 85% = $0. Plus $${BONUS_KICKER} to everyone when all agents reach ${BONUS_KICKER_THRESHOLD}%+.`;
   return `
     <div style="font-size:14px;font-weight:800;color:#0f1e3d;margin-bottom:10px">📆 Quarterly Rollup & Bonus ${year}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${qTabs}</div>
@@ -1444,56 +1527,79 @@ function renderBonusQuarter(){
         <thead><tr style="background:#7c3aed">
           <th style="padding:8px 10px;font-size:11px;color:#fff;font-weight:700;text-align:left">Agent</th>
           ${q.months.map(mm=>`<th style="padding:8px;font-size:11px;color:#fff;font-weight:700;text-align:center">${BONUS_MONTH_NAMES[parseInt(mm)].slice(0,3)}</th>`).join('')}
-          <th style="padding:8px;font-size:11px;color:#fff;font-weight:700;text-align:center">Quarter Avg</th>
-          <th style="padding:8px;font-size:11px;color:#fff;font-weight:700;text-align:center">Bonus</th>
+          <th style="padding:8px;font-size:11px;color:#fff;font-weight:700;text-align:center">${isNew?`Earned ($${BONUS_MAX_QUARTER} max)`:'Quarter Avg'}</th>
+          ${isNew?'':'<th style="padding:8px;font-size:11px;color:#fff;font-weight:700;text-align:center">Bonus</th>'}
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.6">Quarter average is the mean of the months with scores entered. Bonus tiers: 100% = $300, 90-99% = $200, 85-89% = $100, below 85% = $0. Plus $${BONUS_KICKER} to everyone when all agents reach ${BONUS_KICKER_THRESHOLD}%+.</div>`;
+    <div style="font-size:11px;color:#94a3b8;margin-top:8px;line-height:1.6">${footNote}</div>`;
 }
 
 // ── Read-only mirror for My Profile ──────────────────────────────
 function renderProfileBonus(targetName){
   bonusInit();
   const year=bonusState.year, mm=bonusState.month;
+  const qId=bonusQuarterIdOfMonth(mm);
+  const isNew=bonusIsNewModel(year,qId);
+  const metrics=bonusMetricsForMonth(year,mm);
+  const perKpi=bonusPerKpiMonth(metrics);
   const data=bonusGet(targetName,year,mm)||{};
-  const overall=bonusMonthOverall(data);
-  const metricRows=BONUS_METRICS.map(m=>{
+  const overall=bonusMonthOverall(data, metrics);
+  const monthEarned=isNew?bonusMonthEarned(data, metrics):null;
+  const frac=isNew?bonusPayFraction:bonusMetricPct;
+  const metricRows=metrics.map(m=>{
     const val=(data[m.key]!==undefined&&data[m.key]!==null)?data[m.key]:null;
-    const p=bonusMetricPct(m,val);
-    const awarded=p===null?null:Math.round(p*m.weight*10)/10;
+    const p=frac(m,val);
+    const awarded=p===null?null:(isNew?(p*perKpi):Math.round(p*m.weight*10)/10);
+    const awardedDisp=awarded===null?'-':(isNew?'$'+awarded.toFixed(2):awarded+'/'+m.weight);
     return `<tr style="border-bottom:1px solid #f1f5f9">
-      <td style="padding:9px 12px;font-size:12.5px;font-weight:700;color:#0f1e3d">${m.label}<div style="font-size:10px;color:#94a3b8;font-weight:500">Best ${m.best}${m.unit} · Worst ${m.worst}${m.unit}</div></td>
+      <td style="padding:9px 12px;font-size:12.5px;font-weight:700;color:#0f1e3d">${m.label}<div style="font-size:10px;color:#94a3b8;font-weight:500">${isNew?'Target':'Best'} ${m.best}${m.unit} · ${isNew?'Min':'Worst'} ${m.worst}${m.unit}</div></td>
       <td style="padding:9px 12px;text-align:center;font-size:13px;color:#0f172a">${val===null?'<span style="color:#b45309;font-style:italic;font-size:11px">Not entered</span>':val+m.unit}</td>
       <td style="padding:9px 12px;text-align:center;font-size:13px;font-weight:700;color:${p===null?'#cbd5e1':bonusColor(p*100)}">${p===null?'-':Math.round(p*100)+'%'}</td>
-      <td style="padding:9px 12px;text-align:center;font-size:12.5px;font-weight:700;color:${awarded===null?'#cbd5e1':'#334155'}">${awarded===null?'-':awarded+'/'+m.weight}</td>
+      <td style="padding:9px 12px;text-align:center;font-size:12.5px;font-weight:700;color:${awarded===null?'#cbd5e1':'#334155'}">${awardedDisp}</td>
     </tr>`;
   }).join('');
 
   // Quarter strip for this agent
-  const q=BONUS_QUARTERS[Math.floor((parseInt(mm)-1)/3)];
-  const qMonthly=q.months.map(m2=>({mm:m2,o:bonusMonthOverall(bonusGet(targetName,year,m2))}));
-  const qVals=qMonthly.filter(x=>x.o).map(x=>x.o.pct);
-  const qAvg=qVals.length?Math.round(qVals.reduce((s,v)=>s+v,0)/qVals.length*10)/10:null;
+  const q=BONUS_QUARTERS.find(x=>x.id===qId);
+  let qAvg=null, qEarned=null, qMonths=[];
+  if(isNew){
+    const qe=bonusQuarterEarnedNew(targetName,year,qId);
+    qEarned=qe.dollars; qMonths=qe.months;
+  } else {
+    const qMonthly=q.months.map(m2=>bonusMonthOverall(bonusGet(targetName,year,m2),metrics));
+    const qVals=qMonthly.filter(x=>x).map(x=>x.pct);
+    qAvg=qVals.length?Math.round(qVals.reduce((s,v)=>s+v,0)/qVals.length*10)/10:null;
+  }
 
   const monthSel=[];
   for(let m=1;m<=12;m++){ const s=String(m).padStart(2,'0'); monthSel.push(`<option value="${s}" ${s===mm?'selected':''}>${BONUS_MONTH_NAMES[m]} ${year}</option>`); }
 
-  return `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;color:#0f1e3d">💰 Bonus Scorecard</div>
-      <select onchange="bonusState.month=this.value;renderPage()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px">${monthSel.join('')}</select>
-    </div>
-    <div style="background:${overall?'#f0fdf4':'#f8fafc'};border:1px solid ${overall?'#bbf7d0':'#e8ecf3'};border-radius:14px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
-      <div style="font-size:34px;font-weight:800;color:${overall?bonusColor(overall.pct):'#94a3b8'}">${overall?overall.pct+'%':'-'}</div>
-      <div>
-        <div style="font-size:12px;font-weight:800;color:#0f1e3d">${BONUS_MONTH_NAMES[parseInt(mm)]} ${year} score</div>
-        <div style="font-size:11px;color:#64748b">${overall?(overall.complete?'All 5 metrics scored, out of '+BONUS_TOTAL_POINTS+' points':overall.entered+' of 5 metrics entered so far'):'No scores entered for this month yet'}</div>
-        ${qAvg!==null?`<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-top:3px">${q.label} average so far: ${qAvg}%</div>`:''}
+  const monthStatNum=overall?(isNew?'$'+monthEarned.dollars.toFixed(2):overall.pct+'%'):'-';
+  const monthStatSub=overall
+    ? (isNew
+        ? `${overall.pct}% this month, of $100 possible${overall.complete?'':' · '+overall.entered+' of '+metrics.length+' KPIs in'}`
+        : (overall.complete?'All '+metrics.length+' metrics scored, out of '+bonusTotalPoints(metrics)+' points':overall.entered+' of '+metrics.length+' metrics entered so far'))
+    : 'No scores entered for this month yet';
+
+  let quarterBanner='';
+  if(isNew && qMonths.some(x=>x)){
+    quarterBanner=`
+    <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:14px;padding:14px 18px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div style="font-size:26px;font-weight:800;color:#7c3aed">$${qEarned.toFixed(2)}</div>
+        <div style="font-size:11.5px;color:#5b21b6;line-height:1.5">
+          <div style="font-weight:800">${q.label} earned so far</div>
+          <div>Out of the $${BONUS_MAX_QUARTER} quarterly maximum. Each month is worth up to $100.</div>
+        </div>
       </div>
-    </div>
-    ${qAvg!==null?`
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${q.months.map((m2,i)=>{const e=qMonths[i];return `<div style="flex:1;min-width:88px;background:#fff;border:1px solid #e9d5ff;border-radius:9px;padding:8px 10px;text-align:center"><div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase">${BONUS_MONTH_NAMES[parseInt(m2)].slice(0,3)}</div><div style="font-size:14px;font-weight:800;color:${e?'#15803d':'#cbd5e1'}">${e?'$'+e.dollars.toFixed(2):'-'}</div></div>`;}).join('')}
+      </div>
+    </div>`;
+  } else if(!isNew && qAvg!==null){
+    quarterBanner=`
     <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
       <div style="font-size:26px;font-weight:800;color:#7c3aed">$${bonusBasePayout(qAvg)+(bonusTeamKicker(year,q.id)?BONUS_KICKER:0)}</div>
       <div style="font-size:11.5px;color:#5b21b6;line-height:1.5">
@@ -1501,19 +1607,34 @@ function renderProfileBonus(targetName){
         <div>Base $${bonusBasePayout(qAvg)} at ${qAvg}%${bonusTeamKicker(year,q.id)?` plus $${BONUS_KICKER} team kicker`:''}</div>
         <div style="color:#a78bda;margin-top:2px">Tiers: 100% = $300, 90-99% = $200, 85-89% = $100. Extra $${BONUS_KICKER} when the whole team reaches ${BONUS_KICKER_THRESHOLD}%+.</div>
       </div>
-    </div>`:''}
+    </div>`;
+  }
+
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;color:#0f1e3d">💰 Bonus Scorecard</div>
+      <select onchange="bonusState.month=this.value;renderPage()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:12px">${monthSel.join('')}</select>
+    </div>
+    <div style="background:${overall?'#f0fdf4':'#f8fafc'};border:1px solid ${overall?'#bbf7d0':'#e8ecf3'};border-radius:14px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+      <div style="font-size:34px;font-weight:800;color:${overall?bonusColor(overall.pct):'#94a3b8'}">${monthStatNum}</div>
+      <div>
+        <div style="font-size:12px;font-weight:800;color:#0f1e3d">${BONUS_MONTH_NAMES[parseInt(mm)]} ${year} ${isNew?'earnings':'score'}</div>
+        <div style="font-size:11px;color:#64748b">${monthStatSub}</div>
+      </div>
+    </div>
+    ${quarterBanner}
     <div style="overflow-x:auto;border:1px solid #e8ecf3;border-radius:12px">
       <table style="width:100%;border-collapse:collapse;min-width:420px">
         <thead><tr style="background:#0f1e3d">
           <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:left">Metric</th>
           <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">Your Value</th>
           <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">Percent</th>
-          <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">Points</th>
+          <th style="padding:8px 12px;font-size:11px;color:#fff;font-weight:700;text-align:center">${isNew?'Earned':'Points'}</th>
         </tr></thead>
         <tbody>${metricRows}</tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:#94a3b8;margin-top:8px">Scores are entered by your manager. Percent shows how far your value sits between the Worst and Best benchmark for each metric.</div>`;
+    <div style="font-size:11px;color:#94a3b8;margin-top:8px">Scores are entered by your manager. Percent shows how far your value sits between the ${isNew?'Minimum and Target':'Worst and Best'} benchmark for each metric.</div>`;
 }
 // ══════════════════ END BONUS TRACKER ══════════════════
 
@@ -6242,13 +6363,22 @@ function renderCommunitiesMap(){
     </div>`;
 }
 
+// Active PEC crew used to filter the Fenix ranking (the Fenix reports also
+// score onsite agents). Dianne Mercado removed - left the team Oct 2026.
+// Update this roster if the team changes.
+const PEC_FENIX_TEAM = ['daniel gelvez','juliet elaco','jo-ann atadero','carizza estanislao','charles calidguid','beverly domingo','kenneth geronimo','quigly arias','russel espaldon','mary panimbagon','elhora paule'];
+const fenixNorm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+// Team-wide average of the Fenix ranking scores, for the Running MTD view.
+function fenixTeamStats(){
+  const fr = state.fenixRanking || {lms:[],pec:[]};
+  const all = [...(fr.lms||[]),...(fr.pec||[])].filter(r=>PEC_FENIX_TEAM.includes(fenixNorm(r && r.name)));
+  const scores = all.map(r=>r.overall).filter(v=>v!==null && v!==undefined && !isNaN(v));
+  const avg = scores.length ? Math.round(scores.reduce((s,v)=>s+v,0)/scores.length) : null;
+  return { avg, count: scores.length, lastSynced: fr.lastSynced || '' };
+}
 function renderFenixRanking(){
   const fr = state.fenixRanking || {lms:[],pec:[]};
-  // Your 12-person crew. The Fenix reports also score onsite agents, so we
-  // filter both lists down to just the team. Update this roster if the team changes.
-  const PEC_TEAM = ['daniel gelvez','juliet elaco','jo-ann atadero','carizza estanislao','charles calidguid','beverly domingo','kenneth geronimo','quigly arias','dianne mercado','russel espaldon','mary panimbagon','elhora paule'];
-  const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-  const onTeam = r => PEC_TEAM.includes(norm(r && r.name));
+  const onTeam = r => PEC_FENIX_TEAM.includes(fenixNorm(r && r.name));
   const lmsTeam = (fr.lms||[]).filter(onTeam);
   const pecTeam = (fr.pec||[]).filter(onTeam);
   const fCol = pct => pct>=90?'#15803d':pct>=80?'#d97706':'#dc2626';
@@ -6419,6 +6549,23 @@ function renderMTD(){
         `:''}
         <div class="kpi-grid">${standaloneItems.map(renderPecCard).join('')}</div>
       `;
+    })()}
+
+    ${(() => {
+      const fs = fenixTeamStats();
+      const col = fs.avg===null ? '#94a3b8' : (fs.avg>=90?'#15803d':fs.avg>=80?'#d97706':'#dc2626');
+      return `
+      <div class="section-label" style="margin-top:22px">Fenix Ranking</div>
+      <div style="background:#fff;border:1px solid #e8ecf3;border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:60px;height:60px;border-radius:50%;background:${col}14;border:2px solid ${col};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:${col}">${fs.avg===null?'—':fs.avg+'%'}</div>
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#0f1e3d">Team Average Fenix Score</div>
+            <div style="font-size:11px;color:#64748b">Mean call-quality score across ${fs.count} team member${fs.count===1?'':'s'} in the Fenix ranking${fs.lastSynced?` · Updated ${escapeHtml(fs.lastSynced)}`:''}</div>
+          </div>
+        </div>
+        <button class="agent-toggle" style="color:#d97706;border-color:#d9770644" onclick="state.scTab='fenixrank';render()">View full ranking →</button>
+      </div>`;
     })()}
 
     <div class="sync-panel" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
